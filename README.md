@@ -42,7 +42,6 @@ It helps track schedules, manage tasks, and organize resources in a simple inter
 1. Clone the repository:  
    ```bash
    git clone https://github.com/JemCarlo-0624/buildwatch.git
-````
 
 2. Move the project to your server’s root directory (e.g., `htdocs` for XAMPP).
 3. Import the database (SQL file if provided).
@@ -51,7 +50,6 @@ It helps track schedules, manage tasks, and organize resources in a simple inter
 
    ```
    http://localhost/buildwatch
-   ```
 
 ---
 
