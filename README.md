@@ -49,7 +49,7 @@ It helps track schedules, manage tasks, and organize resources in a simple inter
 5. Start your server and open the project in your browser:
 
    ```
-   http://localhost/buildwatch
+   http://localhost/buildwatch/public/index.php
 
 ---
 
