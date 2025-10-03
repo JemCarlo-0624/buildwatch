@@ -79,9 +79,3 @@ It helps track schedules, manage tasks, and organize resources in a simple inter
 This project is under active development.
 More features and UI improvements will be added soon.
 
-```
-
----
-
-Do you also want me to create a **LICENSE file** (e.g., MIT) so the repo looks complete, or keep it license-free for now?
-```
