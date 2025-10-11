@@ -551,12 +551,10 @@ foreach ($tasks as $task) {
         if (progressFilter) progressFilter.addEventListener('change', filterTasks);
 
         function viewTask(taskId) {
-            // Implement view task details
-            alert('View task details for task #' + taskId);
+            window.location.href = 'tasks_details.php?id=' + taskId;
         }
 
         function editTask(taskId) {
-            // Implement edit task
             window.location.href = 'tasks_edit.php?id=' + taskId;
         }
     </script>

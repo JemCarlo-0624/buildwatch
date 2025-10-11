@@ -291,7 +291,7 @@ if ($_SESSION['role'] === 'worker') {
                         
                         <?php if ($_SESSION['role'] !== 'worker'): ?>
                             <div class="project-actions">
-                                <a href="project_edit.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                <a href="projects_edit.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
                                 <a href="projects_assign.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary">
