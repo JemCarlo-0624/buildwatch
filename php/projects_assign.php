@@ -10,11 +10,29 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['pm','admin'])) {
 $project_id = $_GET['id'] ?? null;
 if (!$project_id) die("❌ Project ID missing");
 
-// Handle form submission
+// --- Only allow assignment if worker is not on an active project ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_POST['user_id'];
+
+    // Check if worker is already assigned to an active (not completed) project
+    $checkStmt = $pdo->prepare("
+        SELECT pa.project_id
+        FROM project_assignments pa
+        JOIN projects p ON pa.project_id = p.id
+        WHERE pa.user_id = ? AND p.status != 'completed'
+    ");
+    $checkStmt->execute([$user_id]);
+    if ($checkStmt->fetch()) {
+        echo "<script>alert('This worker is already assigned to an active project.');window.location.href=window.location.href;</script>";
+        exit;
+    }
+
+    // Assign worker to project
     $stmt = $pdo->prepare("INSERT INTO project_assignments (project_id, user_id) VALUES (?, ?)");
     $stmt->execute([$project_id, $user_id]);
+    // Redirect to avoid form resubmission
+    header("Location: projects_assign.php?id=" . urlencode($project_id));
+    exit;
 }
 
 $projectStmt = $pdo->prepare("SELECT p.*, u.name as creator FROM projects p JOIN users u ON p.created_by = u.id WHERE p.id = ?");
@@ -25,8 +43,18 @@ if (!$project) {
     die("❌ Project not found");
 }
 
-// Get all workers
-$workers = $pdo->query("SELECT * FROM users WHERE role='worker'")->fetchAll();
+// --- Only show available workers (not assigned to any active project) ---
+$workers = $pdo->query("
+    SELECT *
+    FROM users u
+    WHERE u.role = 'worker'
+    AND u.id NOT IN (
+        SELECT pa.user_id
+        FROM project_assignments pa
+        JOIN projects p ON pa.project_id = p.id
+        WHERE p.status != 'completed'
+    )
+")->fetchAll();
 
 // Get assigned users
 $stmt = $pdo->prepare("SELECT u.* FROM project_assignments pa JOIN users u ON pa.user_id=u.id WHERE pa.project_id=?");
