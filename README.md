@@ -36,7 +36,7 @@ It helps track schedules, manage tasks, and organize resources in a simple inter
 ### Prerequisites
 - PHP 8+  
 - MySQL or MariaDB  
-- Local server (XAMPP, WAMP, Laragon, etc.)  
+- Local server (XAMPP,WAMP)  
 
 ### Installation
 1. Clone the repository:  
@@ -50,7 +50,6 @@ It helps track schedules, manage tasks, and organize resources in a simple inter
 
    ```
    http://localhost/buildwatch/public/index.php
-
 ---
 
 ## Usage
