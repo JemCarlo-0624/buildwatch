@@ -246,11 +246,6 @@ if ($_SESSION['role'] === 'worker') {
                 </p>
             </div>
             <div class="d-flex gap-2">
-                <?php if ($_SESSION['role'] !== 'worker'): ?>
-                    <a href="projects_create.php" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> New Project
-                    </a>
-                <?php endif; ?>
             </div>
         </div>
 
@@ -274,7 +269,7 @@ if ($_SESSION['role'] === 'worker') {
                             <div class="project-meta">
                                 <div class="meta-item">
                                     <i class="fas fa-user"></i>
-                                    <span>Created by: <?= htmlspecialchars($p['creator']) ?></span>
+                                    <span>Project Manager: <?= htmlspecialchars($p['creator']) ?></span>
                                 </div>
                                 <div class="meta-item">
                                     <i class="fas fa-calendar"></i>
