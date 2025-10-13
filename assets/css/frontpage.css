@@ -72,6 +72,16 @@ nav {
   background: #084980;
 }
 
+/* Added styling for client portal button */
+.client-btn {
+  background: var(--secondary);
+}
+
+.client-btn:hover {
+  background: #b28101;
+}
+/* </CHANGE> */
+
 /* Hero Section */
 .hero {
   background: url("../images/hero_2.jpg") no-repeat center center;

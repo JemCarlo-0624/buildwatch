@@ -10,11 +10,10 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['pm','admin'])) {
 $project_id = $_GET['id'] ?? null;
 if (!$project_id) die("❌ Project ID missing");
 
-// --- Only allow assignment if worker is not on an active project ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_POST['user_id'];
 
-    // Check if worker is already assigned to an active (not completed) project
+    // Check if user is already assigned to an active (not completed) project
     $checkStmt = $pdo->prepare("
         SELECT pa.project_id
         FROM project_assignments pa
@@ -23,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ");
     $checkStmt->execute([$user_id]);
     if ($checkStmt->fetch()) {
-        echo "<script>alert('This worker is already assigned to an active project.');window.location.href=window.location.href;</script>";
+        echo "<script>alert('This user is already assigned to an active project.');window.location.href=window.location.href;</script>";
         exit;
     }
 
-    // Assign worker to project
+    // Assign user to project
     $stmt = $pdo->prepare("INSERT INTO project_assignments (project_id, user_id) VALUES (?, ?)");
     $stmt->execute([$project_id, $user_id]);
     // Redirect to avoid form resubmission
@@ -43,7 +42,20 @@ if (!$project) {
     die("❌ Project not found");
 }
 
-// --- Only show available workers (not assigned to any active project) ---
+// Get available Project Managers (not assigned to any active project)
+$pms = $pdo->query("
+    SELECT *
+    FROM users u
+    WHERE u.role = 'pm'
+    AND u.id NOT IN (
+        SELECT pa.user_id
+        FROM project_assignments pa
+        JOIN projects p ON pa.project_id = p.id
+        WHERE p.status != 'completed'
+    )
+")->fetchAll();
+
+// Get available Workers (not assigned to any active project)
 $workers = $pdo->query("
     SELECT *
     FROM users u
@@ -56,17 +68,20 @@ $workers = $pdo->query("
     )
 ")->fetchAll();
 
-// Get assigned users
-$stmt = $pdo->prepare("SELECT u.* FROM project_assignments pa JOIN users u ON pa.user_id=u.id WHERE pa.project_id=?");
+$stmt = $pdo->prepare("SELECT u.* FROM project_assignments pa JOIN users u ON pa.user_id=u.id WHERE pa.project_id=? AND u.role='pm'");
 $stmt->execute([$project_id]);
-$assigned = $stmt->fetchAll();
+$assignedPMs = $stmt->fetchAll();
+
+$stmt = $pdo->prepare("SELECT u.* FROM project_assignments pa JOIN users u ON pa.user_id=u.id WHERE pa.project_id=? AND u.role='worker'");
+$stmt->execute([$project_id]);
+$assignedWorkers = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assign Workers - <?= htmlspecialchars($project['name']) ?></title>
+    <title>Assign Team - <?= htmlspecialchars($project['name']) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -145,6 +160,15 @@ $assigned = $stmt->fetchAll();
             color: var(--primary);
         }
 
+        /* Updated section title colors for PM and Worker sections */
+        .section-title.pm-section i {
+            color: var(--secondary);
+        }
+
+        .section-title.worker-section i {
+            color: var(--success);
+        }
+
         .worker-select-form {
             display: flex;
             gap: 15px;
@@ -202,11 +226,11 @@ $assigned = $stmt->fetchAll();
             border-color: var(--primary);
         }
 
+        /* Different avatar colors for PMs and Workers */
         .worker-avatar {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -214,6 +238,14 @@ $assigned = $stmt->fetchAll();
             font-weight: 600;
             font-size: 18px;
             flex-shrink: 0;
+        }
+
+        .worker-avatar.pm {
+            background: linear-gradient(135deg, var(--secondary), #1976d2);
+        }
+
+        .worker-avatar.worker {
+            background: linear-gradient(135deg, var(--success), #27ae60);
         }
 
         .worker-info {
@@ -373,10 +405,12 @@ $assigned = $stmt->fetchAll();
                 <?php endif; ?>
             </div>
 
+            <!-- Separate section for assigning Workers -->
             <div class="assignment-section">
                 <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="fas fa-user-plus"></i>
+                    <h3 class="section-title worker-section">
+                        <i class="fas fa-user-hard-hat"></i>
+                        Assign Worker
                     </h3>
                 </div>
 
@@ -394,34 +428,36 @@ $assigned = $stmt->fetchAll();
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-success">
                         <i class="fas fa-plus"></i> Assign Worker
                     </button>
                 </form>
             </div>
+
+            <!-- Separate display section for assigned Project Managers -->
             <div class="assignment-section">
                 <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="fas fa-users-cog"></i>
-                        Assigned Workers
-                        <span class="badge bg-primary rounded-pill" style="font-size: 14px; margin-left: 10px;">
-                            <?= count($assigned) ?>
+                    <h3 class="section-title pm-section">
+                        <i class="fas fa-user-tie"></i>
+                        Assigned Project Manager
+                        <span class="badge bg-secondary rounded-pill" style="font-size: 14px; margin-left: 10px;">
+                            <?= count($assignedPMs) ?>
                         </span>
                     </h3>
                 </div>
 
-                <?php if (count($assigned) > 0): ?>
+                <?php if (count($assignedPMs) > 0): ?>
                     <div class="assigned-workers-grid">
-                        <?php foreach ($assigned as $a): ?>
+                        <?php foreach ($assignedPMs as $pm): ?>
                             <div class="worker-card">
-                                <div class="worker-avatar">
-                                    <?= strtoupper(substr($a['name'], 0, 2)) ?>
+                                <div class="worker-avatar pm">
+                                    <?= strtoupper(substr($pm['name'], 0, 2)) ?>
                                 </div>
                                 <div class="worker-info">
-                                    <div class="worker-name"><?= htmlspecialchars($a['name']) ?></div>
+                                    <div class="worker-name"><?= htmlspecialchars($pm['name']) ?></div>
                                     <div class="worker-email">
                                         <i class="fas fa-envelope"></i>
-                                        <?= htmlspecialchars($a['email']) ?>
+                                        <?= htmlspecialchars($pm['email']) ?>
                                     </div>
                                 </div>
                             </div>
@@ -429,7 +465,45 @@ $assigned = $stmt->fetchAll();
                     </div>
                 <?php else: ?>
                     <div class="empty-state">
-                        <i class="fas fa-user-slash"></i>
+                        <i class="fas fa-user-tie"></i>
+                        <h4>No Project Managers Assigned Yet</h4>
+                        <p>Use the form above to assign project managers to this project.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Separate display section for assigned Workers -->
+            <div class="assignment-section">
+                <div class="section-header">
+                    <h3 class="section-title worker-section">
+                        <i class="fas fa-user-hard-hat"></i>
+                        Assigned Workers
+                        <span class="badge bg-success rounded-pill" style="font-size: 14px; margin-left: 10px;">
+                            <?= count($assignedWorkers) ?>
+                        </span>
+                    </h3>
+                </div>
+
+                <?php if (count($assignedWorkers) > 0): ?>
+                    <div class="assigned-workers-grid">
+                        <?php foreach ($assignedWorkers as $worker): ?>
+                            <div class="worker-card">
+                                <div class="worker-avatar worker">
+                                    <?= strtoupper(substr($worker['name'], 0, 2)) ?>
+                                </div>
+                                <div class="worker-info">
+                                    <div class="worker-name"><?= htmlspecialchars($worker['name']) ?></div>
+                                    <div class="worker-email">
+                                        <i class="fas fa-envelope"></i>
+                                        <?= htmlspecialchars($worker['email']) ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fas fa-user-hard-hat"></i>
                         <h4>No Workers Assigned Yet</h4>
                         <p>Use the form above to assign workers to this project.</p>
                     </div>

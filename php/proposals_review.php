@@ -25,13 +25,14 @@ if (isset($_POST['approve_proposal'])) {
 
         // Create project from proposal
         $insertProject = $pdo->prepare("
-            INSERT INTO projects (name, description, status, created_by, budget, timeline, category) 
-            VALUES (?, ?, 'planning', ?, ?, ?, ?)
+            INSERT INTO projects (name, description, status, created_by, client_id, budget, timeline, category) 
+            VALUES (?, ?, 'planning', ?, ?, ?, ?, ?)
         ");
         $insertProject->execute([
             $proposal['title'],
             $proposal['description'],
             $assignedPm,
+            $proposal['client_id'], // Added client_id to the INSERT statement to link project to client
             $budget,
             $timeline,
             $category
@@ -71,23 +72,26 @@ if (isset($_GET['action'], $_GET['id']) && $_GET['action'] === 'rejected') {
 $filterStatus = $_GET['status'] ?? 'all';
 $searchQuery = $_GET['search'] ?? '';
 
-$sql = "SELECT * FROM project_proposals WHERE 1=1";
+$sql = "SELECT pp.*, c.name as client_name, c.email as client_email, c.phone as client_phone, c.company as client_company 
+        FROM project_proposals pp 
+        LEFT JOIN clients c ON pp.client_id = c.id 
+        WHERE 1=1";
 $params = [];
 
 if ($filterStatus !== 'all') {
-    $sql .= " AND status = ?";
+    $sql .= " AND pp.status = ?";
     $params[] = $filterStatus;
 }
 
 if (!empty($searchQuery)) {
-    $sql .= " AND (title LIKE ? OR client_name LIKE ? OR client_email LIKE ?)";
+    $sql .= " AND (pp.title LIKE ? OR c.name LIKE ? OR c.email LIKE ?)";
     $searchParam = "%$searchQuery%";
     $params[] = $searchParam;
     $params[] = $searchParam;
     $params[] = $searchParam;
 }
 
-$sql .= " ORDER BY submitted_at DESC";
+$sql .= " ORDER BY pp.submitted_at DESC";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -562,6 +566,14 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
                         <div class="meta-item">
                             <i class="fas fa-envelope"></i>
                             <span><?php echo htmlspecialchars($p['client_email']); ?></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-phone"></i>
+                            <span><strong>Phone:</strong> <?php echo htmlspecialchars($p['client_phone']); ?></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-building"></i>
+                            <span><strong>Company:</strong> <?php echo htmlspecialchars($p['client_company']); ?></span>
                         </div>
                         <div class="meta-item">
                             <i class="fas fa-calendar"></i>

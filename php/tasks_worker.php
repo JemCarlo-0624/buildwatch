@@ -193,11 +193,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .progress-input {
-            width: 70px;
-            padding: 6px 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            width: 120px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .progress-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .progress-input::-webkit-slider-thumb:hover {
+            background: #084a7d;
+        }
+
+        .progress-input::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .progress-input::-moz-range-thumb:hover {
+            background: #084a7d;
+        }
+
+        .progress-value-display {
             font-size: 13px;
+            font-weight: 600;
+            color: var(--dark);
+            min-width: 35px;
         }
 
         .btn-update {
@@ -243,7 +282,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
             <a href="projects_worker.php" class="nav-item">
                 <i class="fas fa-project-diagram"></i> My Projects
-            </a>
             </a>
         </div>
 
@@ -373,7 +411,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <td>
                             <form method="post" class="progress-update-form">
                                 <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
-                                <input type="number" name="progress" value="<?php echo $task['progress']; ?>" min="0" max="100" class="progress-input" required>
+                                <!-- Changed from number input to range slider with value display -->
+                                <input 
+                                    type="range" 
+                                    name="progress" 
+                                    value="<?php echo $task['progress']; ?>" 
+                                    min="0" 
+                                    max="100" 
+                                    step="5"
+                                    class="progress-input" 
+                                    data-task-id="<?php echo $task['id']; ?>"
+                                    required
+                                >
+                                <span class="progress-value-display" id="progress-display-<?php echo $task['id']; ?>">
+                                    <?php echo $task['progress']; ?>%
+                                </span>
                                 <button type="submit" class="btn-update">
                                     <i class="fas fa-save"></i> Update
                                 </button>
@@ -398,6 +450,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Update progress display when slider moves
+        document.querySelectorAll('.progress-input').forEach(slider => {
+            slider.addEventListener('input', function() {
+                const taskId = this.getAttribute('data-task-id');
+                const display = document.getElementById('progress-display-' + taskId);
+                if (display) {
+                    display.textContent = this.value + '%';
+                }
+            });
+        });
+
         const searchInput = document.getElementById('searchInput');
         const tableBody = document.getElementById('tasksTableBody');
         const rows = tableBody ? tableBody.getElementsByTagName('tr') : [];

@@ -95,8 +95,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Fetch projects for dropdown
 $projects = $pdo->query("SELECT * FROM projects ORDER BY created_at DESC")->fetchAll();
 
-// Fetch workers for dropdown
-$workers = $pdo->query("SELECT * FROM users WHERE role='worker'")->fetchAll();
+$stmt = $pdo->prepare("
+    SELECT DISTINCT u.* 
+    FROM users u
+    JOIN project_assignments pa ON u.id = pa.user_id
+    WHERE u.role = 'worker' 
+    AND pa.project_id = ?
+    ORDER BY u.name
+");
+$stmt->execute([$task['project_id']]);
+$workers = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">

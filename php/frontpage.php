@@ -19,7 +19,8 @@
     </div>
     
     <div class="nav-buttons">
-      <a href="login.php" class="nav-btn contractor-btn">Are You a Contractor? Sign In Here</a>
+      <a href="client_login.php" class="nav-btn client-btn">Client Portal</a>
+      <a href="login.php" class="nav-btn contractor-btn">Contractor Sign In</a>
     </div>
   </nav>
 

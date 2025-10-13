@@ -13,12 +13,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $timeline = trim($_POST['timeline'] ?? '');
 
     if ($name && $email && $title && $description) {
-        $stmt = $pdo->prepare("
-            INSERT INTO project_proposals (client_name, client_email, title, description)
-            VALUES (?, ?, ?, ?)
-        ");
-        $stmt->execute([$name, $email, $title, $description]);
-        $success = true;
+        try {
+            // Check if client already exists
+            $stmt = $pdo->prepare("SELECT id FROM clients WHERE email = ?");
+            $stmt->execute([$email]);
+            $client = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($client) {
+                // Client exists, use their ID
+                $client_id = $client['id'];
+            } else {
+                // Create new client record with temporary password
+                $temp_password = bin2hex(random_bytes(8)); // Generate random temporary password
+                $hashed_password = password_hash($temp_password, PASSWORD_DEFAULT);
+                
+                $stmt = $pdo->prepare("
+                    INSERT INTO clients (name, email, phone, company, password, created_at)
+                    VALUES (?, ?, ?, ?, ?, NOW())
+                ");
+                $stmt->execute([$name, $email, $phone, $company, $hashed_password]);
+                $client_id = $pdo->lastInsertId();
+            }
+            
+            $stmt = $pdo->prepare("
+                INSERT INTO project_proposals (client_id, title, description, status, submitted_at)
+                VALUES (?, ?, ?, 'pending', NOW())
+            ");
+            $stmt->execute([$client_id, $title, $description]);
+            $success = true;
+        } catch (PDOException $e) {
+            error_log("Proposal submission error: " . $e->getMessage());
+            $error = "⚠️ An error occurred while submitting your proposal. Please try again.";
+        }
     } else {
         $error = "⚠️ Please fill in all required fields.";
     }

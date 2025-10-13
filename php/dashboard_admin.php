@@ -10,7 +10,7 @@ try {
     $totalProjects = $pdo->query("SELECT COUNT(*) FROM projects")->fetchColumn();
     $tasksCompleted = $pdo->query("SELECT COUNT(*) FROM tasks WHERE progress=100")->fetchColumn();
     $pendingProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE status='pending'")->fetchColumn();
-    $activeProjects = $pdo->query("SELECT COUNT(*) FROM projects WHERE status='active'")->fetchColumn();
+    $activeProjects = $pdo->query("SELECT COUNT(*) FROM projects WHERE status='ongoing'")->fetchColumn();
 
     // Fetch upcoming schedule with better error handling
     $scheduleQuery = "

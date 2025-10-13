@@ -7,8 +7,17 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['pm','admin','wor
     exit;
 }
 
-if ($_SESSION['role'] === 'worker') {
-    // Workers see only their assigned projects
+if ($_SESSION['role'] === 'admin') {
+    // Admins see all projects
+    $stmt = $pdo->query("
+        SELECT p.*, u.name as creator 
+        FROM projects p 
+        JOIN users u ON p.created_by = u.id 
+        ORDER BY p.created_at DESC
+    ");
+    $projects = $stmt->fetchAll();
+} else {
+    // PMs and Workers see only their assigned projects
     $stmt = $pdo->prepare("
         SELECT p.*, u.name as creator 
         FROM projects p 
@@ -18,15 +27,6 @@ if ($_SESSION['role'] === 'worker') {
         ORDER BY p.created_at DESC
     ");
     $stmt->execute([$_SESSION['user_id']]);
-    $projects = $stmt->fetchAll();
-} else {
-    // Admins and PMs see all projects
-    $stmt = $pdo->query("
-        SELECT p.*, u.name as creator 
-        FROM projects p 
-        JOIN users u ON p.created_by = u.id 
-        ORDER BY p.created_at DESC
-    ");
     $projects = $stmt->fetchAll();
 }
 ?>
@@ -237,9 +237,9 @@ if ($_SESSION['role'] === 'worker') {
 
         <div class="d-flex justify-content-between align-items-start mb-4">
             <div>
-                <h1 class="page-title"><?= $_SESSION['role']==='worker' ? 'My Projects' : 'All Projects' ?></h1>
+                <h1 class="page-title"><?= $_SESSION['role']==='worker' ? 'My Projects' : ($_SESSION['role']==='pm' ? 'My Projects' : 'All Projects') ?></h1>
                 <p class="page-description">
-                    <?= $_SESSION['role']==='worker' ? 'View and manage your assigned projects.' : 'Manage all projects in the system.' ?>
+                    <?= $_SESSION['role']==='worker' ? 'View and manage your assigned projects.' : ($_SESSION['role']==='pm' ? 'View and manage your assigned projects.' : 'Manage all projects in the system.') ?>
                     <?php if (count($projects) > 0): ?>
                         <span class="positive">(<?= count($projects) ?> project<?= count($projects) !== 1 ? 's' : '' ?>)</span>
                     <?php endif; ?>
@@ -315,7 +315,7 @@ if ($_SESSION['role'] === 'worker') {
             <div class="empty-state">
                 <i class="fas fa-project-diagram"></i>
                 <h3>No Projects Found</h3>
-                <p><?= $_SESSION['role']==='worker' ? 'You have no assigned projects yet.' : 'No projects have been created yet.' ?></p>
+                <p><?= $_SESSION['role']==='worker' ? 'You have no assigned projects yet.' : ($_SESSION['role']==='pm' ? 'You have no assigned projects yet.' : 'No projects have been created yet.') ?></p>
                 <?php if ($_SESSION['role'] !== 'worker'): ?>
                     <a href="projects_create.php" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Create Your First Project
