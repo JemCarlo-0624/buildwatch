@@ -6,6 +6,26 @@ require_once("../config/db.php");
 $email = trim($_POST['email'] ?? '');
 $password = trim($_POST['password'] ?? '');
 
+// Validate inputs
+if (empty($email)) {
+    $_SESSION['error'] = 'Email is required.';
+    header("Location: login.php");
+    exit;
+}
+
+if (empty($password)) {
+    $_SESSION['error'] = 'Password is required.';
+    header("Location: login.php");
+    exit;
+}
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $_SESSION['error'] = 'Please enter a valid email address.';
+    header("Location: login.php");
+    exit;
+}
+// </CHANGE>
+
 // Check if user exists
 $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
 $stmt->execute([$email]);
@@ -20,6 +40,7 @@ if ($user && password_verify($password, $user['password'])) {
     exit;
 }
 
-
-// If failed
-echo "❌ Invalid email or password. <a href='login.php'>Try again</a>";
+$_SESSION['error'] = 'Invalid email or password. Please try again.';
+header("Location: login.php");
+exit;
+// </CHANGE>

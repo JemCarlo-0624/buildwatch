@@ -1,5 +1,5 @@
 <?php
-require_once("../config/db.php"); // Database connection
+require_once("../config/db.php");
 session_start();
 
 // Only handle POST requests
@@ -21,18 +21,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$password) $errors[] = "Password is required.";
     if ($password !== $confirm_password) $errors[] = "Passwords do not match.";
 
-    // Check if email already exists
     $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
     $stmt->execute([$email]);
     if ($stmt->fetch()) {
-        $errors[] = "Email is already registered.";
+        $errors[] = "This email is already registered. Please use a different email.";
     }
 
+    // Check if name already exists
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE name = ?");
+    $stmt->execute([$full_name]);
+    if ($stmt->fetch()) {
+        $errors[] = "This name is already taken. Please use a different name.";
+    }
+    // </CHANGE>
+
     if (!empty($errors)) {
-        foreach ($errors as $err) {
-            echo "<p style='color:red;'>❌ " . htmlspecialchars($err) . "</p>";
-        }
-        echo "<p><a href='signup.php'>⬅ Back to Sign Up</a></p>";
+        $_SESSION['error'] = implode(' ', $errors);
+        $_SESSION['form_data'] = [
+            'role' => $role,
+            'full_name' => $full_name,
+            'email' => $email,
+            'phone' => $phone
+        ];
+        header("Location: sign_up.php");
         exit;
     }
 
@@ -42,14 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Check if `phone` column exists
     $columns = $pdo->query("SHOW COLUMNS FROM users LIKE 'phone'")->fetch();
     if ($columns) {
-        // `phone` exists → include it
         $stmt = $pdo->prepare("
             INSERT INTO users (name, email, password, role, phone)
             VALUES (?, ?, ?, ?, ?)
         ");
         $stmt->execute([$full_name, $email, $password_hash, $role, $phone]);
     } else {
-        // `phone` does not exist → exclude it
         $stmt = $pdo->prepare("
             INSERT INTO users (name, email, password, role)
             VALUES (?, ?, ?, ?)
@@ -63,6 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['role'] = $role;
     $_SESSION['name'] = $full_name;
 
+    $_SESSION['success'] = "Registration successful! Welcome to BuildWatch.";
+
     // Redirect to dashboard
     if ($role === 'pm') {
         header("Location: ../php/dashboard_pm.php");
@@ -72,6 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 } else {
     // Not a POST request
-    header("Location: signup.php");
+    header("Location: sign_up.php");
     exit;
 }
