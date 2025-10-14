@@ -227,7 +227,6 @@ $users = $stmt->fetchAll();
             <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> Projects</a>
             <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
             <a href="proposals_review.php" class="nav-item"><i class="fas fa-lightbulb"></i> Proposals</a>
-            <a href="schedule.php" class="nav-item"><i class="fas fa-calendar-alt"></i> Schedule</a>
             <a href="users_list.php" class="nav-item active"><i class="fas fa-users"></i> Users</a>
         </div>
 

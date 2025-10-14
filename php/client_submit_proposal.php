@@ -22,19 +22,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
     $budget = trim($_POST['budget'] ?? '');
-    $timeline = trim($_POST['timeline'] ?? '');
+    $start_date = trim($_POST['start_date'] ?? '');
+    $end_date = trim($_POST['end_date'] ?? '');
 
     if ($title && $description) {
-        try {
-            $stmt = $pdo->prepare("
-                INSERT INTO project_proposals (client_id, title, description, status, submitted_at)
-                VALUES (?, ?, ?, 'pending', NOW())
-            ");
-            $stmt->execute([$client_id, $title, $description]);
-            $success = true;
-        } catch (PDOException $e) {
-            error_log("Proposal submission error: " . $e->getMessage());
-            $error = "An error occurred while submitting your proposal. Please try again.";
+        if ($start_date && $end_date) {
+            $start = new DateTime($start_date);
+            $end = new DateTime($end_date);
+            if ($end <= $start) {
+                $error = "End date must be after start date.";
+            }
+        }
+        
+        if (empty($error)) {
+            try {
+                $stmt = $pdo->prepare("
+                    INSERT INTO project_proposals (client_id, title, description, start_date, end_date, status, submitted_at)
+                    VALUES (?, ?, ?, ?, ?, 'pending', NOW())
+                ");
+                $stmt->execute([
+                    $client_id, 
+                    $title, 
+                    $description,
+                    $start_date ?: null,
+                    $end_date ?: null
+                ]);
+                $success = true;
+            } catch (PDOException $e) {
+                error_log("Proposal submission error: " . $e->getMessage());
+                $error = "An error occurred while submitting your proposal. Please try again.";
+            }
         }
     } else {
         $error = "Please fill in all required fields.";
@@ -50,9 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
-        /* ========================================
-           BASE STYLES
-           ======================================== */
         body { 
             background: #f5f7fa;
             color: #333;
@@ -61,9 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-family: 'Segoe UI', Tahoma, sans-serif;
         }
 
-        /* ========================================
-           HEADER STYLES
-           ======================================== */
         .client-header {
             background: linear-gradient(135deg, #0a4275 0%, #084980 100%);
             color: white;
@@ -147,9 +158,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-color: rgba(255, 255, 255, 0.4);
         }
 
-        /* ========================================
-           MAIN CONTENT
-           ======================================== */
         .main-content {
             max-width: 900px;
             margin: 40px auto;
@@ -181,9 +189,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin: 0;
         }
 
-        /* ========================================
-           FORM CONTAINER
-           ======================================== */
         .form-container {
             background: white;
             padding: 40px;
@@ -191,9 +196,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         }
 
-        /* ========================================
-           MESSAGES
-           ======================================== */
         .success-message {
             background: #d4edda;
             color: #155724;
@@ -251,9 +253,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        /* ========================================
-           INFO BOX
-           ======================================== */
         .info-box {
             background: linear-gradient(135deg, #e7f3ff 0%, #f0f8ff 100%);
             border-left: 4px solid #0a4275;
@@ -282,9 +281,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             line-height: 1.6;
         }
 
-        /* ========================================
-           FORM STYLES
-           ======================================== */
         .proposal-form {
             display: grid;
             gap: 25px;
@@ -396,14 +392,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: -5px;
         }
 
-        /* ========================================
-           BUTTONS
-           ======================================== */
-        .form-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: flex-start;
-            padding-top: 10px;
+        .form-group input[type="date"] {
+            cursor: pointer;
+        }
+
+        .form-group input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .form-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            background: rgba(10, 66, 117, 0.1);
         }
 
         .btn {
@@ -455,9 +455,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: #218838;
         }
 
-        /* ========================================
-           RESPONSIVE STYLES
-           ======================================== */
         @media (max-width: 768px) {
             .client-header {
                 flex-direction: column;
@@ -555,7 +552,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <ul>
                         <li>Provide a clear and descriptive project title</li>
                         <li>Include detailed project description with scope and objectives</li>
-                        <li>Specify any budget constraints or timeline requirements</li>
+                        <li>Specify your budget constraints and project timeline dates</li>
                         <li>Mention any specific materials, techniques, or standards required</li>
                     </ul>
                 </div>
@@ -646,32 +643,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h3 class="form-section-title">
                             <i class="fas fa-calendar-alt"></i> Budget & Timeline
                         </h3>
+                        <div class="form-group">
+                            <label for="budget">
+                                <i class="fas fa-dollar-sign label-icon"></i> Estimated Budget
+                            </label>
+                            <input 
+                                type="number" 
+                                id="budget" 
+                                name="budget" 
+                                placeholder="Enter estimated budget" 
+                                min="0" 
+                                step="0.01"
+                            >
+                            <small><i class="fas fa-info-circle"></i> Optional - helps us provide accurate proposals</small>
+                        </div>
+                        
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="budget">
-                                    <i class="fas fa-dollar-sign label-icon"></i> Estimated Budget
+                                <label for="start_date">
+                                    <i class="fas fa-calendar-day label-icon"></i> Expected Start Date
                                 </label>
                                 <input 
-                                    type="number" 
-                                    id="budget" 
-                                    name="budget" 
-                                    placeholder="Enter estimated budget" 
-                                    min="0" 
-                                    step="0.01"
+                                    type="date" 
+                                    id="start_date" 
+                                    name="start_date"
+                                    min="<?php echo date('Y-m-d'); ?>"
                                 >
-                                <small><i class="fas fa-info-circle"></i> Optional - helps us provide accurate proposals</small>
+                                <small><i class="fas fa-info-circle"></i> When do you want the project to begin?</small>
                             </div>
                             <div class="form-group">
-                                <label for="timeline">
-                                    <i class="fas fa-clock label-icon"></i> Expected Timeline
+                                <label for="end_date">
+                                    <i class="fas fa-calendar-check label-icon"></i> Expected Completion Date
                                 </label>
                                 <input 
-                                    type="text" 
-                                    id="timeline" 
-                                    name="timeline" 
-                                    placeholder="e.g., 3-6 months, 1 year"
+                                    type="date" 
+                                    id="end_date" 
+                                    name="end_date"
+                                    min="<?php echo date('Y-m-d'); ?>"
                                 >
-                                <small><i class="fas fa-info-circle"></i> Optional - when do you need this completed?</small>
+                                <small><i class="fas fa-info-circle"></i> When do you need the project completed?</small>
                             </div>
                         </div>
                     </div>
@@ -691,7 +701,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // Character counter for description
         const descriptionField = document.getElementById('description');
         const charCount = document.getElementById('charCount');
         
@@ -701,12 +710,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
         }
 
-        // Form validation
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+
+        if (startDateInput && endDateInput) {
+            startDateInput.addEventListener('change', function() {
+                if (this.value) {
+                    endDateInput.min = this.value;
+                    if (endDateInput.value && endDateInput.value < this.value) {
+                        endDateInput.value = '';
+                    }
+                }
+            });
+
+            endDateInput.addEventListener('change', function() {
+                if (startDateInput.value && this.value) {
+                    if (this.value <= startDateInput.value) {
+                        alert('End date must be after start date.');
+                        this.value = '';
+                    }
+                }
+            });
+        }
+
         const form = document.getElementById('proposalForm');
         if (form) {
             form.addEventListener('submit', function(e) {
                 const title = document.getElementById('title').value.trim();
                 const description = document.getElementById('description').value.trim();
+                const startDate = document.getElementById('start_date').value;
+                const endDate = document.getElementById('end_date').value;
                 
                 if (!title || !description) {
                     e.preventDefault();
@@ -718,6 +751,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     e.preventDefault();
                     alert('Please provide a more detailed project description (at least 50 characters).');
                     return false;
+                }
+
+                if (startDate && endDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    
+                    if (end <= start) {
+                        e.preventDefault();
+                        alert('End date must be after start date.');
+                        return false;
+                    }
                 }
             });
         }

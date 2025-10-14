@@ -8,7 +8,8 @@ if (isset($_POST['approve_proposal'])) {
     $proposalId = (int)$_POST['proposal_id'];
     $assignedPm = (int)$_POST['assigned_pm'];
     $budget = !empty($_POST['budget']) ? (float)$_POST['budget'] : null;
-    $timeline = !empty($_POST['timeline']) ? $_POST['timeline'] : null;
+    $startDate = !empty($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-d');
+    $endDate = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
     $category = !empty($_POST['category']) ? $_POST['category'] : null;
 
     try {
@@ -23,19 +24,25 @@ if (isset($_POST['approve_proposal'])) {
         $proposalStmt->execute([$proposalId]);
         $proposal = $proposalStmt->fetch(PDO::FETCH_ASSOC);
 
-        // Create project from proposal
+        if (empty($endDate)) {
+            // If no end date provided, default to 6 months from start
+            $endDate = date('Y-m-d', strtotime($startDate . ' + 6 months'));
+        }
+
+        // Create project from proposal with automatic schedule generation
         $insertProject = $pdo->prepare("
-            INSERT INTO projects (name, description, status, created_by, client_id, budget, timeline, category) 
-            VALUES (?, ?, 'planning', ?, ?, ?, ?, ?)
+            INSERT INTO projects (name, description, status, created_by, client_id, budget, category, start_date, end_date) 
+            VALUES (?, ?, 'planning', ?, ?, ?, ?, ?, ?)
         ");
         $insertProject->execute([
             $proposal['title'],
             $proposal['description'],
             $assignedPm,
-            $proposal['client_id'], // Added client_id to the INSERT statement to link project to client
+            $proposal['client_id'],
             $budget,
-            $timeline,
-            $category
+            $category,
+            $startDate,
+            $endDate
         ]);
 
         $projectId = $pdo->lastInsertId();
@@ -46,7 +53,7 @@ if (isset($_POST['approve_proposal'])) {
 
         $pdo->commit();
         
-        $_SESSION['success_message'] = "Proposal approved and project created successfully!";
+        $_SESSION['success_message'] = "Proposal approved and project created successfully! Project schedule set from " . date('M j, Y', strtotime($startDate)) . " to " . date('M j, Y', strtotime($endDate)) . ".";
         header("Location: proposals_review.php");
         exit;
     } catch (Exception $e) {
@@ -152,19 +159,6 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
         .stat-icon-warning { background: rgba(255, 193, 7, 0.1); color: var(--warning); }
         .stat-icon-success { background: rgba(46, 204, 113, 0.1); color: var(--success); }
         .stat-icon-danger { background: rgba(212, 47, 19, 0.1); color: var(--accent); }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: bold;
-            margin: 5px 0;
-            color: var(--dark);
-        }
-
-        .stat-label {
-            color: var(--gray);
-            font-size: 14px;
-            font-weight: 500;
-        }
 
         .filters-card {
             background: white;
@@ -416,7 +410,6 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
                 <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> Projects</a>
                 <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
                 <a href="proposals_review.php" class="nav-item active"><i class="fas fa-lightbulb"></i> Proposals</a>
-                <a href="schedule.php" class="nav-item"><i class="fas fa-calendar-alt"></i> Schedule</a>
                 <a href="users_list.php" class="nav-item"><i class="fas fa-users"></i> Users</a>
             <?php else: ?>
                 <a href="dashboard_pm.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
@@ -607,22 +600,32 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
 
     <!-- Added approval modal -->
     <div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="approvalModalLabel">
                         <i class="fas fa-check-circle"></i>
-                        Approve Proposal
+                        Approve Proposal & Create Project
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form method="POST" action="proposals_review.php">
+                <form method="POST" action="proposals_review.php" id="approvalForm">
                     <div class="modal-body">
                         <input type="hidden" name="proposal_id" id="proposal_id">
                         
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
                             <strong>Proposal:</strong> <span id="proposal_title"></span>
+                        </div>
+
+                        <div class="alert alert-light border-start border-primary border-4">
+                            <h6 class="alert-heading mb-2">
+                                <i class="fas fa-calendar-alt text-primary"></i> Project Schedule
+                            </h6>
+                            <small class="text-muted">
+                                Define concrete start and end dates for scheduling and resource allocation. 
+                                Dates from the client's proposal will be pre-filled if available.
+                            </small>
                         </div>
 
                         <div class="mb-3">
@@ -640,31 +643,57 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
                             <small class="text-muted">The selected PM will be assigned to manage this project</small>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="budget" class="form-label">Budget (Optional)</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="budget" name="budget" 
-                                       placeholder="Enter project budget" step="0.01" min="0">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="budget" class="form-label">
+                                    <i class="fas fa-dollar-sign text-muted"></i> Budget
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="budget" name="budget" 
+                                           placeholder="Enter project budget" step="0.01" min="0">
+                                </div>
+                                <small class="text-muted">Optional - Project budget allocation</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="category" class="form-label">
+                                    <i class="fas fa-tag text-muted"></i> Category
+                                </label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">Select a category</option>
+                                    <option value="residential">Residential</option>
+                                    <option value="commercial">Commercial</option>
+                                    <option value="infrastructure">Infrastructure</option>
+                                    <option value="renovation">Renovation</option>
+                                    <option value="maintenance">Maintenance</option>
+                                </select>
+                                <small class="text-muted">Optional - Project classification</small>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="timeline" class="form-label">Timeline (Optional)</label>
-                            <input type="text" class="form-control" id="timeline" name="timeline" 
-                                   placeholder="e.g., 6 months, 12 weeks">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="start_date" class="form-label">
+                                    <i class="fas fa-calendar-day text-success"></i> Project Start Date <span class="required">*</span>
+                                </label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" 
+                                       value="<?php echo date('Y-m-d'); ?>" required
+                                       min="<?php echo date('Y-m-d'); ?>">
+                                <small class="text-muted">When the project will begin</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_date" class="form-label">
+                                    <i class="fas fa-calendar-check text-danger"></i> Project End Date <span class="required">*</span>
+                                </label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required
+                                       min="<?php echo date('Y-m-d'); ?>">
+                                <small class="text-muted">Expected project completion date</small>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="category" class="form-label">Category (Optional)</label>
-                            <select class="form-select" id="category" name="category">
-                                <option value="">Select a category</option>
-                                <option value="residential">Residential</option>
-                                <option value="commercial">Commercial</option>
-                                <option value="infrastructure">Infrastructure</option>
-                                <option value="renovation">Renovation</option>
-                                <option value="maintenance">Maintenance</option>
-                            </select>
+                        <div class="alert alert-secondary mb-0" id="durationDisplay" style="display: none;">
+                            <i class="fas fa-clock"></i>
+                            <strong>Project Duration:</strong> <span id="durationText"></span>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -682,22 +711,121 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Added JavaScript for modal functionality -->
     <script>
+        // Store proposal data for modal
+        const proposalsData = <?php echo json_encode($proposals); ?>;
+
         function openApprovalModal(proposalId, proposalTitle) {
             document.getElementById('proposal_id').value = proposalId;
             document.getElementById('proposal_title').textContent = proposalTitle;
             
+            // Find the proposal data
+            const proposal = proposalsData.find(p => p.id == proposalId);
+            
             // Reset form fields
             document.getElementById('assigned_pm').value = '';
             document.getElementById('budget').value = '';
-            document.getElementById('timeline').value = '';
             document.getElementById('category').value = '';
+            
+            // Set start date to today by default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('start_date').value = today;
+            
+            // Pre-fill dates from client's proposal if available
+            if (proposal) {
+                if (proposal.start_date) {
+                    document.getElementById('start_date').value = proposal.start_date;
+                }
+                if (proposal.end_date) {
+                    document.getElementById('end_date').value = proposal.end_date;
+                    updateDuration(); // Calculate and show duration
+                } else {
+                    document.getElementById('end_date').value = '';
+                }
+            } else {
+                document.getElementById('end_date').value = '';
+            }
             
             // Show modal
             const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
             modal.show();
         }
+
+        // Date validation and duration calculation
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+        const durationDisplay = document.getElementById('durationDisplay');
+        const durationText = document.getElementById('durationText');
+
+        function updateDuration() {
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                if (end > start) {
+                    const diffTime = Math.abs(end - start);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const diffWeeks = Math.floor(diffDays / 7);
+                    const diffMonths = Math.floor(diffDays / 30);
+                    
+                    let durationString = '';
+                    if (diffMonths > 0) {
+                        durationString = `${diffMonths} month${diffMonths > 1 ? 's' : ''} (${diffDays} days)`;
+                    } else if (diffWeeks > 0) {
+                        durationString = `${diffWeeks} week${diffWeeks > 1 ? 's' : ''} (${diffDays} days)`;
+                    } else {
+                        durationString = `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+                    }
+                    
+                    durationText.textContent = durationString;
+                    durationDisplay.style.display = 'block';
+                } else {
+                    durationDisplay.style.display = 'none';
+                }
+            } else {
+                durationDisplay.style.display = 'none';
+            }
+        }
+
+        startDateInput.addEventListener('change', function() {
+            // Update minimum end date
+            endDateInput.min = this.value;
+            
+            // Clear end date if it's before start date
+            if (endDateInput.value && endDateInput.value <= this.value) {
+                endDateInput.value = '';
+            }
+            
+            updateDuration();
+        });
+
+        endDateInput.addEventListener('change', function() {
+            updateDuration();
+        });
+
+        // Form validation
+        document.getElementById('approvalForm').addEventListener('submit', function(e) {
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            
+            if (!startDate || !endDate) {
+                e.preventDefault();
+                alert('Please provide both start and end dates for the project.');
+                return false;
+            }
+            
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (end <= start) {
+                e.preventDefault();
+                alert('End date must be after start date.');
+                return false;
+            }
+        });
     </script>
 </body>
 </html>

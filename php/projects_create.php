@@ -11,19 +11,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $desc = trim($_POST['description']);
     $status = $_POST['status'] ?? 'ongoing';
-    $budget = trim($_POST['budget']);
+    $priority = $_POST['priority'] ?? 'medium';
+    $client_id = !empty($_POST['client_id']) ? $_POST['client_id'] : null;
+    $budget = !empty($_POST['budget']) ? floatval($_POST['budget']) : null;
     $timeline = trim($_POST['timeline']);
+    $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
+    $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
     $category = $_POST['category'] ?? '';
+    $estimated_hours = !empty($_POST['estimated_hours']) ? intval($_POST['estimated_hours']) : null;
 
     if ($name) {
-        $stmt = $pdo->prepare("INSERT INTO projects (name, description, status, created_by, budget, timeline, category) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $desc, $status, $_SESSION['user_id'], $budget, $timeline, $category]);
+        $stmt = $pdo->prepare("
+            INSERT INTO projects (
+                name, description, status, priority, created_by, client_id, 
+                budget, timeline, start_date, end_date, category, estimated_hours,
+                completion_percentage, total_hours_spent, created_at, last_activity_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NOW(), NOW())
+        ");
+        $stmt->execute([
+            $name, $desc, $status, $priority, $_SESSION['user_id'], $client_id,
+            $budget, $timeline, $start_date, $end_date, $category, $estimated_hours
+        ]);
 
         header("Location: projects_list.php");
         exit;
     } else {
         $error = "⚠️ Please enter a project name.";
     }
+}
+
+$clients = [];
+try {
+    $clients = $pdo->query("SELECT id, name FROM clients ORDER BY name")->fetchAll();
+} catch (PDOException $e) {
+    // Clients table doesn't exist, skip
 }
 ?>
 <!DOCTYPE html>
@@ -33,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create New Project - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
 
     <style>
         /* Reset & Theme */
@@ -116,36 +137,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="text" id="name" name="name" placeholder="Enter project name" required>
             </div>
 
+            <?php if (!empty($clients)): ?>
+            <div class="form-group">
+                <label for="client_id">Client</label>
+                <select id="client_id" name="client_id">
+                    <option value="">Select client (optional)</option>
+                    <?php foreach ($clients as $client): ?>
+                        <option value="<?= $client['id'] ?>"><?= htmlspecialchars($client['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+
             <div class="form-row">
                 <div class="form-group">
-                    <label for="budget">Estimated Budget ($)</label>
-                    <input type="number" id="budget" name="budget" placeholder="Enter budget estimate" min="0" step="0.01">
+                    <label for="budget">Budget ($)</label>
+                    <input type="number" id="budget" name="budget" placeholder="Enter budget" min="0" step="0.01">
                 </div>
                 <div class="form-group">
-                    <label for="timeline">Expected Timeline</label>
-                    <input type="text" id="timeline" name="timeline" placeholder="e.g. 6 months">
+                    <label for="estimated_hours">Estimated Hours</label>
+                    <input type="number" id="estimated_hours" name="estimated_hours" placeholder="e.g. 160" min="0">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
+                    <label for="start_date">Start Date</label>
+                    <input type="date" id="start_date" name="start_date">
+                </div>
+                <div class="form-group">
+                    <label for="end_date">End Date</label>
+                    <input type="date" id="end_date" name="end_date">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="timeline">Timeline Description</label>
+                    <input type="text" id="timeline" name="timeline" placeholder="e.g. 6 months, Q1 2024">
+                </div>
+                <div class="form-group">
                     <label for="category">Project Category</label>
                     <select id="category" name="category">
                         <option value="">Select category</option>
-                        <option value="web-development">Residential</option>
-                        <option value="mobile-app">Commercial</option>
+                        <option value="residential">Residential</option>
+                        <option value="commercial">Commercial</option>
                         <option value="infrastructure">Infrastructure</option>
-                        <option value="maintenance">Industrial</option>
-                        <option value="research">Maintainance</option>
+                        <option value="industrial">Industrial</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="status">Project Status</label>
                     <select id="status" name="status">
-                        <option value="ongoing">Ongoing</option>
-                        <option value="completed">Completed</option>
-                        <option value="on-hold">On Hold</option>
                         <option value="planning">Planning</option>
+                        <option value="ongoing" selected>Ongoing</option>
+                        <option value="on-hold">On Hold</option>
+                        <option value="completed">Completed</option>
                     </select>
                 </div>
             </div>

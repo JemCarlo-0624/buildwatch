@@ -562,6 +562,212 @@ $projects = $stmt->fetchAll();
         }
 
         /* ========================================
+           REPORT GENERATION STYLES
+           ======================================== */
+        .generate-report-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            margin-top: 15px;
+            margin-left: 10px;
+        }
+        
+        .generate-report-btn:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: var(--radius-xl);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-content h3 {
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .close {
+            color: var(--gray);
+            float: right;
+            font-size: 32px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: var(--dark);
+        }
+        
+        .report-format-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .format-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+        
+        .format-btn:hover {
+            border-color: var(--primary);
+            background: rgba(10, 66, 117, 0.05);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(10, 66, 117, 0.15);
+        }
+        
+        .format-btn i {
+            font-size: 32px;
+            color: var(--primary);
+        }
+        
+        .format-btn span {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 15px;
+        }
+        
+        .format-btn small {
+            color: var(--gray);
+            font-size: 12px;
+        }
+        
+        .report-progress {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .report-result {
+            padding: 20px;
+        }
+        
+        .success-message,
+        .error-message {
+            text-align: center;
+        }
+        
+        .success-message i {
+            font-size: 48px;
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+        
+        .error-message i {
+            font-size: 48px;
+            color: var(--accent);
+            margin-bottom: 15px;
+        }
+        
+        .success-message h4,
+        .error-message h4 {
+            color: var(--dark);
+            margin: 10px 0;
+        }
+        
+        .report-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .btn-secondary {
+            background: var(--gray);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--dark);
+        }
+        
+        @media (max-width: 768px) {
+            .report-format-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 20px;
+            }
+        }
+
+        /* ========================================
            RESPONSIVE STYLES
            ======================================== */
         @media (max-width: 768px) {
@@ -759,11 +965,55 @@ $projects = $stmt->fetchAll();
                                 <a href="client_project_details.php?id=<?php echo $project['id']; ?>" class="view-details-btn" onclick="event.stopPropagation();">
                                     <i class="fas fa-eye"></i> View Details
                                 </a>
+                                
+                                 <!-- CHANGE: Added Generate Report button -->
+                                <button class="generate-report-btn" onclick="generateReport(event, <?php echo $project['id']; ?>)">
+                                    <i class="fas fa-file-pdf"></i> Generate Report
+                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
             </div>
+        </div>
+    </div>
+
+    <!-- CHANGE: Added report generation modal -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeReportModal()">&times;</span>
+            <h3><i class="fas fa-file-alt"></i> Generate Project Report</h3>
+            <p>Select the format for your project report:</p>
+            
+            <div class="report-format-grid">
+                <button class="format-btn" onclick="generateReportFormat('pdf')">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>PDF Report</span>
+                    <small>Professional formatted document</small>
+                </button>
+                <button class="format-btn" onclick="generateReportFormat('html')">
+                    <i class="fas fa-file-code"></i>
+                    <span>HTML Report</span>
+                    <small>Web-viewable format</small>
+                </button>
+                <button class="format-btn" onclick="generateReportFormat('json')">
+                    <i class="fas fa-file-code"></i>
+                    <span>JSON Data</span>
+                    <small>Machine-readable format</small>
+                </button>
+                <button class="format-btn" onclick="generateReportFormat('txt')">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Text Report</span>
+                    <small>Plain text format</small>
+                </button>
+            </div>
+            
+            <div id="reportProgress" class="report-progress" style="display: none;">
+                <div class="spinner"></div>
+                <p>Generating your report...</p>
+            </div>
+            
+            <div id="reportResult" class="report-result" style="display: none;"></div>
         </div>
     </div>
 
@@ -1059,6 +1309,9 @@ $projects = $stmt->fetchAll();
                     <a href="client_project_details.php?id=${project.id}" class="view-details-btn" onclick="event.stopPropagation();">
                         <i class="fas fa-eye"></i> View Details
                     </a>
+                    <button class="generate-report-btn" onclick="generateReport(event, ${project.id})">
+                        <i class="fas fa-file-pdf"></i> Generate Report
+                    </button>
                 </div>
             `;
         }
@@ -1162,6 +1415,105 @@ $projects = $stmt->fetchAll();
             });
         }
 
+        // ========================================
+        // REPORT GENERATION FUNCTIONS
+        // ========================================
+        let currentProjectId = null;
+        
+        function generateReport(event, projectId) {
+            event.stopPropagation();
+            currentProjectId = projectId;
+            document.getElementById('reportModal').style.display = 'block';
+            document.getElementById('reportProgress').style.display = 'none';
+            document.getElementById('reportResult').style.display = 'none';
+        }
+        
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+            currentProjectId = null;
+        }
+        
+        async function generateReportFormat(format) {
+            if (!currentProjectId) return;
+            
+            const progressDiv = document.getElementById('reportProgress');
+            const resultDiv = document.getElementById('reportResult');
+            
+            progressDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            
+            try {
+                console.log('[v0] Generating report for project:', currentProjectId, 'format:', format);
+                const response = await fetch(`generate_report.php?project_id=${currentProjectId}&format=${format}`);
+                console.log('[v0] Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('[v0] Response data:', data);
+                
+                progressDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success-message">
+                            <i class="fas fa-check-circle"></i>
+                            <h4>Report Generated Successfully!</h4>
+                            <p>Your ${format.toUpperCase()} report is ready.</p>
+                            <div class="report-actions">
+                                <a href="${data.reportUrl}" class="btn btn-primary" download>
+                                    <i class="fas fa-download"></i> Download Report
+                                </a>
+                                ${format === 'html' ? `
+                                    <a href="${data.reportUrl}" class="btn btn-secondary" target="_blank">
+                                        <i class="fas fa-external-link-alt"></i> View Report
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    let errorDetails = data.error || 'An error occurred while generating the report.';
+                    if (data.details) {
+                        errorDetails += '<br><br><strong>Details:</strong><br><pre style="text-align: left; background: #f5f5f5; padding: 10px; border-radius: 5px; font-size: 12px; max-height: 200px; overflow-y: auto;">' + 
+                            escapeHtml(data.details) + '</pre>';
+                    }
+                    if (data.returnCode) {
+                        errorDetails += '<br><small>Return code: ' + data.returnCode + '</small>';
+                    }
+                    
+                    resultDiv.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h4>Report Generation Failed</h4>
+                            <p>${errorDetails}</p>
+                            <button class="btn btn-secondary" onclick="closeReportModal()">Close</button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('[v0] Report generation error:', error);
+                progressDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h4>Connection Error</h4>
+                        <p>Failed to connect to the report generator. Please try again.</p>
+                        <p><small>Error: ${error.message}</small></p>
+                        <button class="btn btn-secondary" onclick="closeReportModal()">Close</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('reportModal');
+            if (event.target === modal) {
+                closeReportModal();
+            }
+        }
+        
         // ========================================
         // EVENT LISTENERS
         // ========================================

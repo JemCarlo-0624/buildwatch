@@ -3,38 +3,12 @@ require_once("../config/db.php");
 
 $success = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['client_name']);
-    $email = trim($_POST['client_email']);
+    $client_id = !empty($_POST['client_id']) ? intval($_POST['client_id']) : null;
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
-    $phone = trim($_POST['phone'] ?? '');
-    $company = trim($_POST['company'] ?? '');
-    $budget = trim($_POST['budget'] ?? '');
-    $timeline = trim($_POST['timeline'] ?? '');
 
-    if ($name && $email && $title && $description) {
+    if ($title && $description) {
         try {
-            // Check if client already exists
-            $stmt = $pdo->prepare("SELECT id FROM clients WHERE email = ?");
-            $stmt->execute([$email]);
-            $client = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($client) {
-                // Client exists, use their ID
-                $client_id = $client['id'];
-            } else {
-                // Create new client record with temporary password
-                $temp_password = bin2hex(random_bytes(8)); // Generate random temporary password
-                $hashed_password = password_hash($temp_password, PASSWORD_DEFAULT);
-                
-                $stmt = $pdo->prepare("
-                    INSERT INTO clients (name, email, phone, company, password, created_at)
-                    VALUES (?, ?, ?, ?, ?, NOW())
-                ");
-                $stmt->execute([$name, $email, $phone, $company, $hashed_password]);
-                $client_id = $pdo->lastInsertId();
-            }
-            
             $stmt = $pdo->prepare("
                 INSERT INTO project_proposals (client_id, title, description, status, submitted_at)
                 VALUES (?, ?, ?, 'pending', NOW())
@@ -60,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../assets/css/style.css">
 
     <style>
-        /* Added modern styling matching dashboard design */
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; }
         :root {
             --primary:#0a63a5; --accent:#d42f13; --secondary:#cb9501;
@@ -171,8 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h3><i class="fas fa-info-circle"></i> What to Include</h3>
                 <ul>
                     <li>Clear project title and detailed description</li>
-                    <li>Your contact information for follow-up</li>
-                    <li>Estimated budget and timeline (if known)</li>
+                    <li>Your client ID (if you have one)</li>
                     <li>Any specific requirements or constraints</li>
                 </ul>
             </div>
@@ -182,28 +154,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="POST" class="proposal-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="client_name">Your Name <span class="required">*</span></label>
-                        <input type="text" id="client_name" name="client_name" placeholder="Enter your full name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="client_email">Email Address <span class="required">*</span></label>
-                        <input type="email" id="client_email" name="client_email" placeholder="your.email@example.com" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" placeholder="(123) 456-7890">
-                        <small>Optional - for faster communication</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="company">Company Name</label>
-                        <input type="text" id="company" name="company" placeholder="Your company name">
-                        <small>Optional - if applicable</small>
-                    </div>
+                <div class="form-group">
+                    <label for="client_id">Client ID</label>
+                    <input type="number" id="client_id" name="client_id" placeholder="Enter your client ID (optional)" min="1">
+                    <small>If you have a client ID, enter it here. Otherwise, leave blank.</small>
                 </div>
 
                 <div class="form-group">
@@ -215,19 +169,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="description">Project Description <span class="required">*</span></label>
                     <textarea id="description" name="description" placeholder="Provide a detailed description of your project, including scope, objectives, and any specific requirements..." required></textarea>
                     <small>Be as detailed as possible to help us understand your needs</small>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="budget">Estimated Budget ($)</label>
-                        <input type="number" id="budget" name="budget" placeholder="Enter estimated budget" min="0" step="0.01">
-                        <small>Optional - helps us provide accurate proposals</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="timeline">Expected Timeline</label>
-                        <input type="text" id="timeline" name="timeline" placeholder="e.g., 3-6 months">
-                        <small>Optional - when do you need this completed?</small>
-                    </div>
                 </div>
 
                 <div class="form-actions">

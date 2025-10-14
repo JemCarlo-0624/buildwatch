@@ -15,11 +15,7 @@ if (!$project_id) {
 
 $client_id = $_SESSION['client_id'];
 
-$stmt = $pdo->prepare("
-    SELECT p.* 
-    FROM projects p
-    WHERE p.id = ? AND p.client_id = ?
-");
+$stmt = $pdo->prepare("SELECT p.* FROM projects p WHERE p.id = ? AND p.client_id = ?");
 $stmt->execute([$project_id, $client_id]);
 $project = $stmt->fetch();
 
@@ -681,16 +677,6 @@ if (!$project) {
                         <p class="text-muted">Loading tasks...</p>
                     </div>
                 </div>
-
-                <div class="section-card">
-                    <h2 class="section-title">
-                        <i class="fas fa-calendar-alt"></i>
-                        Project Schedule
-                    </h2>
-                    <div id="schedule-container">
-                        <p class="text-muted">Loading schedule...</p>
-                    </div>
-                </div>
             </div>
 
             <div class="col-lg-4">
@@ -767,8 +753,7 @@ if (!$project) {
                 hasChanges: false,
                 completion: false,
                 tasks: false,
-                team: false,
-                schedule: false
+                team: false
             };
 
             if (newData.project.completion_percentage !== state.previousData.project.completion_percentage) {
@@ -786,18 +771,12 @@ if (!$project) {
                 changes.hasChanges = true;
             }
 
-            if (JSON.stringify(newData.schedule) !== JSON.stringify(state.previousData.schedule)) {
-                changes.schedule = true;
-                changes.hasChanges = true;
-            }
-
             return changes;
         }
 
         function updateUI(data, changes = null) {
             updateStats(data, changes?.completion);
             updateTasks(data.tasks, changes?.tasks);
-            updateSchedule(data.schedule, changes?.schedule);
             updateProjectInfo(data.project);
             updateTeam(data.team, changes?.team);
         }
@@ -852,27 +831,6 @@ if (!$project) {
                 document.getElementById('tasks-container').innerHTML = tasksHTML;
             } else {
                 document.getElementById('tasks-container').innerHTML = '<p class="text-muted">No tasks yet</p>';
-            }
-        }
-
-        function updateSchedule(schedule, hasChanged) {
-            if (schedule && schedule.length > 0) {
-                const scheduleHTML = schedule.map((item, index) => `
-                    <div class="milestone-item ${hasChanged && index === 0 ? 'highlight-change' : ''}">
-                        <div class="milestone-icon">
-                            <i class="fas fa-calendar"></i>
-                        </div>
-                        <div class="milestone-info">
-                            <div class="milestone-name">${escapeHtml(item.task_title || 'Schedule Item')}</div>
-                            <div class="milestone-date">
-                                ${formatDate(item.start_date)} - ${formatDate(item.end_date)}
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-                document.getElementById('schedule-container').innerHTML = scheduleHTML;
-            } else {
-                document.getElementById('schedule-container').innerHTML = '<p class="text-muted">No schedule items yet</p>';
             }
         }
 
@@ -987,7 +945,6 @@ if (!$project) {
                 const changeMessages = [];
                 if (changes.completion) changeMessages.push('Project progress updated');
                 if (changes.tasks) changeMessages.push('Tasks updated');
-                if (changes.schedule) changeMessages.push('Schedule updated');
                 if (changes.team) changeMessages.push('Team members changed');
 
                 showNotification(changeMessages.join(' • '), 'success');

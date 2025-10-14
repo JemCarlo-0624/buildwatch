@@ -329,7 +329,6 @@ try {
             <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> Projects</a>
             <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
             <a href="proposals_review.php" class="nav-item"><i class="fas fa-lightbulb"></i> Proposals</a>
-            <a href="schedule.php" class="nav-item"><i class="fas fa-calendar-alt"></i> Schedule</a>
             <a href="users_list.php" class="nav-item"><i class="fas fa-users"></i> Users</a>
         </div>
 
@@ -360,7 +359,6 @@ try {
             </div>
             <div class="d-flex gap-2">
                 <a href="dashboard_admin.php" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh</a>
-                <a href="reports.php" class="btn btn-outline-primary"><i class="fas fa-download"></i> Export Report</a>
             </div>
         </div>
 

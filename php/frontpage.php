@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BuildWatch - Construction Management System</title>
   
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   
-
   <link rel="stylesheet" href="../assets/css/frontpage.css">
 </head>
 <body>
@@ -17,25 +19,33 @@
     <div class="logo">
       <span>Build</span><span>Watch</span>
     </div>
-    
-    <div class="nav-buttons">
-      <a href="client_login.php" class="nav-btn client-btn">Client Portal</a>
-      <a href="login.php" class="nav-btn contractor-btn">Contractor Sign In</a>
-    </div>
   </nav>
 
-
   <section class="hero">
-    <div class="container">
-      <h1>Connect with the Right Contractor for Your Project.</h1>
-      <p>Submit your project proposal and get matched with qualified contractors ready to bring your vision to life.</p>
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <h1>Professional Construction Management at Your Fingertips</h1>
+      <p>Access your projects, track progress, and collaborate with your team. Secure login for clients and staff members.</p>
       <div class="cta-buttons">
-        <a href="proposals_submit.php" class="btn-primary">Submit a Project</a>
+        <a href="client_login.php" class="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <polyline points="10 17 15 12 10 7"></polyline>
+            <line x1="15" y1="12" x2="3" y2="12"></line>
+          </svg>
+          Client Login
+        </a>
+        <a href="login.php" class="btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Staff Portal
+        </a>
       </div>
     </div>
   </section>
 
- 
   <section class="features">
     <div class="container">
       <h2>What Makes the Difference</h2>
@@ -55,7 +65,6 @@
       </div>
     </div>
   </section>
-
 
   <footer>
     <div class="footer-content">

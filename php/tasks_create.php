@@ -45,8 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Fetch projects
 $projects = $pdo->query("SELECT * FROM projects ORDER BY created_at DESC")->fetchAll();
 
-// Fetch workers
-$workers = $pdo->query("SELECT * FROM users WHERE role='worker'")->fetchAll();
+// Fetch workers (will be loaded dynamically via JavaScript)
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -166,6 +165,7 @@ $workers = $pdo->query("SELECT * FROM users WHERE role='worker'")->fetchAll();
 
                 <div class="form-group">
                     <label for="description" class="form-label">
+                        Description
                     </label>
                     <textarea 
                         name="description" 
@@ -180,14 +180,12 @@ $workers = $pdo->query("SELECT * FROM users WHERE role='worker'")->fetchAll();
                         <label for="assigned_to" class="form-label">
                             Assign To <span style="color: var(--accent);">*</span>
                         </label>
-                        <select name="assigned_to" id="assigned_to" class="form-input" required>
-                            <option value="">Select a worker</option>
-                            <?php foreach ($workers as $w): ?>
-                                <option value="<?= $w['id'] ?>" <?= (isset($_POST['assigned_to']) && $_POST['assigned_to'] == $w['id']) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($w['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
+                        <select name="assigned_to" id="assigned_to" class="form-input" required disabled>
+                            <option value="">Select a project first</option>
                         </select>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> Only workers assigned to the selected project will appear
+                        </small>
                     </div>
 
                     <div class="form-group">
@@ -219,5 +217,58 @@ $workers = $pdo->query("SELECT * FROM users WHERE role='worker'")->fetchAll();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const projectSelect = document.getElementById('project_id');
+        const workerSelect = document.getElementById('assigned_to');
+        
+        // Listen for project selection changes
+        projectSelect.addEventListener('change', async function() {
+            const projectId = this.value;
+            
+            // Reset worker dropdown
+            workerSelect.innerHTML = '<option value="">Loading workers...</option>';
+            workerSelect.disabled = true;
+            
+            if (!projectId) {
+                workerSelect.innerHTML = '<option value="">Select a project first</option>';
+                return;
+            }
+            
+            try {
+                // Fetch workers assigned to the selected project
+                const response = await fetch(`get_project_workers.php?project_id=${projectId}`);
+                const data = await response.json();
+                
+                if (data.success && data.workers.length > 0) {
+                    // Populate dropdown with assigned workers
+                    workerSelect.innerHTML = '<option value="">Select a worker</option>';
+                    data.workers.forEach(worker => {
+                        const option = document.createElement('option');
+                        option.value = worker.id;
+                        option.textContent = worker.name;
+                        workerSelect.appendChild(option);
+                    });
+                    workerSelect.disabled = false;
+                } else if (data.success && data.workers.length === 0) {
+                    // No workers assigned to this project
+                    workerSelect.innerHTML = '<option value="">No workers assigned to this project</option>';
+                    workerSelect.disabled = true;
+                } else {
+                    // Error occurred
+                    workerSelect.innerHTML = '<option value="">Error loading workers</option>';
+                    console.error('Error:', data.error);
+                }
+            } catch (error) {
+                workerSelect.innerHTML = '<option value="">Error loading workers</option>';
+                console.error('Fetch error:', error);
+            }
+        });
+        
+        // Trigger change event if project is already selected (for form validation errors)
+        if (projectSelect.value) {
+            projectSelect.dispatchEvent(new Event('change'));
+        }
+    </script>
 </body>
 </html>

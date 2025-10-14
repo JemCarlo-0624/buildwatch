@@ -14,9 +14,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $desc = $_POST['description'];
     $status = $_POST['status'];
+    $priority = $_POST['priority'] ?? 'medium';
+    $budget = !empty($_POST['budget']) ? floatval(str_replace(',', '', $_POST['budget'])) : null;
+    $timeline = trim($_POST['timeline'] ?? '');
+    $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
+    $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+    $category = $_POST['category'] ?? '';
+    $completion_percentage = min(100, max(0, intval($_POST['completion_percentage'] ?? 0)));
 
-    $stmt = $pdo->prepare("UPDATE projects SET name=?, description=?, status=? WHERE id=?");
-    $stmt->execute([$name, $desc, $status, $id]);
+    $stmt = $pdo->prepare("
+        UPDATE projects 
+        SET name=?, description=?, status=?, priority=?, budget=?, 
+            timeline=?, start_date=?, end_date=?, category=?, 
+            completion_percentage=?, last_activity_at=NOW()
+        WHERE id=?
+    ");
+    $stmt->execute([
+        $name, $desc, $status, $priority, $budget, $timeline, 
+        $start_date, $end_date, $category, 
+        $completion_percentage, $id
+    ]);
 
     header("Location: projects_list.php");
     exit;
@@ -29,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Project - Dashboard</title>
 
-    <!-- Added Bootstrap 5, Font Awesome, and custom CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -77,25 +93,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-top: 1px solid #f0f0f0;
         }
 
-        .status-info {
-            display: flex;
-            gap: 12px;
-            margin-top: 8px;
+        /* Added progress slider styles */
+        .progress-slider-container {
+            position: relative;
+            padding-top: 10px;
         }
 
-        .status-option {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
+        .progress-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #e0e0e0 0%, #e0e0e0 100%);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
         }
 
-        .status-option.ongoing { background-color: #d1ecf1; color: #0c5460; }
-        .status-option.completed { background-color: #d4edda; color: #155724; }
-        .status-option.on-hold { background-color: #f8d7da; color: #721c24; }
+        .progress-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+
+        .progress-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .progress-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+
+        .progress-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .progress-value {
+            display: inline-block;
+            min-width: 50px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--primary);
+            margin-left: 12px;
+        }
 
         @media (max-width: 768px) {
             .btn-group-actions {
@@ -171,7 +227,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
         </div>
 
-        <!-- Using standard .form-container class instead of custom .form-card with centering -->
         <div class="form-container">
             <div class="form-section-title">
                 <i class="fas fa-edit"></i> Project Details
@@ -205,19 +260,104 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ><?= htmlspecialchars($project['description']) ?></textarea>
                 </div>
 
+                <!-- Updated budget field to use peso currency with comma formatting -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <label for="budget" class="form-label">
+                            <i class="fas fa-peso-sign text-primary"></i> Budget (₱)
+                        </label>
+                        <input type="text" class="form-control" id="budget" name="budget" 
+                               value="<?= !empty($project['budget']) ? number_format($project['budget'], 2) : '' ?>" 
+                               placeholder="e.g. 1,000,000.00"
+                               oninput="formatBudget(this)">
+                        <small class="text-muted">Enter amount in Philippine Pesos</small>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="start_date" class="form-label">
+                            <i class="fas fa-calendar-alt text-primary"></i> Start Date
+                        </label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" 
+                               value="<?= htmlspecialchars($project['start_date'] ?? '') ?>">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="end_date" class="form-label">
+                            <i class="fas fa-calendar-check text-primary"></i> End Date
+                        </label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" 
+                               value="<?= htmlspecialchars($project['end_date'] ?? '') ?>">
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="timeline" class="form-label">
+                            <i class="fas fa-hourglass-half text-primary"></i> Timeline Description
+                        </label>
+                        <input type="text" class="form-control" id="timeline" name="timeline" 
+                               value="<?= htmlspecialchars($project['timeline'] ?? '') ?>" 
+                               placeholder="e.g. 6 months, Q1 2024">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="category" class="form-label">
+                            <i class="fas fa-tag text-primary"></i> Category
+                        </label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">Select category</option>
+                            <option value="residential" <?= ($project['category'] ?? '') == 'residential' ? 'selected' : '' ?>>Residential</option>
+                            <option value="commercial" <?= ($project['category'] ?? '') == 'commercial' ? 'selected' : '' ?>>Commercial</option>
+                            <option value="infrastructure" <?= ($project['category'] ?? '') == 'infrastructure' ? 'selected' : '' ?>>Infrastructure</option>
+                            <option value="industrial" <?= ($project['category'] ?? '') == 'industrial' ? 'selected' : '' ?>>Industrial</option>
+                            <option value="maintenance" <?= ($project['category'] ?? '') == 'maintenance' ? 'selected' : '' ?>>Maintenance</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="priority" class="form-label">
+                            <i class="fas fa-exclamation-circle text-primary"></i> Priority
+                        </label>
+                        <select class="form-select" id="priority" name="priority">
+                            <option value="low" <?= ($project['priority'] ?? 'medium') == 'low' ? 'selected' : '' ?>>Low</option>
+                            <option value="medium" <?= ($project['priority'] ?? 'medium') == 'medium' ? 'selected' : '' ?>>Medium</option>
+                            <option value="high" <?= ($project['priority'] ?? 'medium') == 'high' ? 'selected' : '' ?>>High</option>
+                            <option value="urgent" <?= ($project['priority'] ?? 'medium') == 'urgent' ? 'selected' : '' ?>>Urgent</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">
+                            <i class="fas fa-info-circle text-primary"></i> Project Status
+                        </label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="planning" <?= $project['status']=='planning'?'selected':'' ?>>Planning</option>
+                            <option value="ongoing" <?= $project['status']=='ongoing'?'selected':'' ?>>Ongoing</option>
+                            <option value="completed" <?= $project['status']=='completed'?'selected':'' ?>>Completed</option>
+                            <option value="on-hold" <?= $project['status']=='on-hold'?'selected':'' ?>>On Hold</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Converted completion percentage to interactive slider with progress bar -->
                 <div class="mb-4">
-                    <label for="status" class="form-label">
-                        <i class="fas fa-info-circle text-primary"></i> Project Status
+                    <label class="form-label">
+                        <i class="fas fa-chart-line text-primary"></i> Project Completion
+                        <span class="progress-value" id="completionValue"><?= intval($project['completion_percentage'] ?? 0) ?>%</span>
                     </label>
-                    <select class="form-select" id="status" name="status">
-                        <option value="ongoing" <?= $project['status']=='ongoing'?'selected':'' ?>>Ongoing</option>
-                        <option value="completed" <?= $project['status']=='completed'?'selected':'' ?>>Completed</option>
-                        <option value="on-hold" <?= $project['status']=='on-hold'?'selected':'' ?>>On Hold</option>
-                    </select>
-                    <div class="status-info">
-                        <span class="status-option ongoing"><i class="fas fa-circle"></i> Ongoing</span>
-                        <span class="status-option completed"><i class="fas fa-check-circle"></i> Completed</span>
-                        <span class="status-option on-hold"><i class="fas fa-pause-circle"></i> On Hold</span>
+                    <div class="progress-slider-container">
+                        <input 
+                            type="range" 
+                            class="progress-slider" 
+                            id="completion_percentage" 
+                            name="completion_percentage" 
+                            min="0" 
+                            max="100" 
+                            step="5" 
+                            value="<?= intval($project['completion_percentage'] ?? 0) ?>"
+                            oninput="updateProgress(this.value)"
+                        >
                     </div>
                 </div>
 
@@ -234,5 +374,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
  
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Added JavaScript for progress slider and budget formatting -->
+    <script>
+        // Update progress bar and value display
+        function updateProgress(value) {
+            document.getElementById('completionValue').textContent = value + '%';
+            
+            // Update slider background gradient
+            const slider = document.getElementById('completion_percentage');
+            const percentage = (value / slider.max) * 100;
+            slider.style.background = `linear-gradient(to right, #3498db 0%, #2ecc71 ${percentage}%, #e0e0e0 ${percentage}%, #e0e0e0 100%)`;
+        }
+
+        // Format budget input with commas
+        function formatBudget(input) {
+            let value = input.value.replace(/,/g, '');
+            if (!isNaN(value) && value !== '') {
+                value = parseFloat(value).toLocaleString('en-US', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                });
+                input.value = value;
+            }
+        }
+
+        // Initialize progress slider on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const initialValue = document.getElementById('completion_percentage').value;
+            updateProgress(initialValue);
+        });
+    </script>
 </body>
 </html>
