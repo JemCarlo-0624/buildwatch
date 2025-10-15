@@ -237,7 +237,6 @@ require_once("../config/db.php");
         </div>
         
         <div class="form-options">
-          <label class="form-checkbox"><input type="checkbox">Remember me</label>
         </div>
         <button type="submit" class="btn btn-primary">Sign In</button>
 

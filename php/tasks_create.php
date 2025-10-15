@@ -34,6 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             $stmt->execute([$project_id, $title, $description, $assigned_to, $due_date]);
 
+            // Only update last_activity_at timestamp
+            $stmt = $pdo->prepare("
+                UPDATE projects 
+                SET last_activity_at = NOW()
+                WHERE id = ?
+            ");
+            $stmt->execute([$project_id]);
+
             header("Location: tasks_list.php");
             exit;
         } catch (PDOException $e) {

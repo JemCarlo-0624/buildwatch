@@ -70,6 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $due_date, $progress, $task_id
             ]);
 
+            // Only update last_activity_at timestamp
+            $stmt = $pdo->prepare("
+                UPDATE projects 
+                SET last_activity_at = NOW()
+                WHERE id = ?
+            ");
+            $stmt->execute([$project_id]);
+
             $success = "Task updated successfully!";
             
             // Refresh task data

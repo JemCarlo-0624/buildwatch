@@ -12,39 +12,6 @@ try {
     $pendingProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE status='pending'")->fetchColumn();
     $activeProjects = $pdo->query("SELECT COUNT(*) FROM projects WHERE status='ongoing'")->fetchColumn();
 
-    // Fetch upcoming schedule with better error handling
-    $scheduleQuery = "
-        SELECT 
-            s.id, s.project_id, s.task_id, s.start_date, s.end_date,
-            COALESCE(t.title, CONCAT('Task #', s.task_id)) AS task_title,
-            COALESCE(p.name, CONCAT('Project #', s.project_id)) AS project_name
-        FROM schedule s
-        LEFT JOIN tasks t ON s.task_id = t.id
-        LEFT JOIN projects p ON s.project_id = p.id
-        WHERE s.start_date >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)
-        ORDER BY s.start_date ASC
-        LIMIT 10
-    ";
-    
-    try {
-        $upcomingSchedule = $pdo->query($scheduleQuery)->fetchAll(PDO::FETCH_ASSOC);
-        
-        $debugScheduleQuery = "
-            SELECT 
-                COUNT(*) as total_count,
-                COUNT(CASE WHEN s.start_date >= CURDATE() THEN 1 END) as future_count,
-                COUNT(CASE WHEN s.start_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 END) as week_count,
-                MIN(s.start_date) as earliest_date,
-                MAX(s.start_date) as latest_date
-            FROM schedule s
-        ";
-        $scheduleDebugInfo = $pdo->query($debugScheduleQuery)->fetch(PDO::FETCH_ASSOC);
-        
-    } catch (PDOException $scheduleError) {
-        error_log("Schedule query error: " . $scheduleError->getMessage());
-        $upcomingSchedule = [];
-        $scheduleDebugInfo = ['total_count' => 0, 'future_count' => 0, 'week_count' => 0, 'earliest_date' => null, 'latest_date' => null];
-    }
 
     // Fetch recent proposals
     $proposals = $pdo->query("SELECT * FROM project_proposals ORDER BY submitted_at DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
@@ -65,7 +32,7 @@ try {
     // Handle database errors gracefully
     error_log("Database error in dashboard: " . $e->getMessage());
     $totalProjects = $tasksCompleted = $pendingProposals = $activeProjects = 0;
-    $upcomingSchedule = $proposals = $tasks = [];
+    $proposals = $tasks = [];
 }
 ?>
 <!DOCTYPE html>
@@ -74,7 +41,6 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - BuildWatch</title>
-    <!-- Added Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -291,7 +257,6 @@ try {
         .stat-icon-primary { background: rgba(10, 99, 165, 0.1); color: var(--primary); }
         .stat-icon-success { background: rgba(46, 204, 113, 0.1); color: var(--success); }
         .stat-icon-accent { background: rgba(212, 47, 19, 0.1); color: var(--accent); }
-        .stat-icon-secondary { background: rgba(203, 149, 1, 0.1); color: var(--secondary); }
 
         .stat-value {
             font-size: 28px;
@@ -314,11 +279,11 @@ try {
 
         .positive { color: var(--success); }
         .negative { color: var(--accent); }
+
+        /* Removed all alert-related CSS styles */
     </style>
 </head>
 <body class="sidebar-main-layout">
-
-    <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo">
             <h1><i class="fas fa-hard-hat"></i> Build Watch</h1>
@@ -332,11 +297,9 @@ try {
             <a href="users_list.php" class="nav-item"><i class="fas fa-users"></i> Users</a>
         </div>
 
-        <!-- Simplified sidebar footer using Bootstrap utilities -->
         <div class="sidebar-footer">
             <div class="d-flex align-items-start gap-2 mb-3">
                 <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 40px; height: 40px;">
-                    AD
                 </div>
                 <div class="flex-grow-1">
                     <div class="text-white fw-semibold"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin'); ?></div>
@@ -348,10 +311,7 @@ try {
             </a>
         </div>
     </div>
-
-    <!-- Main Content -->
     <div class="main-content">
-        <!-- Using Bootstrap grid and utilities -->
         <div class="d-flex justify-content-between align-items-start mb-4">
             <div>
                 <h1 class="page-title">Admin Dashboard</h1>
@@ -361,8 +321,6 @@ try {
                 <a href="dashboard_admin.php" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh</a>
             </div>
         </div>
-
-        <!-- Statistics Overview -->
         <div class="stats-container">
             <div class="stat-card">
                 <div class="stat-icon stat-icon-primary"><i class="fas fa-project-diagram"></i></div>
@@ -382,82 +340,9 @@ try {
                 <div class="stat-label">PENDING PROPOSALS</div>
                 <div class="stat-change negative">Needs review</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon stat-icon-secondary"><i class="fas fa-chart-line"></i></div>
-                <div class="stat-value"><?php echo count($upcomingSchedule); ?></div>
-                <div class="stat-label">UPCOMING EVENTS</div>
-                <div class="stat-change positive">Next 7 days</div>
-            </div>
         </div>
-
-        <!-- Dashboard Grid -->
         <div class="dashboard-grid">
 
-            <!-- Upcoming Schedule Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-calendar" style="color: var(--primary);"></i> Upcoming Schedule</h3>
-                    <a href="schedule.php" class="btn btn-outline-primary btn-sm">View All</a>
-                </div>
-                <div class="card-body">
-                    <?php if (!empty($upcomingSchedule)): ?>
-                        <?php foreach ($upcomingSchedule as $event): ?>
-                            <div class="project-item">
-                                <div class="project-color" style="background-color: var(--primary);"></div>
-                                <div class="project-info">
-                                    <div class="project-item-title">
-                                        <?php echo htmlspecialchars($event['task_title'] ?? 'Untitled Event'); ?>
-                                    </div>
-                                    <div class="project-item-details">
-                                        <?php echo htmlspecialchars($event['project_name'] ?? 'No Project'); ?> •
-                                        <?php 
-                                        try {
-                                            if (!empty($event['start_date'])) {
-                                                $startDate = new DateTime($event['start_date']);
-                                                echo $startDate->format('M j');
-                                            } else {
-                                                echo 'No start';
-                                            }
-                                            echo ' - ';
-                                            if (!empty($event['end_date'])) {
-                                                $endDate = new DateTime($event['end_date']);
-                                                echo $endDate->format('M j');
-                                            } else {
-                                                echo 'No end';
-                                            }
-                                        } catch (Exception $e) {
-                                            echo 'Invalid date';
-                                        }
-                                        ?>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="text-center p-4">
-                            <i class="fas fa-calendar-times fs-1 text-muted mb-3"></i>
-                            <p>No upcoming schedule events</p>
-                            <?php if (isset($scheduleDebugInfo)): ?>
-                                <div class="alert alert-info small text-start mt-3">
-                                    <strong>Debug Info:</strong><br>
-                                    Total schedule entries: <?php echo $scheduleDebugInfo['total_count'] ?? 0; ?><br>
-                                    Future events: <?php echo $scheduleDebugInfo['future_count'] ?? 0; ?><br>
-                                    Events in last week: <?php echo $scheduleDebugInfo['week_count'] ?? 0; ?><br>
-                                    <?php if ($scheduleDebugInfo['earliest_date']): ?>
-                                        Earliest: <?php echo date('Y-m-d', strtotime($scheduleDebugInfo['earliest_date'])); ?><br>
-                                    <?php endif; ?>
-                                    <?php if ($scheduleDebugInfo['latest_date']): ?>
-                                        Latest: <?php echo date('Y-m-d', strtotime($scheduleDebugInfo['latest_date'])); ?><br>
-                                    <?php endif; ?>
-                                    Current date: <?php echo date('Y-m-d'); ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Recent Proposals Card -->
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-lightbulb" style="color: var(--accent);"></i> Recent Proposals</h3>
@@ -507,8 +392,6 @@ try {
                     <?php endif; ?>
                 </div>
             </div>
-
-            <!-- Recent Tasks Card -->
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-tasks" style="color: var(--success);"></i> Recent Tasks</h3>
@@ -554,12 +437,8 @@ try {
                     <?php endif; ?>
                 </div>
             </div>
-
-        </div> <!-- End Dashboard Grid -->
-
-    </div> <!-- End Main Content -->
-
-    <!-- Added Bootstrap 5 JS bundle -->
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {

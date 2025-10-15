@@ -302,10 +302,10 @@ foreach ($tasks as $task) {
             <a href="users_list.php" class="nav-item">
                 <i class="fas fa-users"></i> Users
             </a>
-            <?php endif; ?>
             <a href="proposals_review.php" class="nav-item">
                 <i class="fas fa-file-alt"></i> Proposals
             </a>
+            <?php endif; ?>
         </div>
 
         <div class="sidebar-footer">

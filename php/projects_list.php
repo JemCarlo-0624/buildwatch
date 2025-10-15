@@ -23,7 +23,7 @@ if ($_SESSION['role'] === 'admin') {
         FROM projects p 
         JOIN users u ON p.created_by = u.id
         JOIN project_assignments pa ON pa.project_id = p.id
-        WHERE pa.user_id = ?
+        WHERE pa.user_id = ? AND p.status != 'completed'
         ORDER BY p.created_at DESC
     ");
     $stmt->execute([$_SESSION['user_id']]);
@@ -206,7 +206,6 @@ if ($_SESSION['role'] === 'admin') {
                 <a href="dashboard_pm.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="projects_list.php" class="nav-item active"><i class="fas fa-project-diagram"></i> Projects</a>
                 <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
-                <a href="proposals_review.php" class="nav-item"><i class="fas fa-lightbulb"></i> Proposals</a>
             <?php else: ?>
                 <a href="dashboard_worker.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="projects_list.php" class="nav-item active"><i class="fas fa-project-diagram"></i> My Projects</a>

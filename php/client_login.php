@@ -231,11 +231,6 @@ unset($_SESSION['error'], $_SESSION['success']);
           </div>
           <div class="invalid-feedback" id="password-error">Password is required.</div>
         </div>
-        
-        <div class="form-options">
-          <label class="form-checkbox"><input type="checkbox">Remember me</label>
-          <a href="forgot_password.php" class="form-link">Forgot password?</a>
-        </div>
         <button type="submit" class="btn btn-primary">Sign In</button>
 
         <div class="auth-switch"><p>Don't have an account? <a href="client_signup.php" class="form-link">Sign up here</a></p></div>

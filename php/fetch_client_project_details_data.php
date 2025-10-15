@@ -60,12 +60,9 @@ try {
         }
     }
 
-    // Calculate completion percentage from tasks
-    if ($tasks_summary['total_tasks'] > 0) {
-        $project['completion_percentage'] = round(($tasks_summary['completed_tasks'] / $tasks_summary['total_tasks']) * 100);
-    } else {
-        $project['completion_percentage'] = (int)$project['completion_percentage'];
-    }
+    $project['completion_percentage'] = isset($project['completion_percentage']) && $project['completion_percentage'] !== null 
+        ? (int)$project['completion_percentage'] 
+        : 0;
 
     // Fetch team members
     $stmt = $pdo->prepare("
@@ -77,17 +74,6 @@ try {
     ");
     $stmt->execute([$project_id]);
     $team = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Fetch schedule
-    $stmt = $pdo->prepare("
-        SELECT s.*, t.title as task_title
-        FROM schedule s
-        LEFT JOIN tasks t ON s.task_id = t.id
-        WHERE s.project_id = ?
-        ORDER BY s.start_date ASC
-    ");
-    $stmt->execute([$project_id]);
-    $schedule = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Fetch creator info
     $stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
@@ -115,7 +101,6 @@ try {
         'tasks' => $tasks,
         'tasks_summary' => $tasks_summary,
         'team' => $team,
-        'schedule' => $schedule,
         'creator' => $creator,
         'last_updated' => date('Y-m-d H:i:s'),
         'timestamp' => time()

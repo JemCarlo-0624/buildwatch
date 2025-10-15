@@ -14,12 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_POST['user_id'];
 
     // Check if user is already assigned to an active (not completed) project
-    $checkStmt = $pdo->prepare("
-        SELECT pa.project_id
-        FROM project_assignments pa
-        JOIN projects p ON pa.project_id = p.id
-        WHERE pa.user_id = ? AND p.status != 'completed'
-    ");
+    $checkStmt = $pdo->prepare("SELECT pa.project_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id WHERE pa.user_id = ? AND p.status != 'completed'");
     $checkStmt->execute([$user_id]);
     if ($checkStmt->fetch()) {
         echo "<script>alert('This user is already assigned to an active project.');window.location.href=window.location.href;</script>";
@@ -43,30 +38,10 @@ if (!$project) {
 }
 
 // Get available Project Managers (not assigned to any active project)
-$pms = $pdo->query("
-    SELECT *
-    FROM users u
-    WHERE u.role = 'pm'
-    AND u.id NOT IN (
-        SELECT pa.user_id
-        FROM project_assignments pa
-        JOIN projects p ON pa.project_id = p.id
-        WHERE p.status != 'completed'
-    )
-")->fetchAll();
+$pms = $pdo->query("SELECT * FROM users u WHERE u.role = 'pm' AND u.id NOT IN (SELECT pa.user_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id WHERE p.status != 'completed')")->fetchAll();
 
 // Get available Workers (not assigned to any active project)
-$workers = $pdo->query("
-    SELECT *
-    FROM users u
-    WHERE u.role = 'worker'
-    AND u.id NOT IN (
-        SELECT pa.user_id
-        FROM project_assignments pa
-        JOIN projects p ON pa.project_id = p.id
-        WHERE p.status != 'completed'
-    )
-")->fetchAll();
+$workers = $pdo->query("SELECT * FROM users u WHERE u.role = 'worker' AND u.id NOT IN (SELECT pa.user_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id WHERE p.status != 'completed')")->fetchAll();
 
 $stmt = $pdo->prepare("SELECT u.* FROM project_assignments pa JOIN users u ON pa.user_id=u.id WHERE pa.project_id=? AND u.role='pm'");
 $stmt->execute([$project_id]);
@@ -85,7 +60,6 @@ $assignedWorkers = $stmt->fetchAll();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 
     <style>
         .assignment-container {
@@ -357,7 +331,6 @@ $assignedWorkers = $stmt->fetchAll();
                 <a href="dashboard_pm.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="projects_list.php" class="nav-item active"><i class="fas fa-project-diagram"></i> Projects</a>
                 <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
-                <a href="proposals_review.php" class="nav-item"><i class="fas fa-lightbulb"></i> Proposals</a>
             <?php endif; ?>
         </div>
 

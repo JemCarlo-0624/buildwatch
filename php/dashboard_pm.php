@@ -280,7 +280,6 @@ $pendingTasks = $totalTasks - $completedTasks;
             <a href="dashboard_pm.php" class="nav-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> My Projects</a>
             <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
-            <a href="proposals_submit.php" class="nav-item"><i class="fas fa-file-alt"></i> Proposals</a>
         </div>
 
         <div class="sidebar-footer">
@@ -311,7 +310,7 @@ $pendingTasks = $totalTasks - $completedTasks;
             </div>
         </div>
 
-         Statistics Overview 
+        <!-- Statistics Overview -->
         <div class="stats-container">
             <div class="stat-card">
                 <div class="stat-icon stat-icon-primary"><i class="fas fa-project-diagram"></i></div>
@@ -341,7 +340,6 @@ $pendingTasks = $totalTasks - $completedTasks;
 
         <div class="dashboard-grid">
 
-   
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-folder-open" style="color: var(--primary);"></i> My Projects</h3>
@@ -380,7 +378,6 @@ $pendingTasks = $totalTasks - $completedTasks;
                     <?php endif; ?>
                 </div>
             </div>
-
 
             <div class="card">
                 <div class="card-header">

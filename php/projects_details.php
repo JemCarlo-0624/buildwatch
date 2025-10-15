@@ -13,12 +13,7 @@ if (!$project_id) {
 }
 
 // Fetch project details with creator information
-$stmt = $pdo->prepare("
-    SELECT p.*, u.name as creator_name, u.email as creator_email 
-    FROM projects p 
-    JOIN users u ON p.created_by = u.id 
-    WHERE p.id = ?
-");
+$stmt = $pdo->prepare("SELECT p.*, u.name as creator_name, u.email as creator_email FROM projects p JOIN users u ON p.created_by = u.id WHERE p.id = ?");
 $stmt->execute([$project_id]);
 $project = $stmt->fetch();
 
@@ -36,24 +31,12 @@ if ($_SESSION['role'] === 'worker') {
 }
 
 // Fetch assigned team members
-$stmt = $pdo->prepare("
-    SELECT u.id, u.name, u.email, u.role 
-    FROM project_assignments pa 
-    JOIN users u ON pa.user_id = u.id 
-    WHERE pa.project_id = ? 
-    ORDER BY u.role, u.name
-");
+$stmt = $pdo->prepare("SELECT u.id, u.name, u.email, u.role FROM project_assignments pa JOIN users u ON pa.user_id = u.id WHERE pa.project_id = ? ORDER BY u.role, u.name");
 $stmt->execute([$project_id]);
 $teamMembers = $stmt->fetchAll();
 
 // Fetch all tasks for this project
-$stmt = $pdo->prepare("
-    SELECT t.*, u.name as assigned_name, u.email as assigned_email 
-    FROM tasks t 
-    LEFT JOIN users u ON t.assigned_to = u.id 
-    WHERE t.project_id = ? 
-    ORDER BY t.due_date ASC, t.created_at DESC
-");
+$stmt = $pdo->prepare("SELECT t.*, u.name as assigned_name, u.email as assigned_email FROM tasks t LEFT JOIN users u ON t.assigned_to = u.id WHERE t.project_id = ? ORDER BY t.due_date ASC, t.created_at DESC");
 $stmt->execute([$project_id]);
 $tasks = $stmt->fetchAll();
 
@@ -524,7 +507,6 @@ foreach ($tasks as $task) {
                 <a href="dashboard_pm.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="projects_list.php" class="nav-item active"><i class="fas fa-project-diagram"></i> Projects</a>
                 <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
-                <a href="proposals_review.php" class="nav-item"><i class="fas fa-lightbulb"></i> Proposals</a>
             <?php else: ?>
                 <a href="dashboard_worker.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="projects_worker.php" class="nav-item active"><i class="fas fa-project-diagram"></i> My Projects</a>

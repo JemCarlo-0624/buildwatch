@@ -11,13 +11,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'worker') {
 $user_id = $_SESSION['user_id'];
 
 // Fetch tasks assigned to this worker
-$stmt = $pdo->prepare("
-    SELECT t.*, p.name as project_name
-    FROM tasks t
-    JOIN projects p ON t.project_id = p.id
-    WHERE t.assigned_to = ?
-    ORDER BY t.due_date ASC
-");
+$stmt = $pdo->prepare("SELECT t.*, p.name as project_name FROM tasks t JOIN projects p ON t.project_id = p.id WHERE t.assigned_to = ? ORDER BY t.due_date ASC");
 $stmt->execute([$user_id]);
 $tasks = $stmt->fetchAll();
 
@@ -39,8 +33,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $task_id = $_POST['task_id'];
     $progress = min(100, max(0, (int)$_POST['progress'])); // clamp 0–100
 
-    $stmt = $pdo->prepare("UPDATE tasks SET progress=? WHERE id=? AND assigned_to=?");
-    $stmt->execute([$progress, $task_id, $user_id]);
+    $stmt = $pdo->prepare("SELECT project_id FROM tasks WHERE id=? AND assigned_to=?");
+    $stmt->execute([$task_id, $user_id]);
+    $taskData = $stmt->fetch();
+    
+    if ($taskData) {
+        $project_id = $taskData['project_id'];
+        
+        // Update task progress
+        $stmt = $pdo->prepare("UPDATE tasks SET progress=? WHERE id=? AND assigned_to=?");
+        $stmt->execute([$progress, $task_id, $user_id]);
+        
+        // Only update last_activity_at timestamp
+        $stmt = $pdo->prepare("
+            UPDATE projects 
+            SET last_activity_at = NOW() 
+            WHERE id = ?
+        ");
+        $stmt->execute([$project_id]);
+    }
 
     header("Location: tasks_worker.php");
     exit;

@@ -45,52 +45,102 @@ $projects = $stmt->fetchAll();
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
         /* ========================================
-           BASE STYLES
+           BASE STYLES & THEME
            ======================================== */
+        :root {
+            /* Transformed color palette from orange to professional deep teal */
+            /* Updated color palette for professional, trustworthy aesthetic */
+            --navy-blue: #1e3a5f;
+            --navy-dark: #152d47;
+            --primary-teal: #0d9488; /* NEW: Replaces construction-orange for modern, professional look */
+            --primary-teal-dark: #0f766e; /* NEW: Darker teal for hover states */
+            --primary-teal-light: #14b8a6; /* NEW: Lighter teal for highlights */
+            --light-bg: #f8f9fa;
+            --white: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --border-color: #e0e6ed;
+            
+            /* Spacing scale */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+            
+            /* Typography */
+            --font-size-xs: 12px;
+            --font-size-sm: 14px;
+            --font-size-base: 16px;
+            --font-size-lg: 18px;
+            --font-size-xl: 24px;
+            --font-size-2xl: 32px;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+            
+            /* Border radius */
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            
+            /* Transitions */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         body { 
-            background: var(--light);
-            color: #333;
+            background: var(--light-bg);
+            color: var(--text-primary);
             margin: 0;
             padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
         }
 
         /* ========================================
-           HEADER STYLES
+           HEADER - IMPROVED VISUAL HIERARCHY
            ======================================== */
+        /* Redesigned header with optimized spacing and perfect circular avatar */
         .client-header {
-            background: linear-gradient(135deg, #0a4275 0%, #084980 100%);
-            color: white;
-            padding: 18px 40px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--space-lg) var(--space-xl); /* Reduced from larger padding */
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 4px 20px rgba(10, 66, 117, 0.25);
+            box-shadow: var(--shadow-sm);
             position: sticky;
             top: 0;
             z-index: 1000;
         }
         
-        /* Enhanced branding section with BuildWatch logo and name */
         .brand-section {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: var(--space-md);
         }
         
         .brand-logo {
-            width: 48px;
+            width: 48px; /* Optimized size */
             height: 48px;
-            background: white;
-            border-radius: 12px;
+            background: linear-gradient(135deg, var(--navy-blue), var(--navy-dark));
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-md);
         }
         
         .brand-logo i {
-            font-size: 28px;
-            color: #0a4275;
+            font-size: 24px;
+            color: var(--white);
         }
         
         .brand-info {
@@ -100,203 +150,260 @@ $projects = $stmt->fetchAll();
         }
         
         .brand-name {
-            font-size: 26px;
+            font-size: 22px; /* Slightly reduced for compactness */
             font-weight: 700;
             letter-spacing: -0.5px;
             margin: 0;
             line-height: 1;
+            color: var(--navy-blue);
         }
         
         .brand-tagline {
-            font-size: 12px;
-            opacity: 0.85;
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
             font-weight: 500;
-            letter-spacing: 0.5px;
         }
         
-        /* Enhanced user details section with better HCI principles */
         .header-right { 
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: var(--space-lg);
         }
         
+        /* Improved user info with perfect circular avatar - removed oval shape */
         .user-info { 
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 10px 18px;
-            background: rgba(255, 255, 255, 0.12);
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            gap: var(--space-md);
+            padding: var(--space-sm) var(--space-md);
+            transition: var(--transition);
+            min-height: 44px; /* Accessibility: minimum touch target */
         }
         
-        .user-info:hover {
-            background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 255, 255, 0.25);
-        }
         
+        /* Updated user avatar to use teal gradient instead of orange */
+        /* Perfect circular avatar with consistent dimensions */
         .user-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%; /* Perfect circle - removed oval shape */
+            background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-dark)); /* CHANGED: From orange to teal gradient */
+            color: var(--white);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 18px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            font-size: var(--font-size-base);
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0; /* Prevents distortion */
         }
         
         .user-details {
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 2px;
         }
         
         .user-name {
-            font-weight: 700;
-            font-size: 15px;
+            font-weight: 600;
+            font-size: var(--font-size-sm);
             line-height: 1.2;
-            letter-spacing: 0.2px;
+            color: var(--text-primary);
         }
         
         .user-email {
-            font-size: 12px;
-            opacity: 0.85;
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
             line-height: 1.2;
-            font-weight: 500;
         }
         
+        /* Improved logout button with better accessibility */
         .logout-btn {
-            background: rgba(231, 76, 60, 0.9);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
+            background: var(--white);
+            color: var(--danger);
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--radius-full);
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: var(--space-sm);
             font-weight: 600;
-            font-size: 14px;
-            border: 2px solid transparent;
+            font-size: var(--font-size-sm);
+            border: 2px solid var(--danger);
+            min-height: 44px; /* Accessibility: minimum touch target */
         }
         
         .logout-btn:hover { 
-            background: rgba(192, 57, 43, 1);
+            background: var(--danger);
+            color: var(--white);
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
-            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: var(--shadow-md);
         }
 
         /* ========================================
-           LIVE INDICATOR
+           MAIN CONTENT - IMPROVED LAYOUT
            ======================================== */
-        .live-indicator {
+        /* Better content organization and spacing */
+        .main-content { 
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--space-xl);
+        }
+        
+        /* Added dashboard overview section with key metrics */
+        .dashboard-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+        
+        .metric-card {
+            background: var(--white);
+            padding: var(--space-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .metric-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 18px;
-            background: rgba(46, 204, 113, 0.15);
-            border-radius: 10px;
-            font-size: 13px;
+            justify-content: space-between;
+        }
+        
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .metric-icon.primary {
+            background: rgba(30, 58, 95, 0.1);
+            color: var(--navy-blue);
+        }
+        
+        .metric-icon.success {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+        
+        .metric-icon.warning {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        /* Updated metric icon teal variant */
+        .metric-icon.teal {
+            background: rgba(13, 148, 136, 0.1); /* CHANGED: From orange to teal */
+            color: var(--primary-teal);
+        }
+        
+        .metric-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+        
+        .metric-value {
+            font-size: var(--font-size-2xl);
             font-weight: 700;
-            color: #2ecc71;
-            border: 2px solid rgba(46, 204, 113, 0.3);
-            letter-spacing: 0.5px;
+            color: var(--text-primary);
+            line-height: 1;
         }
         
-        .live-dot {
-            width: 10px;
-            height: 10px;
-            background: #2ecc71;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-            box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
+        .metric-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            font-weight: 500;
         }
         
-        @keyframes pulse {
-            0%, 100% { 
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% { 
-                opacity: 0.6;
-                transform: scale(0.9);
-            }
+        .metric-change {
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
         }
-
-        /* ========================================
-           MAIN CONTENT AREA
-           ======================================== */
-        .main-content { 
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 0 30px;
+        
+        .metric-change.positive {
+            color: var(--success);
+        }
+        
+        .metric-change.neutral {
+            color: var(--text-secondary);
         }
         
         .welcome-card {
-            background: white;
-            padding: 30px;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            margin-bottom: 30px;
-            border-left: 4px solid var(--primary);
+            background: linear-gradient(135deg, var(--navy-blue), var(--navy-dark));
+            padding: var(--space-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin-bottom: var(--space-xl);
+            color: var(--white);
         }
         
         .welcome-card h2 { 
-            color: var(--primary);
-            margin-bottom: 10px;
-            font-size: 24px;
+            color: var(--white);
+            margin-bottom: var(--space-sm);
+            font-size: var(--font-size-xl);
+            font-weight: 700;
         }
         
         .welcome-card p { 
-            color: var(--gray);
-            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: var(--font-size-base);
+            margin-bottom: var(--space-md);
         }
 
         .last-updated {
-            font-size: 12px;
-            color: var(--gray);
+            font-size: var(--font-size-xs);
+            color: rgba(255, 255, 255, 0.8);
             display: flex;
             align-items: center;
-            gap: 5px;
-            margin-top: 10px;
-        }
-        
-        .last-updated i {
-            font-size: 10px;
+            gap: var(--space-sm);
         }
 
+        /* Improved actions bar with better visual hierarchy */
         .actions-bar {
             display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: var(--space-md);
+            margin-bottom: var(--space-xl);
             flex-wrap: wrap;
         }
 
         /* ========================================
-           NOTIFICATION STYLES
+           NOTIFICATION SYSTEM
            ======================================== */
         .update-notification {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 15px 20px;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xl);
+            top: var(--space-lg);
+            right: var(--space-lg);
+            background: var(--white);
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
             display: none;
             align-items: center;
-            gap: 12px;
-            z-index: 1000;
+            gap: var(--space-md);
+            z-index: 2000;
             border-left: 4px solid var(--success);
             animation: slideIn 0.3s ease;
+            min-width: 320px;
         }
         
         @keyframes slideIn {
@@ -315,7 +422,7 @@ $projects = $stmt->fetchAll();
         }
         
         .update-notification i {
-            font-size: 20px;
+            font-size: 24px;
             color: var(--success);
         }
         
@@ -325,47 +432,84 @@ $projects = $stmt->fetchAll();
         
         .update-notification-title {
             font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 3px;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+            font-size: var(--font-size-sm);
         }
         
         .update-notification-text {
-            font-size: 13px;
-            color: var(--gray);
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
         }
 
         /* ========================================
-           PROPOSALS SECTION
+           SECTION HEADERS - IMPROVED CLARITY
            ======================================== */
-        .proposals-section h3,
-        .projects-section h3 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: var(--dark);
+        /* Better section headers with improved visual hierarchy */
+        .section-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+            padding-bottom: var(--space-md);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .section-title {
+            font-size: var(--font-size-lg);
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+        
+        .section-title i {
+            color: var(--navy-blue);
+            font-size: 20px;
+        }
+        
+        .section-count {
+            background: var(--light-bg);
+            padding: 2px var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
             font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* ========================================
+           PROPOSALS SECTION - IMPROVED CARDS
+           ======================================== */
+        .proposals-section,
+        .projects-section {
+            margin-bottom: var(--space-2xl);
         }
         
         .proposals-grid,
         .projects-grid {
             display: grid;
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: var(--space-lg);
         }
         
+        /* Redesigned proposal cards with better visual hierarchy */
         .proposal-card {
-            background: white;
-            padding: 25px;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            transition: all var(--transition-normal);
-            border-left: 4px solid var(--secondary);
+            background: var(--white);
+            padding: var(--space-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--navy-blue);
+            cursor: pointer;
         }
         
+        /* Updated proposal card hover to use teal accent */
         .proposal-card:hover { 
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-xl);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-left-color: var(--primary-teal); /* CHANGED: From orange to teal */
         }
 
         .proposal-card.updated, 
@@ -374,228 +518,264 @@ $projects = $stmt->fetchAll();
         }
         
         @keyframes highlight {
-            0%, 100% { background: white; }
-            50% { background: rgba(46, 204, 113, 0.1); }
+            0%, 100% { background: var(--white); }
+            50% { background: rgba(46, 204, 113, 0.05); }
         }
         
         .proposal-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 15px;
+            margin-bottom: var(--space-md);
+            gap: var(--space-md);
         }
         
         .proposal-title { 
-            font-size: 18px;
+            font-size: var(--font-size-lg);
             font-weight: 600;
-            color: var(--dark);
+            color: var(--text-primary);
+            line-height: 1.3;
+            flex: 1;
         }
         
+        /* Improved status badges with better contrast */
         .proposal-status {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 11px;
+            padding: var(--space-xs) var(--space-md);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
         
         .status-pending { 
-            background: #fff3cd;
-            color: #856404;
+            background: rgba(243, 156, 18, 0.1);
+            color: #b8860b;
         }
         
         .status-approved { 
             background: rgba(46, 204, 113, 0.1);
-            color: var(--success);
+            color: #27ae60;
         }
         
         .status-rejected { 
-            background: rgba(212, 47, 19, 0.1);
-            color: var(--accent);
+            background: rgba(231, 76, 60, 0.1);
+            color: #c0392b;
         }
         
         .proposal-description {
-            color: var(--gray);
-            margin-bottom: 15px;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
             line-height: 1.6;
-            font-size: 14px;
+            font-size: var(--font-size-sm);
         }
         
         .proposal-meta {
             display: flex;
-            gap: 20px;
-            font-size: 13px;
-            color: var(--gray);
-            padding-top: 15px;
-            border-top: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .proposal-meta span {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
         }
         
         .proposal-meta i { 
-            color: var(--primary);
-            margin-right: 5px;
+            color: var(--navy-blue);
         }
 
         /* ========================================
-           PROJECTS SECTION
+           PROJECTS SECTION - IMPROVED DESIGN
            ======================================== */
-        .projects-section {
-            margin-top: 40px;
-        }
-
+        /* Redesigned project cards with better information hierarchy */
         .project-card {
-            background: white;
-            padding: 25px;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            transition: all var(--transition-normal);
-            border-left: 4px solid var(--primary);
+            background: var(--white);
+            padding: var(--space-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+            /* Updated project card border to use teal */
+            border-left: 4px solid var(--primary-teal); /* CHANGED: From orange to teal */
             cursor: pointer;
         }
 
         .project-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-xl);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
         }
 
         .project-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 15px;
+            margin-bottom: var(--space-md);
+            gap: var(--space-md);
         }
 
         .project-name {
-            font-size: 18px;
+            font-size: var(--font-size-lg);
             font-weight: 600;
-            color: var(--dark);
+            color: var(--text-primary);
+            line-height: 1.3;
+            flex: 1;
         }
 
+        /* Improved progress bar with better visual feedback */
         .project-progress {
-            margin: 15px 0;
+            margin: var(--space-md) 0;
         }
 
         .progress-label {
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
-            color: var(--gray);
-            margin-bottom: 8px;
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-sm);
+            font-weight: 500;
         }
 
         .progress-bar {
             width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
+            height: 10px;
+            background: var(--light-bg);
+            border-radius: var(--radius-full);
             overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
+        /* Updated progress bar to use teal gradient */
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            background: linear-gradient(90deg, var(--primary-teal), var(--primary-teal-dark)); /* CHANGED: From orange to teal gradient */
             transition: width 0.5s ease;
+            border-radius: var(--radius-full);
         }
 
         .project-stats {
             display: flex;
-            gap: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #f0f0f0;
-            font-size: 13px;
-            color: var(--gray);
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--border-color);
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+        }
+
+        .project-stats span {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
         }
 
         .project-stats i {
-            color: var(--primary);
-            margin-right: 5px;
+            color: var(--navy-blue);
         }
 
+        /* Improved action buttons with better accessibility */
         .view-details-btn {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--primary);
-            color: white;
-            border-radius: var(--radius-sm);
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-lg);
+            background: var(--navy-blue);
+            color: var(--white);
+            border-radius: var(--radius-md);
             text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all var(--transition-normal);
-            margin-top: 15px;
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            transition: var(--transition);
+            margin-top: var(--space-md);
+            min-height: 44px; /* Accessibility: minimum touch target */
         }
 
         .view-details-btn:hover {
-            background: var(--dark);
-            color: white;
+            background: var(--navy-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         /* ========================================
-           EMPTY STATE
+           EMPTY STATE - IMPROVED DESIGN
            ======================================== */
+        /* Better empty state with clearer messaging */
         .empty-state {
-            background: white;
-            padding: 60px 30px;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
+            background: var(--white);
+            padding: var(--space-2xl) var(--space-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
             text-align: center;
+            border: 2px dashed var(--border-color);
         }
         
         .empty-state i { 
-            font-size: 60px;
-            color: var(--gray);
-            margin-bottom: 20px;
+            font-size: 64px;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-lg);
             opacity: 0.5;
         }
         
         .empty-state h3 { 
-            color: var(--dark);
-            margin-bottom: 10px;
-            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+            font-size: var(--font-size-xl);
+            font-weight: 600;
         }
         
         .empty-state p { 
-            color: var(--gray);
-            margin-bottom: 25px;
-            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-xl);
+            font-size: var(--font-size-base);
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* ========================================
-           REPORT GENERATION STYLES
+           REPORT GENERATION MODAL
            ======================================== */
+        /* Updated generate report button to use teal */
         .generate-report-btn {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--secondary);
-            color: white;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-lg);
+            background: var(--primary-teal); /* CHANGED: From orange to teal */
+            color: var(--white);
             border: none;
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-weight: 500;
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
             cursor: pointer;
-            transition: all var(--transition-normal);
-            margin-top: 15px;
-            margin-left: 10px;
+            transition: var(--transition);
+            margin-top: var(--space-md);
+            margin-left: var(--space-sm);
+            min-height: 44px; /* Accessibility */
         }
         
         .generate-report-btn:hover {
-            background: #27ae60;
+            /* Updated hover background to use teal-dark */
+            background: var(--primary-teal-dark); /* CHANGED: From orange-dark to teal-dark */
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+            box-shadow: var(--shadow-md);
         }
         
         .modal {
             display: none;
             position: fixed;
-            z-index: 2000;
+            z-index: 3000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.5);
             animation: fadeIn 0.3s ease;
         }
         
@@ -605,13 +785,13 @@ $projects = $stmt->fetchAll();
         }
         
         .modal-content {
-            background-color: white;
+            background-color: var(--white);
             margin: 5% auto;
-            padding: 30px;
-            border-radius: var(--radius-xl);
+            padding: var(--space-xl);
+            border-radius: var(--radius-lg);
             width: 90%;
             max-width: 600px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow-lg);
             animation: slideDown 0.3s ease;
         }
         
@@ -627,16 +807,17 @@ $projects = $stmt->fetchAll();
         }
         
         .modal-content h3 {
-            color: var(--primary);
+            color: var(--text-primary);
             margin-top: 0;
-            margin-bottom: 15px;
+            margin-bottom: var(--space-md);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: var(--space-md);
+            font-size: var(--font-size-xl);
         }
         
         .close {
-            color: var(--gray);
+            color: var(--text-secondary);
             float: right;
             font-size: 32px;
             font-weight: bold;
@@ -646,66 +827,67 @@ $projects = $stmt->fetchAll();
         }
         
         .close:hover {
-            color: var(--dark);
+            color: var(--text-primary);
         }
         
         .report-format-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin: 25px 0;
+            gap: var(--space-md);
+            margin: var(--space-xl) 0;
         }
         
         .format-btn {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: var(--radius-lg);
-            padding: 20px;
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-sm);
             text-align: center;
+            min-height: 44px; /* Accessibility */
         }
         
         .format-btn:hover {
-            border-color: var(--primary);
-            background: rgba(10, 66, 117, 0.05);
+            border-color: var(--navy-blue);
+            background: rgba(30, 58, 95, 0.05);
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(10, 66, 117, 0.15);
+            box-shadow: var(--shadow-md);
         }
         
         .format-btn i {
             font-size: 32px;
-            color: var(--primary);
+            color: var(--navy-blue);
         }
         
         .format-btn span {
             font-weight: 600;
-            color: var(--dark);
-            font-size: 15px;
+            color: var(--text-primary);
+            font-size: var(--font-size-base);
         }
         
         .format-btn small {
-            color: var(--gray);
-            font-size: 12px;
+            color: var(--text-secondary);
+            font-size: var(--font-size-xs);
         }
         
         .report-progress {
             text-align: center;
-            padding: 30px;
+            padding: var(--space-xl);
         }
         
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary);
+            border: 4px solid var(--light-bg);
+            border-top: 4px solid var(--navy-blue);
             border-radius: 50%;
             width: 50px;
             height: 50px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto var(--space-lg);
         }
         
         @keyframes spin {
@@ -714,7 +896,7 @@ $projects = $stmt->fetchAll();
         }
         
         .report-result {
-            padding: 20px;
+            padding: var(--space-lg);
         }
         
         .success-message,
@@ -725,56 +907,44 @@ $projects = $stmt->fetchAll();
         .success-message i {
             font-size: 48px;
             color: var(--success);
-            margin-bottom: 15px;
+            margin-bottom: var(--space-md);
         }
         
         .error-message i {
             font-size: 48px;
-            color: var(--accent);
-            margin-bottom: 15px;
+            color: var(--danger);
+            margin-bottom: var(--space-md);
         }
         
         .success-message h4,
         .error-message h4 {
-            color: var(--dark);
-            margin: 10px 0;
+            color: var(--text-primary);
+            margin: var(--space-sm) 0;
         }
         
         .report-actions {
             display: flex;
-            gap: 10px;
+            gap: var(--space-sm);
             justify-content: center;
-            margin-top: 20px;
+            margin-top: var(--space-lg);
         }
         
         .btn-secondary {
-            background: var(--gray);
+            background: var(--text-secondary);
         }
         
         .btn-secondary:hover {
-            background: var(--dark);
-        }
-        
-        @media (max-width: 768px) {
-            .report-format-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .modal-content {
-                width: 95%;
-                margin: 10% auto;
-                padding: 20px;
-            }
+            background: var(--text-primary);
         }
 
         /* ========================================
-           RESPONSIVE STYLES
+           RESPONSIVE DESIGN
            ======================================== */
         @media (max-width: 768px) {
             .client-header { 
                 flex-direction: column;
-                gap: 15px;
-                padding: 15px 20px;
+                gap: var(--space-md);
+                padding: var(--space-md);
             }
             
             .brand-section {
@@ -785,7 +955,7 @@ $projects = $stmt->fetchAll();
             .header-right {
                 width: 100%;
                 flex-direction: column;
-                gap: 12px;
+                gap: var(--space-sm);
             }
             
             .user-info {
@@ -799,8 +969,16 @@ $projects = $stmt->fetchAll();
             }
             
             .main-content { 
-                padding: 0 15px;
-                margin: 20px auto;
+                padding: var(--space-md);
+            }
+            
+            .dashboard-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .proposals-grid,
+            .projects-grid {
+                grid-template-columns: 1fr;
             }
             
             .actions-bar {
@@ -810,6 +988,16 @@ $projects = $stmt->fetchAll();
             .actions-bar .btn {
                 width: 100%;
                 justify-content: center;
+            }
+            
+            .report-format-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: var(--space-lg);
             }
         }
     </style>
@@ -832,10 +1020,6 @@ $projects = $stmt->fetchAll();
                     <div class="user-name"><?php echo htmlspecialchars($client_name); ?></div>
                     <div class="user-email"><?php echo htmlspecialchars($client_email); ?></div>
                 </div>
-            </div>
-            <div class="live-indicator">
-                <div class="live-dot"></div>
-                <span>LIVE</span>
             </div>
             <a href="client_logout.php" class="logout-btn">
                 <i class="fas fa-sign-out-alt"></i> Logout
@@ -861,6 +1045,98 @@ $projects = $stmt->fetchAll();
             </div>
         </div>
 
+        <div class="dashboard-overview">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon primary">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="totalProposals"><?php echo count($proposals); ?></div>
+                    <div class="metric-label">Total Proposals</div>
+                    <div class="metric-change neutral">
+                        <i class="fas fa-circle"></i>
+                        <span>All submissions</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon success">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="activeProjects"><?php echo count($projects); ?></div>
+                    <div class="metric-label">Active Projects</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>In progress</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value" id="pendingProposals">
+                        <?php 
+                            $pending = array_filter($proposals, function($p) { 
+                                return ($p['status'] ?? 'pending') === 'pending'; 
+                            });
+                            echo count($pending);
+                        ?>
+                    </div>
+                    <div class="metric-label">Pending Review</div>
+                    <div class="metric-change neutral">
+                        <i class="fas fa-hourglass-half"></i>
+                        <span>Awaiting approval</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+
+                    <div class="metric-icon teal">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">
+                        <?php 
+                            if (count($projects) > 0) {
+                                $totalProgress = 0;
+                                foreach ($projects as $project) {
+                                    $totalTasks = (int)($project['total_tasks'] ?? 0);
+                                    $completedTasks = (int)($project['completed_tasks'] ?? 0);
+                                    // The calculation below is retained as a fallback if completion_percentage is not available
+                                    $progress = $totalTasks > 0 
+                                        ? round(($completedTasks / $totalTasks) * 100) 
+                                        : (int)($project['completion_percentage'] ?? 0);
+                                    $totalProgress += $progress;
+                                }
+                                echo round($totalProgress / count($projects)) . '%';
+                            } else {
+                                echo '0%';
+                            }
+                        ?>
+                    </div>
+                    <div class="metric-label">Avg. Completion</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Overall progress</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="actions-bar">
             <a href="client_submit_proposal.php" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Submit New Proposal
@@ -868,7 +1144,13 @@ $projects = $stmt->fetchAll();
         </div>
 
         <div class="proposals-section">
-            <h3><i class="fas fa-folder-open"></i> Your Project Proposals (<span id="proposalCount"><?php echo count($proposals); ?></span>)</h3>
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Your Project Proposals</span>
+                    <span class="section-count" id="proposalCount"><?php echo count($proposals); ?></span>
+                </div>
+            </div>
             
             <div id="proposalsContainer">
                 <?php if (empty($proposals)): ?>
@@ -909,7 +1191,13 @@ $projects = $stmt->fetchAll();
         </div>
 
         <div class="projects-section">
-            <h3><i class="fas fa-project-diagram"></i> Your Active Projects (<span id="projectCount"><?php echo count($projects); ?></span>)</h3>
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-project-diagram"></i>
+                    <span>Your Active Projects</span>
+                    <span class="section-count" id="projectCount"><?php echo count($projects); ?></span>
+                </div>
+            </div>
             
             <div id="projectsContainer">
                 <?php if (empty($projects)): ?>
@@ -924,9 +1212,7 @@ $projects = $stmt->fetchAll();
                             <?php
                                 $totalTasks = (int)($project['total_tasks'] ?? 0);
                                 $completedTasks = (int)($project['completed_tasks'] ?? 0);
-                                $progress = $totalTasks > 0 
-                                    ? round(($completedTasks / $totalTasks) * 100) 
-                                    : (int)($project['completion_percentage'] ?? 0);
+                                $progress = $project['completion_percentage'] ?? 0; // Use completion_percentage directly from database
                                 $status = $project['status'] ?? 'planning';
                             ?>
                             <div class="project-card" onclick="window.location.href='client_project_details.php?id=<?php echo $project['id']; ?>'">
@@ -966,7 +1252,6 @@ $projects = $stmt->fetchAll();
                                     <i class="fas fa-eye"></i> View Details
                                 </a>
                                 
-                                 <!-- CHANGE: Added Generate Report button -->
                                 <button class="generate-report-btn" onclick="generateReport(event, <?php echo $project['id']; ?>)">
                                     <i class="fas fa-file-pdf"></i> Generate Report
                                 </button>
@@ -978,7 +1263,6 @@ $projects = $stmt->fetchAll();
         </div>
     </div>
 
-    <!-- CHANGE: Added report generation modal -->
     <div id="reportModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeReportModal()">&times;</span>
@@ -986,11 +1270,6 @@ $projects = $stmt->fetchAll();
             <p>Select the format for your project report:</p>
             
             <div class="report-format-grid">
-                <button class="format-btn" onclick="generateReportFormat('pdf')">
-                    <i class="fas fa-file-pdf"></i>
-                    <span>PDF Report</span>
-                    <small>Professional formatted document</small>
-                </button>
                 <button class="format-btn" onclick="generateReportFormat('html')">
                     <i class="fas fa-file-code"></i>
                     <span>HTML Report</span>
@@ -1040,7 +1319,7 @@ $projects = $stmt->fetchAll();
             }
         };
 
-        console.log("[v0] Initial state loaded:", {
+        console.log("Initial state loaded:", {
             proposals: state.currentProposals.length,
             projects: state.currentProjects.length
         });
@@ -1049,7 +1328,7 @@ $projects = $stmt->fetchAll();
         // DATA FETCHING
         // ========================================
         async function fetchData(endpoint, type) {
-            console.log(`[v0] Fetching ${type} from ${endpoint}`);
+            console.log(`Fetching ${type} from ${endpoint}`);
             
             try {
                 const response = await fetch(endpoint, {
@@ -1058,14 +1337,14 @@ $projects = $stmt->fetchAll();
                     headers: { 'Accept': 'application/json' }
                 });
                 
-                console.log(`[v0] Response status for ${type}:`, response.status);
+                console.log(`Response status for ${type}:`, response.status);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const data = await response.json();
-                console.log(`[v0] Received ${type} data:`, data);
+                console.log(` Received ${type} data:`, data);
                 
                 if (data.success) {
                     if (type === 'proposals') {
@@ -1075,10 +1354,10 @@ $projects = $stmt->fetchAll();
                     }
                     updateLastUpdatedTime();
                 } else {
-                    console.error(`[v0] ${type} fetch failed:`, data.error);
+                    console.error(`${type} fetch failed:`, data.error);
                 }
             } catch (error) {
-                console.error(`[v0] Error fetching ${type}:`, error);
+                console.error(`Error fetching ${type}:`, error);
                 retryFetch(type);
             }
         }
@@ -1100,7 +1379,7 @@ $projects = $stmt->fetchAll();
         // UI UPDATE FUNCTIONS
         // ========================================
         function updateProposalsUI(newProposals) {
-            console.log("[v0] Updating proposals UI:", newProposals.length);
+            console.log("Updating proposals UI:", newProposals.length);
             
             const changes = detectChanges(state.currentProposals, newProposals, 'proposal');
             
@@ -1115,11 +1394,16 @@ $projects = $stmt->fetchAll();
             
             state.isFirstLoad = false;
             updateCount('proposalCount', newProposals.length);
+            document.getElementById('totalProposals').textContent = newProposals.length;
+            
+            const pendingCount = newProposals.filter(p => p.status === 'pending').length;
+            document.getElementById('pendingProposals').textContent = pendingCount;
+
         }
 
         function updateProjectsUI(newProjects) {
-            console.log("[v0] Updating projects UI:", newProjects.length);
-            console.log("[v0] Current projects:", state.currentProjects.length);
+            console.log("Updating projects UI:", newProjects.length);
+            console.log("Current projects:", state.currentProjects.length);
             
             const changes = detectChanges(state.currentProjects, newProjects, 'project');
             
@@ -1132,6 +1416,23 @@ $projects = $stmt->fetchAll();
             
             state.currentProjects = newProjects;
             updateCount('projectCount', newProjects.length);
+            document.getElementById('activeProjects').textContent = newProjects.length;
+
+            // Update Avg. Completion metric
+            let totalProgress = 0;
+            if (newProjects.length > 0) {
+                newProjects.forEach(project => {
+                    const totalTasks = parseInt(project.total_tasks) || 0;
+                    const completedTasks = parseInt(project.completed_tasks) || 0;
+                    const progress = totalTasks > 0 
+                        ? Math.round((completedTasks / totalTasks) * 100) 
+                        : parseInt(project.completion_percentage) || 0;
+                    totalProgress += progress;
+                });
+                document.querySelector('.dashboard-overview .metric-card:last-child .metric-value').textContent = `${Math.round(totalProgress / newProjects.length)}%`;
+            } else {
+                document.querySelector('.dashboard-overview .metric-card:last-child .metric-value').textContent = '0%';
+            }
         }
 
 
@@ -1145,6 +1446,8 @@ $projects = $stmt->fetchAll();
                 hasChanges: false,
                 type: type
             };
+            
+            const oldIds = new Set(oldData.map(item => item.id));
             
             newData.forEach(newItem => {
                 const oldItem = oldData.find(old => old.id === newItem.id);
@@ -1223,7 +1526,7 @@ $projects = $stmt->fetchAll();
         }
 
         function renderProjects(projects, changes) {
-            console.log("[v0] Rendering projects:", projects.length);
+            console.log("Rendering projects:", projects.length);
             const container = document.getElementById('projectsContainer');
             
             if (projects.length === 0) {
@@ -1263,7 +1566,7 @@ $projects = $stmt->fetchAll();
         function createProjectCard(project, changes) {
             const totalTasks = parseInt(project.total_tasks) || 0;
             const completedTasks = parseInt(project.completed_tasks) || 0;
-            const progress = project.progress || 0;
+            const progress = parseInt(project.completion_percentage) || 0;
             const status = project.status || 'planning';
             const isUpdated = changes && (
                 changes.statusChanges.some(c => c.id === project.id) ||
@@ -1352,16 +1655,23 @@ $projects = $stmt->fetchAll();
         }
 
         function capitalize(str) {
+            if (!str) return '';
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
         function formatDate(dateString) {
             if (!dateString) return '';
-            return new Date(dateString).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-            });
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+            } catch (e) {
+                console.error("Error formatting date:", dateString, e);
+                return '';
+            }
         }
 
         function getEmptyState(type) {
@@ -1426,11 +1736,14 @@ $projects = $stmt->fetchAll();
             document.getElementById('reportModal').style.display = 'block';
             document.getElementById('reportProgress').style.display = 'none';
             document.getElementById('reportResult').style.display = 'none';
+            document.getElementById('reportResult').innerHTML = ''; // Clear previous results
         }
         
         function closeReportModal() {
             document.getElementById('reportModal').style.display = 'none';
             currentProjectId = null;
+            document.getElementById('reportProgress').style.display = 'none';
+            document.getElementById('reportResult').style.display = 'none';
         }
         
         async function generateReportFormat(format) {
@@ -1441,14 +1754,20 @@ $projects = $stmt->fetchAll();
             
             progressDiv.style.display = 'block';
             resultDiv.style.display = 'none';
+            resultDiv.innerHTML = ''; // Clear previous results
             
             try {
-                console.log('[v0] Generating report for project:', currentProjectId, 'format:', format);
+                console.log('Generating report for project:', currentProjectId, 'format:', format);
                 const response = await fetch(`generate_report.php?project_id=${currentProjectId}&format=${format}`);
-                console.log('[v0] Response status:', response.status);
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+                }
                 
                 const data = await response.json();
-                console.log('[v0] Response data:', data);
+                console.log('Response data:', data);
                 
                 progressDiv.style.display = 'none';
                 resultDiv.style.display = 'block';
@@ -1491,7 +1810,7 @@ $projects = $stmt->fetchAll();
                     `;
                 }
             } catch (error) {
-                console.error('[v0] Report generation error:', error);
+                console.error('Report generation error:', error);
                 progressDiv.style.display = 'none';
                 resultDiv.style.display = 'block';
                 resultDiv.innerHTML = `
@@ -1521,6 +1840,7 @@ $projects = $stmt->fetchAll();
             if (document.hidden) {
                 stopPolling();
             } else {
+                // Re-fetch and restart polling when tab becomes visible
                 fetchData('fetch_client_proposals_data.php', 'proposals');
                 fetchData('fetch_client_projects_data.php', 'projects');
                 startPolling();
