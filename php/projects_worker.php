@@ -9,25 +9,47 @@ $user_id = $_SESSION['user_id'];
 $stmt = $pdo->prepare("
     SELECT p.*, 
            u.name as creator_name,
+           c.name as client_name,
            COUNT(DISTINCT t.id) as total_tasks,
            SUM(CASE WHEN t.progress = 100 THEN 1 ELSE 0 END) as completed_tasks,
            AVG(t.progress) as avg_progress
     FROM project_assignments pa 
     JOIN projects p ON pa.project_id = p.id
     JOIN users u ON p.created_by = u.id
-    LEFT JOIN tasks t ON t.project_id = p.id AND t.assigned_to = ?
+    LEFT JOIN clients c ON p.client_id = c.id
+    LEFT JOIN tasks t ON t.project_id = p.id
     WHERE pa.user_id = ?
-    GROUP BY p.id, u.name
-    ORDER BY p.created_at DESC
+    GROUP BY p.id, u.name, c.name
+    ORDER BY p.last_activity_at DESC
 ");
-$stmt->execute([$user_id, $user_id]);
+$stmt->execute([$user_id]);
 $projects = $stmt->fetchAll();
 
-// Calculate statistics
+function determineProjectStatus($project) {
+    $status = strtolower($project['status'] ?? 'unknown');
+    return $status;
+}
+
+// Update project statuses based on database status
+foreach ($projects as &$project) {
+    $project['display_status'] = determineProjectStatus($project);
+    $project['db_status'] = strtolower($project['status'] ?? 'unknown');
+}
+
+// Calculate statistics based on database status
 $totalProjects = count($projects);
-$activeProjects = count(array_filter($projects, function($p) { return strtolower($p['status']) === 'active'; }));
-$completedProjects = count(array_filter($projects, function($p) { return strtolower($p['status']) === 'completed'; }));
-$onHoldProjects = count(array_filter($projects, function($p) { return strtolower($p['status']) === 'on-hold'; }));
+$activeProjects = count(array_filter($projects, function($p) { return $p['db_status'] === 'ongoing'; }));
+$completedProjects = count(array_filter($projects, function($p) { return $p['db_status'] === 'completed'; }));
+$onHoldProjects = count(array_filter($projects, function($p) { return $p['db_status'] === 'on-hold'; }));
+
+// Get overdue projects
+$overdue_projects = 0;
+$today = date('Y-m-d');
+foreach ($projects as $p) {
+    if ($p['end_date'] && $p['end_date'] < $today && $p['db_status'] !== 'completed') {
+        $overdue_projects++;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,232 +61,461 @@ $onHoldProjects = count(array_filter($projects, function($p) { return strtolower
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
+        :root {
+            --navy-blue: #1e3a5f;
+            --navy-dark: #152d47;
+            --primary-teal: #0d9488;
+            --primary-teal-dark: #0f766e;
+            --primary-teal-light: #14b8a6;
+            --light-bg: #f8f9fa;
+            --white: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --border-color: #e0e6ed;
         }
 
-        .project-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        body {
+            background: var(--light-bg);
+            color: var(--text-primary);
+        }
+
+        .page-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 24px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .page-header-content h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+        }
+
+        .page-header-content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .page-header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-header {
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
             transition: all 0.3s ease;
-            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-header-primary {
+            background: var(--primary-teal);
+            color: var(--white);
+            border: 1px solid var(--primary-teal);
+        }
+
+        .btn-header-primary:hover {
+            background: var(--primary-teal-dark);
+            border-color: var(--primary-teal-dark);
+            color: var(--white);
+        }
+
+        .btn-header-outline {
+            background: var(--white);
+            color: var(--primary-teal);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-header-outline:hover {
+            background: var(--light-bg);
+            border-color: var(--primary-teal);
+        }
+
+        .filter-section {
+            background: var(--white);
+            padding: 20px 32px;
+            margin-bottom: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary-teal);
+            color: var(--primary-teal);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-teal);
+            color: var(--white);
+            border-color: var(--primary-teal);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+            padding: 0 32px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
-            border-left: 4px solid var(--primary);
+            gap: 12px;
         }
 
-        .project-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        }
-
-        .project-card.status-active {
-            border-left-color: var(--success);
-        }
-
-        .project-card.status-completed {
-            border-left-color: var(--primary);
-        }
-
-        .project-card.status-on-hold {
-            border-left-color: var(--warning);
-        }
-
-        .project-card-header {
-            padding: 20px 20px 15px 20px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .project-card-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--dark);
-            margin: 0 0 8px 0;
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            font-size: 20px;
         }
 
-        .project-id {
+        .stat-icon-primary {
+            background: rgba(13, 148, 136, 0.1);
+            color: var(--primary-teal);
+        }
+
+        .stat-icon-success {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon-warning {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon-danger {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
             font-size: 13px;
-            color: var(--gray);
+            color: var(--text-secondary);
             font-weight: 500;
         }
 
-        .card-body {
+        .projects-container {
+            padding: 0 32px;
+            margin-bottom: 32px;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .project-card {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .project-card-header {
             padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .project-card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
             flex: 1;
         }
 
-        .project-description {
-            color: var(--gray);
-            line-height: 1.6;
-            margin-bottom: 20px;
-            font-size: 14px;
+        .project-status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .status-ongoing {
+            background: rgba(13, 148, 136, 0.1);
+            color: var(--primary-teal);
+        }
+
+        .status-completed {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+
+        .status-on-hold {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+
+        .status-planning {
+            background: rgba(108, 117, 125, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .project-card-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .project-meta {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 8px;
+            font-size: 13px;
         }
 
         .meta-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 14px;
-            color: var(--gray);
+            gap: 8px;
+            color: var(--text-secondary);
         }
 
         .meta-item i {
-            width: 18px;
-            color: var(--primary);
+            width: 16px;
             text-align: center;
+            color: var(--primary-teal);
         }
 
-        .meta-item strong {
-            color: var(--dark);
-        }
-
-        .project-progress-section {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .progress-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            font-size: 13px;
         }
 
         .progress-label {
-            font-size: 13px;
             font-weight: 600;
-            color: var(--dark);
+            color: var(--text-primary);
         }
 
-        .progress-percentage {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--primary);
+        .progress-value {
+            color: var(--text-secondary);
+            font-weight: 500;
         }
 
-        .progress-bar-wrapper {
+        .progress-bar-container {
+            width: 100%;
             height: 8px;
-            background: #e0e0e0;
+            background: #e9ecef;
             border-radius: 4px;
             overflow: hidden;
-            margin-bottom: 10px;
         }
 
         .progress-bar-fill {
             height: 100%;
+            background: linear-gradient(90deg, var(--primary-teal), var(--primary-teal-light));
             border-radius: 4px;
             transition: width 0.3s ease;
         }
 
-        .task-summary {
+        .deadline-section {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
             display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--gray);
+            align-items: center;
+            gap: 8px;
         }
 
-        .project-actions {
+        .deadline-on-track {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+
+        .deadline-at-risk {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+
+        .deadline-overdue {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        .project-card-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
             display: flex;
             gap: 8px;
-            padding: 15px 20px;
-            border-top: 1px solid #f0f0f0;
-            background: #fafafa;
         }
 
-        .status-badge {
-            padding: 5px 12px;
-            border-radius: 12px;
-            font-size: 11px;
+        .btn-small {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
         }
 
-        .status-active { background-color: #d1ecf1; color: #0c5460; }
-        .status-completed { background-color: #d4edda; color: #155724; }
-        .status-pending { background-color: #fff3cd; color: #856404; }
-        .status-on-hold { background-color: #f8d7da; color: #721c24; }
+        .btn-small:hover {
+            background: var(--primary-teal);
+            color: var(--white);
+            border-color: var(--primary-teal);
+        }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            background: white;
+            padding: 60px 32px;
+            background: var(--white);
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .empty-state i {
-            font-size: 64px;
-            color: var(--gray);
-            margin-bottom: 20px;
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+            color: var(--text-secondary);
         }
 
-        .empty-state h3 {
-            font-size: 24px;
+        .empty-state-title {
+            font-size: 18px;
             font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 10px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
         }
 
-        .empty-state p {
-            color: var(--gray);
-            margin-bottom: 20px;
-        }
-
-        .filter-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-tab {
-            padding: 8px 16px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            border-radius: 8px;
+        .empty-state-text {
             font-size: 14px;
-            font-weight: 500;
-            color: var(--gray);
-            cursor: pointer;
-            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
         }
 
-        .filter-tab:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .filter-tab.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
+        .auto-refresh-info {
+            text-align: center;
+            padding: 12px;
+            background: rgba(13, 148, 136, 0.05);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 24px;
+            margin-left: 32px;
+            margin-right: 32px;
         }
 
         @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .page-header-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .btn-header {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .filter-section,
+            .projects-container,
+            .stats-grid,
+            .auto-refresh-info {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
             .projects-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
             }
-            
-            .project-actions {
-                flex-wrap: wrap;
+
+            .filter-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -302,179 +553,202 @@ $onHoldProjects = count(array_filter($projects, function($p) { return strtolower
 
     <!-- Main Content -->
     <div class="main-content">
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div>
-                <h1 class="page-title">My Projects</h1>
-                <p class="page-description">View and manage your assigned construction projects</p>
+        <!-- Updated page header with new design matching projects_list.php -->
+        <div class="page-header">
+            <div class="page-header-content">
+                <h1><i class="fas fa-project-diagram"></i> My Projects</h1>
+                <p>View and manage your assigned construction projects</p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="dashboard_worker.php" class="btn btn-outline-primary">
+            <div class="page-header-actions">
+                <a href="dashboard_worker.php" class="btn-header btn-header-outline">
                     <i class="fas fa-arrow-left"></i> Back to Dashboard
                 </a>
-                <a href="tasks_worker.php" class="btn btn-primary">
+                <a href="tasks_worker.php" class="btn-header btn-header-primary">
                     <i class="fas fa-tasks"></i> View My Tasks
                 </a>
             </div>
         </div>
 
         <!-- Statistics Overview -->
-        <div class="stats-container">
+        <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon stat-icon-primary"><i class="fas fa-project-diagram"></i></div>
                 <div class="stat-value"><?php echo number_format($totalProjects); ?></div>
-                <div class="stat-label">TOTAL PROJECTS</div>
-                <div class="stat-change positive">Assigned to you</div>
+                <div class="stat-label">Total Projects</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon stat-icon-success"><i class="fas fa-play-circle"></i></div>
+                <div class="stat-icon stat-icon-success"><i class="fas fa-spinner"></i></div>
                 <div class="stat-value"><?php echo number_format($activeProjects); ?></div>
-                <div class="stat-label">ACTIVE PROJECTS</div>
-                <div class="stat-change positive">In progress</div>
+                <div class="stat-label">Ongoing</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon stat-icon-accent"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-icon stat-icon-warning"><i class="fas fa-check-circle"></i></div>
                 <div class="stat-value"><?php echo number_format($completedProjects); ?></div>
-                <div class="stat-label">COMPLETED</div>
-                <div class="stat-change positive">Finished</div>
+                <div class="stat-label">Completed</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon stat-icon-secondary"><i class="fas fa-pause-circle"></i></div>
-                <div class="stat-value"><?php echo number_format($onHoldProjects); ?></div>
-                <div class="stat-label">ON HOLD</div>
-                <div class="stat-change negative">Paused</div>
+                <div class="stat-icon stat-icon-danger"><i class="fas fa-exclamation-circle"></i></div>
+                <div class="stat-value"><?php echo number_format($overdue_projects); ?></div>
+                <div class="stat-label">Overdue</div>
             </div>
         </div>
 
         <!-- Filter Tabs -->
-        <div class="filter-tabs">
-            <button class="filter-tab active" data-filter="all">
-                All Projects (<?php echo $totalProjects; ?>)
-            </button>
-            <button class="filter-tab" data-filter="active">
-                Active (<?php echo $activeProjects; ?>)
-            </button>
-            <button class="filter-tab" data-filter="completed">
-                Completed (<?php echo $completedProjects; ?>)
-            </button>
-            <button class="filter-tab" data-filter="on-hold">
-                On Hold (<?php echo $onHoldProjects; ?>)
-            </button>
+        <!-- Updated filter section with new styling -->
+        <div class="filter-section">
+            <span class="filter-label">Filter by Status:</span>
+            <button class="filter-btn active" onclick="filterProjects('all')">All Projects (<?php echo $totalProjects; ?>)</button>
+            <button class="filter-btn" onclick="filterProjects('ongoing')">Ongoing (<?php echo $activeProjects; ?>)</button>
+            <button class="filter-btn" onclick="filterProjects('completed')">Completed (<?php echo $completedProjects; ?>)</button>
+            <button class="filter-btn" onclick="filterProjects('on-hold')">On Hold (<?php echo $onHoldProjects; ?>)</button>
         </div>
 
         <!-- Projects Grid -->
-        <?php if (!empty($projects)): ?>
-            <div class="projects-grid">
-                <?php foreach ($projects as $p): ?>
-                    <?php 
-                    $statusClass = strtolower(str_replace(' ', '-', $p['status'] ?? 'unknown'));
-                    $avgProgress = round($p['avg_progress'] ?? 0);
-                    $totalTasks = (int)($p['total_tasks'] ?? 0);
-                    $completedTasks = (int)($p['completed_tasks'] ?? 0);
-                    
-                    $progressColor = $avgProgress == 100 ? 'var(--success)' : ($avgProgress > 50 ? 'var(--primary)' : 'var(--warning)');
-                    ?>
-                    <div class="project-card status-<?php echo $statusClass; ?>" data-status="<?php echo $statusClass; ?>">
-                        <div class="project-card-header">
-                            <div class="project-card-title">
-                                <span><?php echo htmlspecialchars($p['name'] ?? 'Untitled Project'); ?></span>
-                                <span class="status-badge status-<?php echo $statusClass; ?>">
-                                    <?php echo htmlspecialchars($p['status'] ?? 'Unknown'); ?>
+        <div class="projects-container">
+            <?php if (!empty($projects)): ?>
+                <div class="projects-grid" id="projectsGrid">
+                    <?php foreach ($projects as $p): ?>
+                        <?php 
+                        // Calculate progress
+                        if ($p['total_tasks'] > 0) {
+                            $progress = round(($p['completed_tasks'] / $p['total_tasks']) * 100);
+                        } else {
+                            $progress = (int)($p['completion_percentage'] ?? 0);
+                        }
+
+                        // Determine deadline status
+                        $deadline_status = 'on-track';
+                        $deadline_text = 'On Track';
+                        $deadline_icon = 'fa-check-circle';
+                        
+                        if ($p['end_date']) {
+                            $end_date = new DateTime($p['end_date']);
+                            $today = new DateTime();
+                            $days_remaining = $today->diff($end_date)->days;
+                            $is_overdue = $today > $end_date;
+
+                            if ($is_overdue && $p['db_status'] !== 'completed') {
+                                $deadline_status = 'overdue';
+                                $deadline_text = 'Overdue by ' . $days_remaining . ' days';
+                                $deadline_icon = 'fa-exclamation-circle';
+                            } elseif ($days_remaining <= 7 && $p['db_status'] === 'ongoing') {
+                                $deadline_status = 'at-risk';
+                                $deadline_text = 'Due in ' . $days_remaining . ' days';
+                                $deadline_icon = 'fa-clock';
+                            } else {
+                                $deadline_text = 'Due ' . $end_date->format('M d, Y');
+                            }
+                        } else {
+                            $deadline_text = 'No deadline set';
+                        }
+                        ?>
+                        <!-- Updated project card design with new layout and styling -->
+                        <div class="project-card" data-status="<?php echo $p['db_status']; ?>">
+                            <div class="project-card-header">
+                                <h3 class="project-card-title"><?php echo htmlspecialchars($p['name'] ?? 'Untitled Project'); ?></h3>
+                                <span class="project-status-badge status-<?php echo htmlspecialchars($p['db_status']); ?>">
+                                    <?php echo ucfirst(str_replace('-', ' ', $p['db_status'])); ?>
                                 </span>
                             </div>
-                            <div class="project-id">Project #<?php echo (int)$p['id']; ?></div>
-                        </div>
-                        
-                        <div class="card-body">
-                            <p class="project-description">
-                                <?php echo htmlspecialchars($p['description'] ?? 'No description available'); ?>
-                            </p>
-                            
-                            <?php if ($totalTasks > 0): ?>
-                            <div class="project-progress-section">
-                                <div class="progress-header">
-                                    <span class="progress-label">Overall Progress</span>
-                                    <span class="progress-percentage"><?php echo $avgProgress; ?>%</span>
+
+                            <div class="project-card-body">
+                                <div class="project-meta">
+                                    <?php if ($p['client_name']): ?>
+                                        <div class="meta-item">
+                                            <i class="fas fa-building"></i>
+                                            <span><?php echo htmlspecialchars($p['client_name']); ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="meta-item">
+                                        <i class="fas fa-user"></i>
+                                        <span><?php echo htmlspecialchars($p['creator_name'] ?? 'Unknown'); ?></span>
+                                    </div>
+                                    <?php if ($p['priority']): ?>
+                                        <div class="meta-item">
+                                            <i class="fas fa-flag"></i>
+                                            <span><?php echo ucfirst($p['priority']); ?> Priority</span>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="progress-bar-wrapper">
-                                    <div class="progress-bar-fill" style="width: <?php echo $avgProgress; ?>%; background: <?php echo $progressColor; ?>;"></div>
-                                </div>
-                                <div class="task-summary">
-                                    <span><?php echo $completedTasks; ?> of <?php echo $totalTasks; ?> tasks completed</span>
-                                    <span><?php echo $totalTasks - $completedTasks; ?> remaining</span>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <div class="project-meta">
-                                <div class="meta-item">
-                                    <i class="fas fa-user"></i>
-                                    <span>Project Manager: <strong><?php echo htmlspecialchars($p['creator_name'] ?? 'Unknown'); ?></strong></span>
-                                </div>
-                                <div class="meta-item">
-                                    <i class="fas fa-calendar"></i>
-                                    <span>Created: <strong><?php echo date('M j, Y', strtotime($p['created_at'])); ?></strong></span>
-                                </div>
-                                <?php if (!empty($p['location'])): ?>
-                                <div class="meta-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <span>Location: <strong><?php echo htmlspecialchars($p['location']); ?></strong></span>
+
+                                <?php if ($p['total_tasks'] > 0): ?>
+                                <div class="progress-section">
+                                    <div class="progress-header">
+                                        <span class="progress-label">Progress</span>
+                                        <span class="progress-value"><?php echo $progress; ?>%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" style="width: <?php echo $progress; ?>%"></div>
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">
+                                        <?php echo $p['completed_tasks']; ?> of <?php echo $p['total_tasks']; ?> tasks completed
+                                    </div>
                                 </div>
                                 <?php endif; ?>
-                                <div class="meta-item">
-                                    <i class="fas fa-tasks"></i>
-                                    <span>Your Tasks: <strong><?php echo $totalTasks; ?> assigned</strong></span>
+
+                                <div class="deadline-section deadline-<?php echo $deadline_status; ?>">
+                                    <i class="fas <?php echo $deadline_icon; ?>"></i>
+                                    <span><?php echo $deadline_text; ?></span>
                                 </div>
                             </div>
+
+                            <div class="project-card-footer">
+                                <a href="tasks_worker.php?project=<?php echo $p['id']; ?>" class="btn-small">
+                                    <i class="fas fa-tasks"></i> View Tasks
+                                </a>
+                                <a href="projects_details.php?id=<?php echo $p['id']; ?>" class="btn-small">
+                                    <i class="fas fa-eye"></i> Details
+                                </a>
+                            </div>
                         </div>
-                        
-                        <div class="project-actions">
-                            <a href="tasks_worker.php?project=<?php echo $p['id']; ?>" class="btn btn-sm btn-primary flex-fill">
-                                <i class="fas fa-tasks"></i> View Tasks
-                            </a>
-                            <a href="projects_details.php?id=<?php echo $p['id']; ?>" class="btn btn-sm btn-outline-primary flex-fill">
-                                <i class="fas fa-info-circle"></i> Details
-                            </a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php else: ?>
-            <div class="empty-state">
-                <i class="fas fa-project-diagram"></i>
-                <h3>No Projects Assigned</h3>
-                <p>You don't have any projects assigned to you yet. Check back later or contact your project manager.</p>
-                <a href="dashboard_worker.php" class="btn btn-primary">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
-                </a>
-            </div>
-        <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                    <div class="empty-state-title">No Projects Assigned</div>
+                    <div class="empty-state-text">You don't have any projects assigned to you yet. Check back later or contact your project manager.</div>
+                    <a href="dashboard_worker.php" class="btn-small" style="max-width: 200px; margin: 0 auto;">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="auto-refresh-info">
+            <i class="fas fa-sync-alt"></i> This page auto-refreshes every 5 minutes
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Filter functionality
-        const filterTabs = document.querySelectorAll('.filter-tab');
-        const projectCards = document.querySelectorAll('.project-card');
+        function filterProjects(status) {
+            const cards = document.querySelectorAll('.project-card');
+            const buttons = document.querySelectorAll('.filter-btn');
 
-        filterTabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                const filter = this.getAttribute('data-filter');
-                
-                // Update active tab
-                filterTabs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Filter projects
-                projectCards.forEach(card => {
-                    const status = card.getAttribute('data-status');
-                    
-                    if (filter === 'all' || status === filter) {
-                        card.style.display = '';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
+            // Update active button
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Filter cards based on database status
+            cards.forEach(card => {
+                if (status === 'all' || card.dataset.status === status) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
             });
+        }
+
+        // Auto-refresh every 5 minutes
+        setInterval(function() {
+            location.reload();
+        }, 5 * 60 * 1000);
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[v0] Worker Projects Dashboard loaded');
         });
     </script>
 </body>

@@ -21,7 +21,6 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
-    $budget = trim($_POST['budget'] ?? '');
     $start_date = trim($_POST['start_date'] ?? '');
     $end_date = trim($_POST['end_date'] ?? '');
 
@@ -552,7 +551,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <ul>
                         <li>Provide a clear and descriptive project title</li>
                         <li>Include detailed project description with scope and objectives</li>
-                        <li>Specify your budget constraints and project timeline dates</li>
+                        <li>Specify your project timeline dates</li>
                         <li>Mention any specific materials, techniques, or standards required</li>
                     </ul>
                 </div>
@@ -638,25 +637,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-
+                    <!-- removed budget field section -->
                     <div class="form-section">
                         <h3 class="form-section-title">
-                            <i class="fas fa-calendar-alt"></i> Budget & Timeline
+                            <i class="fas fa-calendar-alt"></i> Timeline
                         </h3>
-                        <div class="form-group">
-                            <label for="budget">
-                                <i class="fas fa-dollar-sign label-icon"></i> Estimated Budget
-                            </label>
-                            <input 
-                                type="number" 
-                                id="budget" 
-                                name="budget" 
-                                placeholder="Enter estimated budget" 
-                                min="0" 
-                                step="0.01"
-                            >
-                            <small><i class="fas fa-info-circle"></i> Optional - helps us provide accurate proposals</small>
-                        </div>
                         
                         <div class="form-row">
                             <div class="form-group">

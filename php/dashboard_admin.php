@@ -1,8 +1,11 @@
 <?php
 require_once("auth_check.php");
-// Ensure requireRole is defined in auth_check.php
 requireRole("admin");
 require_once("../config/db.php");
+
+$pageTitle = "Admin Dashboard";
+$pageDescription = "Welcome back! Here's an overview of your construction management system.";
+$pageActions = '<a href="dashboard_admin.php" class="btn btn-primary" title="Refresh dashboard data"><i class="fas fa-sync-alt"></i> Refresh</a>';
 
 // Add error handling and debugging
 try {
@@ -40,40 +43,46 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - BuildWatch</title>
+    <title><?php echo htmlspecialchars($pageTitle); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Additional dashboard-specific styles */
+        /* Enhanced HCI principles: improved visual hierarchy, feedback, and accessibility */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
+            gap: var(--space-xl);
+            margin-top: var(--space-lg);
         }
 
         .card {
-            background: white;
-            border-radius: 12px;
+            background: var(--white);
+            border-radius: var(--radius-lg);
             padding: 0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-normal);
             overflow: hidden;
+            border: 1px solid #f0f0f0;
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: #e0e0e0;
+        }
+
+        .card:focus-within {
+            box-shadow: 0 0 0 3px rgba(10, 99, 165, 0.1);
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 20px 15px 20px;
-            border-bottom: 1px solid #f0f0f0;
-            background: white;
+            padding: var(--space-lg);
+            border-bottom: 2px solid #f5f5f5;
+            background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
         }
 
         .card-title {
@@ -83,7 +92,7 @@ try {
             margin: 0;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: var(--space-sm);
         }
 
         .card-body {
@@ -93,13 +102,19 @@ try {
         .project-item, .task-item {
             display: flex;
             align-items: flex-start;
-            padding: 15px 20px;
+            padding: var(--space-md) var(--space-lg);
             border-bottom: 1px solid #f8f9fa;
-            transition: background-color 0.2s ease;
+            transition: background-color var(--transition-fast);
+            cursor: pointer;
         }
 
         .project-item:hover, .task-item:hover {
             background-color: #f8f9fa;
+        }
+
+        .project-item:focus-within, .task-item:focus-within {
+            background-color: rgba(10, 99, 165, 0.05);
+            outline: 2px solid transparent;
         }
 
         .project-item:last-child, .task-item:last-child {
@@ -110,9 +125,10 @@ try {
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            margin-right: 15px;
+            margin-right: var(--space-md);
             margin-top: 5px;
             flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .project-info, .task-info {
@@ -136,15 +152,15 @@ try {
             position: relative;
             background-color: #f0f0f0;
             height: 6px;
-            border-radius: 3px;
-            margin-top: 8px;
+            border-radius: var(--radius-sm);
+            margin-top: var(--space-sm);
             overflow: hidden;
         }
 
         .progress-bar {
             height: 100%;
-            border-radius: 3px;
-            transition: width 0.3s ease;
+            border-radius: var(--radius-sm);
+            transition: width var(--transition-normal);
         }
 
         .progress-text {
@@ -157,8 +173,14 @@ try {
         }
 
         .task-checkbox {
-            margin-right: 15px;
+            margin-right: var(--space-md);
             margin-top: 3px;
+            cursor: pointer;
+        }
+
+        .task-checkbox:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
         .status-badge {
@@ -168,6 +190,7 @@ try {
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            display: inline-block;
         }
 
         .status-pending { background-color: #fff3cd; color: #856404; }
@@ -175,112 +198,68 @@ try {
         .status-rejected { background-color: #f8d7da; color: #721c24; }
         .status-unknown { background-color: #e2e3e5; color: #495057; }
 
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 4px;
-        }
-
         .text-center {
             text-align: center;
         }
 
-        .p-20 {
-            padding: 20px;
-        }
-
-        /* Debug info styling */
-        .debug-info {
-            font-size: 11px;
+        .empty-state {
+            padding: var(--space-2xl) var(--space-lg);
+            text-align: center;
             color: var(--gray);
-            line-height: 1.4;
-            text-align: left;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 10px;
         }
 
-        .debug-info br {
-            margin-bottom: 3px;
+        .empty-state-icon {
+            font-size: 48px;
+            color: #d0d0d0;
+            margin-bottom: var(--space-md);
         }
 
-        /* Responsive adjustments */
+        .empty-state-text {
+            font-size: 14px;
+            margin-bottom: var(--space-md);
+        }
+
+        .empty-state-action {
+            font-size: 12px;
+            color: var(--primary);
+        }
+
+        /* Improved button styling for better visual feedback */
+        .btn-outline {
+            border: 1px solid #d0d0d0;
+            color: var(--dark);
+            background: var(--white);
+        }
+
+        .btn-outline:hover {
+            background: #f5f5f5;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Responsive adjustments using CSS variables */
         @media (max-width: 768px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: var(--space-lg);
             }
             
             .card-header {
-                padding: 15px;
+                padding: var(--space-md);
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-sm);
             }
             
             .project-item, .task-item {
-                padding: 12px 15px;
+                padding: var(--space-sm) var(--space-md);
             }
         }
-
-        /* Stats container improvements */
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
-
-        .stat-icon-primary { background: rgba(10, 99, 165, 0.1); color: var(--primary); }
-        .stat-icon-success { background: rgba(46, 204, 113, 0.1); color: var(--success); }
-        .stat-icon-accent { background: rgba(212, 47, 19, 0.1); color: var(--accent); }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: bold;
-            margin: 5px 0;
-            color: var(--dark);
-        }
-
-        .stat-label {
-            color: var(--gray);
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .stat-change {
-            font-size: 12px;
-            margin-top: 5px;
-            font-weight: 500;
-        }
-
-        .positive { color: var(--success); }
-        .negative { color: var(--accent); }
-
-        /* Removed all alert-related CSS styles */
     </style>
 </head>
 <body class="sidebar-main-layout">
@@ -291,6 +270,7 @@ try {
 
         <div class="nav-section">
             <div class="nav-section-title">Admin Panel</div>
+            <a href="dashboard_admin.php" class="nav-item active" aria-current="page"><i class="fas fa-chart-line"></i> Dashboard</a>
             <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> Projects</a>
             <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
             <a href="proposals_review.php" class="nav-item"><i class="fas fa-lightbulb"></i> Proposals</a>
@@ -299,11 +279,12 @@ try {
 
         <div class="sidebar-footer">
             <div class="d-flex align-items-start gap-2 mb-3">
-                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 40px; height: 40px;">
+                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 40px; height: 40px;" aria-label="User avatar">
+                    <?php echo strtoupper(substr($_SESSION['name'] ?? 'A', 0, 1)); ?>
                 </div>
                 <div class="flex-grow-1">
                     <div class="text-white fw-semibold"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin'); ?></div>
-                    <small class="text-white-50"><?php echo htmlspecialchars($_SESSION['email'] ?? 'admin@example.com'); ?></small>
+                    <small class="text-white-50">Administrator</small>
                 </div>
             </div>
             <a href="logout.php" class="btn btn-light btn-sm w-100">
@@ -314,11 +295,11 @@ try {
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-start mb-4">
             <div>
-                <h1 class="page-title">Admin Dashboard</h1>
-                <p class="page-description">Welcome back! Here's an overview of your construction management system.</p>
+                <h1 class="page-title"><?php echo htmlspecialchars($pageTitle); ?></h1>
+                <p class="page-description"><?php echo htmlspecialchars($pageDescription); ?></p>
             </div>
             <div class="d-flex gap-2">
-                <a href="dashboard_admin.php" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh</a>
+                <?php echo $pageActions; ?>
             </div>
         </div>
         <div class="stats-container">
@@ -346,12 +327,12 @@ try {
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-lightbulb" style="color: var(--accent);"></i> Recent Proposals</h3>
-                    <a href="proposals_review.php" class="btn btn-outline-primary btn-sm">View All</a>
+                    <a href="proposals_review.php" class="btn btn-outline btn-sm">View All</a>
                 </div>
                 <div class="card-body">
                     <?php if (!empty($proposals)): ?>
                         <?php foreach ($proposals as $p): ?>
-                            <div class="project-item">
+                            <div class="project-item" role="article" tabindex="0">
                                 <div class="project-color" style="background-color: 
                                     <?php 
                                     switch($p['status']) {
@@ -360,8 +341,7 @@ try {
                                         case 'rejected': echo 'var(--accent)'; break;
                                         default: echo 'var(--gray)';
                                     }
-                                    ?>">
-                                </div>
+                                    ?>" aria-label="Status indicator"></div>
                                 <div class="project-info">
                                     <div class="project-item-title"><?php echo htmlspecialchars($p['title'] ?? 'Untitled Proposal'); ?></div>
                                     <div class="project-item-details">
@@ -385,9 +365,10 @@ try {
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="text-center p-4">
-                            <i class="fas fa-inbox fs-1 text-muted mb-3"></i>
-                            <p>No proposals found</p>
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                            <div class="empty-state-text">No proposals found</div>
+                            <div class="empty-state-action"><a href="proposals_review.php">Create a new proposal →</a></div>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -395,13 +376,13 @@ try {
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-tasks" style="color: var(--success);"></i> Recent Tasks</h3>
-                    <a href="tasks_list.php" class="btn btn-outline-primary btn-sm">View All</a>
+                    <a href="tasks_list.php" class="btn btn-outline btn-sm">View All</a>
                 </div>
                 <div class="card-body">
                     <?php if (!empty($tasks)): ?>
                         <?php foreach ($tasks as $t): ?>
-                            <div class="task-item">
-                                <input type="checkbox" class="task-checkbox form-check-input" <?php echo ($t['progress'] ?? 0) == 100 ? 'checked' : ''; ?> disabled>
+                            <div class="task-item" role="article" tabindex="0">
+                                <input type="checkbox" class="task-checkbox form-check-input" <?php echo ($t['progress'] ?? 0) == 100 ? 'checked' : ''; ?> disabled aria-label="Task completion status">
                                 <div class="task-info">
                                     <div class="task-title"><?php echo htmlspecialchars($t['title'] ?? 'Untitled Task'); ?></div>
                                     <div class="project-item-details">
@@ -422,7 +403,8 @@ try {
                                         $progressColor = $progress == 100 ? 'var(--success)' : ($progress > 50 ? 'var(--primary)' : 'var(--warning)');
                                         ?>
                                         <div class="progress-bar" 
-                                             style="width:<?php echo $progress; ?>%;background:<?php echo $progressColor; ?>;">
+                                             style="width:<?php echo $progress; ?>%;background:<?php echo $progressColor; ?>;"
+                                             role="progressbar" aria-valuenow="<?php echo $progress; ?>" aria-valuemin="0" aria-valuemax="100">
                                         </div>
                                         <span class="progress-text"><?php echo $progress; ?>%</span>
                                     </div>
@@ -430,9 +412,10 @@ try {
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="text-center p-4">
-                            <i class="fas fa-clipboard-list fs-1 text-muted mb-3"></i>
-                            <p>No tasks found</p>
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-clipboard-list"></i></div>
+                            <div class="empty-state-text">No tasks found</div>
+                            <div class="empty-state-action"><a href="tasks_list.php">Create a new task →</a></div>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -442,13 +425,22 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Handle task checkbox interactions
         const checkboxes = document.querySelectorAll('.task-checkbox');
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const taskItem = this.closest('.task-item');
                 if (taskItem) {
                     taskItem.style.opacity = this.checked ? '0.7' : '1';
+                }
+            });
+        });
+
+        const items = document.querySelectorAll('.project-item, .task-item');
+        items.forEach(item => {
+            item.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    const link = this.querySelector('a');
+                    if (link) link.click();
                 }
             });
         });

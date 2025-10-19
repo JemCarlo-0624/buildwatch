@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Report - Commercial Building for Discaya</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: #f5f5f5; color: #333; line-height: 1.6; }
+.header { background: linear-gradient(135deg, #0a4275 0%, #084980 100%); color: white; padding: 40px 20px; text-align: center; }
+.header h1 { margin: 0; font-size: 32px; }
+.subtitle { margin: 10px 0 0 0; opacity: 0.9; font-size: 14px; }
+.project-banner { background: #0a4275; color: white; padding: 20px; text-align: center; margin-bottom: 30px; }
+.project-banner h2 { margin: 0; font-size: 24px; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.section { background: white; padding: 25px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.section h3 { color: #0a4275; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #0a4275; padding-bottom: 10px; }
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 20px; }
+.metric-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+.metric-card.success { border-left: 4px solid #2ecc71; }
+.metric-card.primary { border-left: 4px solid #0a4275; }
+.metric-card.warning { border-left: 4px solid #f39c12; }
+.metric-card.info { border-left: 4px solid #3498db; }
+.metric-card.danger { border-left: 4px solid #e74c3c; }
+.metric-label { font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 5px; font-weight: 600; }
+.metric-value { font-size: 28px; font-weight: bold; color: #333; }
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 15px; }
+.team-card { background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 3px solid #0a4275; }
+.team-card .name { font-weight: 600; color: #0a4275; margin-bottom: 5px; }
+.team-card .role { font-size: 12px; color: #666; text-transform: uppercase; }
+.team-card .email { font-size: 13px; color: #888; margin-top: 5px; }
+table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+th { background: #0a4275; color: white; padding: 12px; text-align: left; font-weight: 600; }
+td { padding: 10px; border-bottom: 1px solid #ddd; }
+tr:hover { background: #f9f9f9; }
+.status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: inline-block; }
+.status-completed { background: #d4edda; color: #155724; }
+.status-in-progress { background: #fff3cd; color: #856404; }
+.status-pending { background: #d1ecf1; color: #0c5460; }
+.status-blocked { background: #f8d7da; color: #721c24; }
+.status-ongoing { background: #d1ecf1; color: #0c5460; }
+.status-on-hold { background: #fff3cd; color: #856404; }
+.status-planning { background: #e2e3e5; color: #383d41; }
+.priority-high { color: #e74c3c; font-weight: 600; }
+.priority-medium { color: #f39c12; font-weight: 600; }
+.priority-low { color: #95a5a6; font-weight: 600; }
+.insights { background: #e8f4f8; border-left: 4px solid #3498db; }
+.footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; font-size: 12px; }
+@media print { body { background: white; } .section { box-shadow: none; page-break-inside: avoid; } }
+@media (max-width: 768px) { .metrics-grid, .overview-grid, .team-grid { grid-template-columns: 1fr; } .container { padding: 10px; } }
+</style>
+</head>
+<body>
+<div class="header">
+<h1>BuildWatch Project Report</h1>
+<p class="subtitle">Generated: 2025-10-19 14:08:49</p>
+</div>
+<div class="project-banner">
+<h2>Commercial Building for Discaya</h2>
+</div>
+<div class="container">
+<div class="section">
+<h3>Project Overview</h3>
+<div class="overview-grid">
+<div><strong>Project Manager:</strong> Project Manager</div>
+<div><strong>Status:</strong> <span class="status-badge status-completed">completed</span></div>
+<div><strong>Priority:</strong> <span class="priority-medium">MEDIUM</span></div>
+<div><strong>Category:</strong> commercial</div>
+<div><strong>Timeline:</strong> </div>
+<div><strong>Budget:</strong> $0.00</div>
+</div>
+<p style="margin-top: 15px;"><strong>Description:</strong> Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry&#39;s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+</div>
+<div class="metrics-grid">
+<div class="metric-card success">
+<div class="metric-label">Completion</div>
+<div class="metric-value">100%</div>
+</div>
+<div class="metric-card primary">
+<div class="metric-label">Total Tasks</div>
+<div class="metric-value">6</div>
+</div>
+<div class="metric-card success">
+<div class="metric-label">Completed</div>
+<div class="metric-value">6</div>
+</div>
+<div class="metric-card warning">
+<div class="metric-label">In Progress</div>
+<div class="metric-value">0</div>
+</div>
+<div class="metric-card info">
+<div class="metric-label">Pending</div>
+<div class="metric-value">0</div>
+</div>
+<div class="metric-card primary">
+<div class="metric-label">Hours Spent</div>
+<div class="metric-value">0.0</div>
+</div>
+<div class="metric-card info">
+<div class="metric-label">Est. Hours</div>
+<div class="metric-value">0.0</div>
+</div>
+<div class="metric-card primary">
+<div class="metric-label">Team Size</div>
+<div class="metric-value">2</div>
+</div>
+</div>
+<div class="section">
+<h3>Team Members</h3>
+<div class="team-grid">
+<div class="team-card">
+<div class="name">Project Manager</div>
+<div class="role">pm</div>
+<div class="email">pm@buildwatch.com</div>
+</div>
+<div class="team-card">
+<div class="name">Worker</div>
+<div class="role">worker</div>
+<div class="email">worker@buildwatch.com</div>
+</div>
+</div>
+</div>
+<div class="section">
+<h3>Timeline Analysis</h3>
+<pre style="white-space: pre-wrap; font-family: inherit;">Project started: Oct 20, 2025
+Days elapsed: -1 days
+Expected completion: Oct 31, 2025
+Days remaining: 12 days
+Timeline: 
+</pre>
+</div>
+<div class="section">
+<h3>Budget & Hours Analysis</h3>
+<pre style="white-space: pre-wrap; font-family: inherit;">Total Budget: $0.00
+Total Hours Spent: 0.0 hours
+Estimated Hours: 0.0 hours
+</pre>
+</div>
+<div class="section">
+<h3>Task Details</h3>
+<div style="overflow-x: auto;">
+<table>
+<thead>
+<tr>
+<th>Task</th><th>Assigned To</th><th>Status</th><th>Progress</th><th>Due Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Having it check</td>
+<td>Worker</td>
+<td><span class="status-badge status-completed">Completed</span></td>
+<td>100%</td>
+<td>Dec 21, 2025</td>
+</tr>
+<tr>
+<td>Prepare foundation layout and excavation</td>
+<td>Worker</td>
+<td><span class="status-badge status-completed">Completed</span></td>
+<td>100%</td>
+<td>Oct 23, 2025</td>
+</tr>
+<tr>
+<td>Install rebar and steel reinforcement</td>
+<td>Worker</td>
+<td><span class="status-badge status-completed">Completed</span></td>
+<td>100%</td>
+<td>Oct 25, 2025</td>
+</tr>
+<tr>
+<td>Assist in foundation concrete pouring</td>
+<td>Worker</td>
+<td><span class="status-badge status-completed">Completed</span></td>
+<td>100%</td>
+<td>Oct 27, 2025</td>
+</tr>
+<tr>
+<td>Set up column formwork and alignment</td>
+<td>Worker</td>
+<td><span class="status-badge status-completed">Completed</span></td>
+<td>100%</td>
+<td>Oct 29, 2025</td>
+</tr>
+<tr>
+<td>Organize materials and clean work area</td>
+<td>Worker</td>
+<td><span class="status-badge status-completed">Completed</span></td>
+<td>100%</td>
+<td>Oct 31, 2025</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section insights">
+<h3>Insights & Recommendations</h3>
+<pre style="white-space: pre-wrap; font-family: inherit;">✓ Project is in good shape with strong completion progress.
+
+⚠ Project deadline is approaching within 2 weeks. Prioritize critical path tasks.
+
+RECOMMENDATIONS:
+• Maintain regular communication with stakeholders.
+• Continue monitoring progress and adjust plans as needed.
+</pre>
+</div>
+</div>
+<div class="footer">
+<p>This report was automatically generated by BuildWatch Report Generator.</p>
+</div>
+</body>
+</html>

@@ -551,7 +551,7 @@ foreach ($tasks as $task) {
                         <?php echo htmlspecialchars($project['status']); ?>
                     </span>
                     <?php if ($_SESSION['role'] !== 'worker'): ?>
-                        <a href="project_edit.php?id=<?php echo $project['id']; ?>" class="btn btn-primary">
+                        <a href="projects_edit.php?id=<?php echo $project['id']; ?>" class="btn btn-primary">
                             <i class="fas fa-edit"></i> Edit Project
                         </a>
                         <a href="projects_assign.php?id=<?php echo $project['id']; ?>" class="btn btn-outline-primary">

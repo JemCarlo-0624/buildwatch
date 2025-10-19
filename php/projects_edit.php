@@ -15,22 +15,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $desc = $_POST['description'];
     $status = $_POST['status'];
     $priority = $_POST['priority'] ?? 'medium';
-    $budget = !empty($_POST['budget']) ? floatval(str_replace(',', '', $_POST['budget'])) : null;
     $timeline = trim($_POST['timeline'] ?? '');
     $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
     $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
     $category = $_POST['category'] ?? '';
-    $completion_percentage = min(100, max(0, intval($_POST['completion_percentage'] ?? 0)));
+
+    $taskStmt = $pdo->prepare("SELECT AVG(progress) as avg_progress FROM tasks WHERE project_id = ?");
+    $taskStmt->execute([$id]);
+    $taskResult = $taskStmt->fetch();
+    $completion_percentage = $taskResult['avg_progress'] ? round($taskResult['avg_progress']) : 0;
 
     $stmt = $pdo->prepare("
         UPDATE projects 
-        SET name=?, description=?, status=?, priority=?, budget=?, 
+        SET name=?, description=?, status=?, priority=?, 
             timeline=?, start_date=?, end_date=?, category=?, 
             completion_percentage=?, last_activity_at=NOW()
         WHERE id=?
     ");
     $stmt->execute([
-        $name, $desc, $status, $priority, $budget, $timeline, 
+        $name, $desc, $status, $priority, $timeline, 
         $start_date, $end_date, $category, 
         $completion_percentage, $id
     ]);
@@ -91,66 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid #f0f0f0;
-        }
-
-        /* Added progress slider styles */
-        .progress-slider-container {
-            position: relative;
-            padding-top: 10px;
-        }
-
-        .progress-slider {
-            width: 100%;
-            height: 8px;
-            border-radius: 4px;
-            background: linear-gradient(to right, #e0e0e0 0%, #e0e0e0 100%);
-            outline: none;
-            -webkit-appearance: none;
-            appearance: none;
-            cursor: pointer;
-        }
-
-        .progress-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--primary);
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: all 0.2s ease;
-        }
-
-        .progress-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-        }
-
-        .progress-slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--primary);
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: all 0.2s ease;
-        }
-
-        .progress-slider::-moz-range-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-        }
-
-        .progress-value {
-            display: inline-block;
-            min-width: 50px;
-            text-align: center;
-            font-weight: 700;
-            font-size: 18px;
-            color: var(--primary);
-            margin-left: 12px;
         }
 
         @media (max-width: 768px) {
@@ -259,20 +202,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ><?= htmlspecialchars($project['description']) ?></textarea>
                 </div>
 
-                <!-- Updated budget field to use peso currency with comma formatting -->
-                <div class="row mb-4">
-                    <div class="col-md-12">
-                        <label for="budget" class="form-label">
-                            <i class="fas fa-peso-sign text-primary"></i> Budget (₱)
-                        </label>
-                        <input type="text" class="form-control" id="budget" name="budget" 
-                               value="<?= !empty($project['budget']) ? number_format($project['budget'], 2) : '' ?>" 
-                               placeholder="e.g. 1,000,000.00"
-                               oninput="formatBudget(this)">
-                        <small class="text-muted">Enter amount in Philippine Pesos</small>
-                    </div>
-                </div>
-
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label for="start_date" class="form-label">
@@ -339,25 +268,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- Converted completion percentage to interactive slider with progress bar -->
-                <div class="mb-4">
+                <div class="mb-4 p-3 bg-light rounded">
                     <label class="form-label">
                         <i class="fas fa-chart-line text-primary"></i> Project Completion
-                        <span class="progress-value" id="completionValue"><?= intval($project['completion_percentage'] ?? 0) ?>%</span>
                     </label>
-                    <div class="progress-slider-container">
-                        <input 
-                            type="range" 
-                            class="progress-slider" 
-                            id="completion_percentage" 
-                            name="completion_percentage" 
-                            min="0" 
-                            max="100" 
-                            step="5" 
-                            value="<?= intval($project['completion_percentage'] ?? 0) ?>"
-                            oninput="updateProgress(this.value)"
-                        >
-                    </div>
+                    <p class="text-muted mb-0">
+                        <small>Project completion is automatically calculated based on the progress of all assigned tasks. Update task progress to reflect project completion.</small>
+                    </p>
                 </div>
 
                 <div class="btn-group-actions">
@@ -373,36 +290,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
  
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Added JavaScript for progress slider and budget formatting -->
-    <script>
-        // Update progress bar and value display
-        function updateProgress(value) {
-            document.getElementById('completionValue').textContent = value + '%';
-            
-            // Update slider background gradient
-            const slider = document.getElementById('completion_percentage');
-            const percentage = (value / slider.max) * 100;
-            slider.style.background = `linear-gradient(to right, #3498db 0%, #2ecc71 ${percentage}%, #e0e0e0 ${percentage}%, #e0e0e0 100%)`;
-        }
-
-        // Format budget input with commas
-        function formatBudget(input) {
-            let value = input.value.replace(/,/g, '');
-            if (!isNaN(value) && value !== '') {
-                value = parseFloat(value).toLocaleString('en-US', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 2
-                });
-                input.value = value;
-            }
-        }
-
-        // Initialize progress slider on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const initialValue = document.getElementById('completion_percentage').value;
-            updateProgress(initialValue);
-        });
-    </script>
 </body>
 </html>

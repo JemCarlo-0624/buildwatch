@@ -1,33 +1,130 @@
 <?php
+require_once("auth_check.php");
 require_once("../config/db.php");
-if (session_status() === PHP_SESSION_NONE) session_start();
 
-if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['pm','admin','worker'])) {
+// Check user role - accessible to Admin, PM, and Worker
+$allowed_roles = ['admin', 'pm', 'worker'];
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], $allowed_roles)) {
     header("Location: login.php");
     exit;
 }
 
-if ($_SESSION['role'] === 'admin') {
-    // Admins see all projects
-    $stmt = $pdo->query("
-        SELECT p.*, u.name as creator 
-        FROM projects p 
-        JOIN users u ON p.created_by = u.id 
-        ORDER BY p.created_at DESC
-    ");
-    $projects = $stmt->fetchAll();
-} else {
-    // PMs and Workers see only their assigned projects
+function autoCompleteProjects($pdo) {
+    try {
+        // Find all projects with 100% progress that are not yet completed
+        $stmt = $pdo->prepare("
+            SELECT p.id,
+                   (SELECT COUNT(*) FROM tasks WHERE project_id = p.id) as total_tasks,
+                   (SELECT COUNT(*) FROM tasks WHERE project_id = p.id AND progress = 100) as completed_tasks
+            FROM projects p
+            WHERE p.status != 'completed'
+            HAVING total_tasks > 0 AND total_tasks = completed_tasks
+        ");
+        $stmt->execute();
+        $projects_to_complete = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Update status to completed for projects with 100% progress
+        if (!empty($projects_to_complete)) {
+            $update_stmt = $pdo->prepare("
+                UPDATE projects 
+                SET status = 'completed', 
+                    completion_percentage = 100,
+                    last_activity_at = NOW()
+                WHERE id = ?
+            ");
+            
+            foreach ($projects_to_complete as $project) {
+                $update_stmt->execute([$project['id']]);
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Error auto-completing projects: " . $e->getMessage());
+    }
+}
+
+// Call auto-complete function
+autoCompleteProjects($pdo);
+
+$user_id = $_SESSION['user_id'];
+$user_role = $_SESSION['role'];
+$user_name = $_SESSION['name'] ?? 'User';
+
+// Determine which projects to fetch based on role
+if ($user_role === 'admin') {
+    // Admin sees all projects
     $stmt = $pdo->prepare("
-        SELECT p.*, u.name as creator 
-        FROM projects p 
-        JOIN users u ON p.created_by = u.id
-        JOIN project_assignments pa ON pa.project_id = p.id
-        WHERE pa.user_id = ? AND p.status != 'completed'
-        ORDER BY p.created_at DESC
+        SELECT p.*, 
+               u.name as created_by_name,
+               c.name as client_name,
+               (SELECT COUNT(*) FROM tasks WHERE project_id = p.id) as total_tasks,
+               (SELECT COUNT(*) FROM tasks WHERE project_id = p.id AND progress = 100) as completed_tasks,
+               (SELECT AVG(progress) FROM tasks WHERE project_id = p.id) as avg_task_progress
+        FROM projects p
+        LEFT JOIN users u ON p.created_by = u.id
+        LEFT JOIN clients c ON p.client_id = c.id
+        ORDER BY p.last_activity_at DESC
     ");
-    $stmt->execute([$_SESSION['user_id']]);
-    $projects = $stmt->fetchAll();
+    $stmt->execute();
+} elseif ($user_role === 'pm') {
+    // PM sees projects they're assigned to
+    $stmt = $pdo->prepare("
+        SELECT p.*, 
+               u.name as created_by_name,
+               c.name as client_name,
+               (SELECT COUNT(*) FROM tasks WHERE project_id = p.id) as total_tasks,
+               (SELECT COUNT(*) FROM tasks WHERE project_id = p.id AND progress = 100) as completed_tasks,
+               (SELECT AVG(progress) FROM tasks WHERE project_id = p.id) as avg_task_progress
+        FROM projects p
+        LEFT JOIN users u ON p.created_by = u.id
+        LEFT JOIN clients c ON p.client_id = c.id
+        WHERE p.id IN (SELECT project_id FROM project_assignments WHERE user_id = ?)
+        ORDER BY p.last_activity_at DESC
+    ");
+    $stmt->execute([$user_id]);
+} else {
+    // Worker sees projects they're assigned to
+    $stmt = $pdo->prepare("
+        SELECT p.*, 
+               u.name as created_by_name,
+               c.name as client_name,
+               (SELECT COUNT(*) FROM tasks WHERE project_id = p.id) as total_tasks,
+               (SELECT COUNT(*) FROM tasks WHERE project_id = p.id AND progress = 100) as completed_tasks,
+               (SELECT AVG(progress) FROM tasks WHERE project_id = p.id) as avg_task_progress
+        FROM projects p
+        LEFT JOIN users u ON p.created_by = u.id
+        LEFT JOIN clients c ON p.client_id = c.id
+        WHERE p.id IN (SELECT project_id FROM project_assignments WHERE user_id = ?)
+        ORDER BY p.last_activity_at DESC
+    ");
+    $stmt->execute([$user_id]);
+}
+
+$projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Calculate summary statistics
+$total_projects = count($projects);
+$ongoing_projects = count(array_filter($projects, function($p) { return $p['status'] === 'ongoing'; }));
+$completed_projects = count(array_filter($projects, function($p) { return $p['status'] === 'completed'; }));
+$on_hold_projects = count(array_filter($projects, function($p) { return $p['status'] === 'on-hold'; }));
+
+// Calculate average progress
+$total_progress = 0;
+foreach ($projects as $p) {
+    if ($p['total_tasks'] > 0) {
+        $total_progress += round(($p['completed_tasks'] / $p['total_tasks']) * 100);
+    } else {
+        $total_progress += (int)($p['completion_percentage'] ?? 0);
+    }
+}
+$avg_progress = $total_projects > 0 ? round($total_progress / $total_projects) : 0;
+
+// Get overdue projects
+$overdue_projects = 0;
+$today = date('Y-m-d');
+foreach ($projects as $p) {
+    if ($p['end_date'] && $p['end_date'] < $today && $p['status'] !== 'completed') {
+        $overdue_projects++;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -35,193 +132,436 @@ if ($_SESSION['role'] === 'admin') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projects List - Dashboard</title>
-
+    <title>Project Overview - BuildWatch</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
+        :root {
+            --navy-blue: #1e3a5f;
+            --navy-dark: #152d47;
+            --primary-teal: #0d9488;
+            --primary-teal-dark: #0f766e;
+            --primary-teal-light: #14b8a6;
+            --light-bg: #f8f9fa;
+            --white: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --border-color: #e0e6ed;
+        }
+
+        body {
+            background: var(--light-bg);
+            color: var(--text-primary);
+        }
+
+        .page-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 24px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+        }
+
+        .page-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .filter-section {
+            background: var(--white);
+            padding: 20px 32px;
+            margin-bottom: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary-teal);
+            color: var(--primary-teal);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-teal);
+            color: var(--white);
+            border-color: var(--primary-teal);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+            padding: 0 32px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-icon-primary {
+            background: rgba(13, 148, 136, 0.1);
+            color: var(--primary-teal);
+        }
+
+        .stat-icon-success {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon-warning {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon-danger {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .projects-container {
+            padding: 0 32px;
+            margin-bottom: 32px;
+        }
+
         .projects-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
+            gap: 24px;
         }
 
         .project-card {
-            background: white;
+            background: var(--white);
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
             overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
         }
 
         .project-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
 
         .project-card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 20px 20px 15px 20px;
-            border-bottom: 1px solid #f0f0f0;
-            background: white;
+            align-items: flex-start;
+            gap: 12px;
         }
 
         .project-card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--dark);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
             margin: 0;
-        }
-
-        .card-body {
-            padding: 20px;
             flex: 1;
         }
 
-        .project-description {
-            color: var(--gray);
-            line-height: 1.6;
-            margin-bottom: 15px;
+        .project-status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .status-ongoing {
+            background: rgba(13, 148, 136, 0.1);
+            color: var(--primary-teal);
+        }
+
+        .status-completed {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+
+        .status-on-hold {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+
+        .status-planning {
+            background: rgba(108, 117, 125, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .project-card-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .project-meta {
             display: flex;
             flex-direction: column;
             gap: 8px;
+            font-size: 13px;
         }
 
         .meta-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13px;
-            color: var(--gray);
+            color: var(--text-secondary);
         }
 
         .meta-item i {
             width: 16px;
-            color: var(--primary);
+            text-align: center;
+            color: var(--primary-teal);
         }
 
-        .project-actions {
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .progress-label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .progress-value {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-teal), var(--primary-teal-light));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .deadline-section {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .deadline-on-track {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+
+        .deadline-at-risk {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+
+        .deadline-overdue {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        .project-card-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
             display: flex;
             gap: 8px;
-            padding: 15px 20px;
-            border-top: 1px solid #f0f0f0;
-            background: #f8f9fa;
         }
 
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
+        .btn-small {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
         }
 
-        .status-active { background-color: #d1ecf1; color: #0c5460; }
-        .status-completed { background-color: #d4edda; color: #155724; }
-        .status-pending { background-color: #fff3cd; color: #856404; }
-        .status-on-hold { background-color: #f8d7da; color: #721c24; }
-
-        .btn-danger {
-            background-color: var(--accent);
-            color: white;
-            border: none;
-        }
-
-        .btn-danger:hover {
-            background-color: #b8321a;
+        .btn-small:hover {
+            background: var(--primary-teal);
+            color: var(--white);
+            border-color: var(--primary-teal);
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 60px 32px;
+            color: var(--text-secondary);
         }
 
-        .empty-state i {
-            font-size: 64px;
-            color: var(--gray);
-            margin-bottom: 20px;
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
         }
 
-        .empty-state h3 {
-            font-size: 24px;
+        .empty-state-title {
+            font-size: 18px;
             font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 10px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
         }
 
-        .empty-state p {
-            color: var(--gray);
-            margin-bottom: 20px;
+        .empty-state-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .auto-refresh-info {
+            text-align: center;
+            padding: 12px;
+            background: rgba(13, 148, 136, 0.05);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 24px;
         }
 
         @media (max-width: 768px) {
+            .page-header,
+            .filter-section,
+            .projects-container,
+            .stats-grid {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
             .projects-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
             }
-            
-            .project-actions {
-                flex-wrap: wrap;
+
+            .filter-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body class="sidebar-main-layout">
-
-
     <div class="sidebar">
         <div class="logo">
             <h1><i class="fas fa-hard-hat"></i> Build Watch</h1>
         </div>
 
         <div class="nav-section">
-            <div class="nav-section-title">
-                <?php 
-                if ($_SESSION['role'] === 'admin') echo 'Admin Panel';
-                elseif ($_SESSION['role'] === 'pm') echo 'PM Panel';
-                else echo 'Worker Panel';
-                ?>
-            </div>
-            <?php if ($_SESSION['role'] === 'admin'): ?>
-                <a href="dashboard_admin.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="projects_list.php" class="nav-item active"><i class="fas fa-project-diagram"></i> Projects</a>
+            <div class="nav-section-title">Navigation</div>
+            <?php if ($user_role === 'admin'): ?>
+                <a href="dashboard_admin.php" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> Projects</a>
                 <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
                 <a href="proposals_review.php" class="nav-item"><i class="fas fa-lightbulb"></i> Proposals</a>
                 <a href="users_list.php" class="nav-item"><i class="fas fa-users"></i> Users</a>
-            <?php elseif ($_SESSION['role'] === 'pm'): ?>
-                <a href="dashboard_pm.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="projects_list.php" class="nav-item active"><i class="fas fa-project-diagram"></i> Projects</a>
+            <?php elseif ($user_role === 'pm'): ?>
+                <a href="dashboard_pm.php" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> Projects</a>
                 <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
             <?php else: ?>
-                <a href="dashboard_worker.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="projects_list.php" class="nav-item active"><i class="fas fa-project-diagram"></i> My Projects</a>
-                <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> My Tasks</a>
+                <a href="dashboard_worker.php" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="tasks_worker.php" class="nav-item"><i class="fas fa-tasks"></i> My Tasks</a>
             <?php endif; ?>
         </div>
-
 
         <div class="sidebar-footer">
             <div class="d-flex align-items-start gap-2 mb-3">
                 <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 40px; height: 40px;">
-                    <?= strtoupper(substr($_SESSION['name'] ?? $_SESSION['username'] ?? 'U', 0, 2)) ?>
+                    <?php echo strtoupper(substr($user_name, 0, 1)); ?>
                 </div>
                 <div class="flex-grow-1">
-                    <div class="text-white fw-semibold"><?= htmlspecialchars($_SESSION['name'] ?? $_SESSION['username'] ?? 'User') ?></div>
-                    <small class="text-white-50"><?= htmlspecialchars($_SESSION['email'] ?? ucfirst($_SESSION['role'])) ?></small>
+                    <div class="text-white fw-semibold"><?php echo htmlspecialchars($user_name); ?></div>
+                    <small class="text-white-50"><?php echo ucfirst($user_role); ?></small>
                 </div>
             </div>
             <a href="logout.php" class="btn btn-light btn-sm w-100">
@@ -230,99 +570,189 @@ if ($_SESSION['role'] === 'admin') {
         </div>
     </div>
 
-
     <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-eye"></i> Project Overview</h1>
+            <p class="page-description">View all projects with progress tracking, deadline status, and quick filters</p>
+        </div>
 
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div>
-                <h1 class="page-title"><?= $_SESSION['role']==='worker' ? 'My Projects' : ($_SESSION['role']==='pm' ? 'My Projects' : 'All Projects') ?></h1>
-                <p class="page-description">
-                    <?= $_SESSION['role']==='worker' ? 'View and manage your assigned projects.' : ($_SESSION['role']==='pm' ? 'View and manage your assigned projects.' : 'Manage all projects in the system.') ?>
-                    <?php if (count($projects) > 0): ?>
-                        <span class="positive">(<?= count($projects) ?> project<?= count($projects) !== 1 ? 's' : '' ?>)</span>
-                    <?php endif; ?>
-                </p>
+        <!-- Summary Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-primary"><i class="fas fa-project-diagram"></i></div>
+                <div class="stat-value"><?php echo $total_projects; ?></div>
+                <div class="stat-label">Total Projects</div>
             </div>
-            <div class="d-flex gap-2">
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-success"><i class="fas fa-spinner"></i></div>
+                <div class="stat-value"><?php echo $ongoing_projects; ?></div>
+                <div class="stat-label">Ongoing</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-warning"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-value"><?php echo $completed_projects; ?></div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-danger"><i class="fas fa-exclamation-circle"></i></div>
+                <div class="stat-value"><?php echo $overdue_projects; ?></div>
+                <div class="stat-label">Overdue</div>
             </div>
         </div>
 
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <span class="filter-label">Filter by Status:</span>
+            <button class="filter-btn active" onclick="filterProjects('all')">All Projects</button>
+            <button class="filter-btn" onclick="filterProjects('ongoing')">Ongoing</button>
+            <button class="filter-btn" onclick="filterProjects('completed')">Completed</button>
+            <button class="filter-btn" onclick="filterProjects('on-hold')">On Hold</button>
+            <button class="filter-btn" onclick="filterProjects('planning')">Planning</button>
+        </div>
 
-        <?php if (count($projects) > 0): ?>
-            <div class="projects-grid">
-                <?php foreach ($projects as $p): ?>
-                    <div class="project-card">
-                        <div class="project-card-header">
-                            <h3 class="project-card-title"><?= htmlspecialchars($p['name']) ?></h3>
-                            <span class="status-badge status-<?= strtolower($p['status']) ?>">
-                                <?= ucfirst($p['status']) ?>
-                            </span>
-                        </div>
+        <!-- Projects Grid -->
+        <div class="projects-container">
+            <?php if (empty($projects)): ?>
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                    <div class="empty-state-title">No Projects Found</div>
+                    <div class="empty-state-text">You don't have any projects assigned yet.</div>
+                </div>
+            <?php else: ?>
+                <div class="projects-grid" id="projectsGrid">
+                    <?php foreach ($projects as $project): ?>
+                        <?php
+                        // Calculate progress
+                        if ($project['total_tasks'] > 0) {
+                            $progress = round(($project['completed_tasks'] / $project['total_tasks']) * 100);
+                        } else {
+                            $progress = (int)($project['completion_percentage'] ?? 0);
+                        }
+
+                        // Determine deadline status
+                        $deadline_status = 'on-track';
+                        $deadline_text = 'On Track';
+                        $deadline_icon = 'fa-check-circle';
                         
-                        <div class="card-body">
-                            <p class="project-description">
-                                <?= htmlspecialchars($p['description']) ?>
-                            </p>
-                            
-                            <div class="project-meta">
-                                <div class="meta-item">
-                                    <i class="fas fa-user"></i>
-                                    <span>Project Manager: <?= htmlspecialchars($p['creator']) ?></span>
+                        if ($project['end_date']) {
+                            $end_date = new DateTime($project['end_date']);
+                            $today = new DateTime();
+                            $days_remaining = $today->diff($end_date)->days;
+                            $is_overdue = $today > $end_date;
+
+                            if ($is_overdue && $project['status'] !== 'completed') {
+                                $deadline_status = 'overdue';
+                                $deadline_text = 'Overdue by ' . $days_remaining . ' days';
+                                $deadline_icon = 'fa-exclamation-circle';
+                            } elseif ($days_remaining <= 7 && $project['status'] === 'ongoing') {
+                                $deadline_status = 'at-risk';
+                                $deadline_text = 'Due in ' . $days_remaining . ' days';
+                                $deadline_icon = 'fa-clock';
+                            } else {
+                                $deadline_text = 'Due ' . $end_date->format('M d, Y');
+                            }
+                        } else {
+                            $deadline_text = 'No deadline set';
+                        }
+                        ?>
+                        <div class="project-card" data-status="<?php echo htmlspecialchars($project['status']); ?>">
+                            <div class="project-card-header">
+                                <h3 class="project-card-title"><?php echo htmlspecialchars($project['name']); ?></h3>
+                                <span class="project-status-badge status-<?php echo htmlspecialchars($project['status']); ?>">
+                                    <?php echo ucfirst(str_replace('-', ' ', $project['status'])); ?>
+                                </span>
+                            </div>
+
+                            <div class="project-card-body">
+                                <div class="project-meta">
+                                    <?php if ($project['client_name']): ?>
+                                        <div class="meta-item">
+                                            <i class="fas fa-building"></i>
+                                            <span><?php echo htmlspecialchars($project['client_name']); ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($project['created_by_name']): ?>
+                                        <div class="meta-item">
+                                            <i class="fas fa-user"></i>
+                                            <span><?php echo htmlspecialchars($project['created_by_name']); ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($project['priority']): ?>
+                                        <div class="meta-item">
+                                            <i class="fas fa-flag"></i>
+                                            <span><?php echo ucfirst($project['priority']); ?> Priority</span>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="meta-item">
-                                    <i class="fas fa-calendar"></i>
-                                    <span><?= date('M j, Y', strtotime($p['created_at'])) ?></span>
-                                </div>
-                                <?php if (!empty($p['location'])): ?>
-                                    <div class="meta-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span><?= htmlspecialchars($p['location']) ?></span>
+
+                                <div class="progress-section">
+                                    <div class="progress-header">
+                                        <span class="progress-label">Progress</span>
+                                        <span class="progress-value"><?php echo $progress; ?>%</span>
                                     </div>
-                                <?php endif; ?>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" style="width: <?php echo $progress; ?>%"></div>
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">
+                                        <?php echo $project['completed_tasks']; ?> of <?php echo $project['total_tasks']; ?> tasks completed
+                                    </div>
+                                </div>
+
+                                <div class="deadline-section deadline-<?php echo $deadline_status; ?>">
+                                    <i class="fas <?php echo $deadline_icon; ?>"></i>
+                                    <span><?php echo $deadline_text; ?></span>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <?php if ($_SESSION['role'] !== 'worker'): ?>
-                            <div class="project-actions">
-                                <a href="projects_edit.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <a href="projects_assign.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-users"></i> Assign
-                                </a>
-                                <a href="projects_delete.php?id=<?= $p['id'] ?>" 
-                                   class="btn btn-sm btn-danger" 
-                                   onclick="return confirm('Are you sure you want to delete this project?');">
-                                    <i class="fas fa-trash"></i> Delete
-                                </a>
-                            </div>
-                        <?php else: ?>
-                            <div class="project-actions">
-                                <a href="project_view.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-primary">
+
+                            <div class="project-card-footer">
+                                <a href="projects_details.php?id=<?php echo $project['id']; ?>" class="btn-small">
                                     <i class="fas fa-eye"></i> View Details
                                 </a>
-                                <a href="tasks_list.php?project=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-tasks"></i> View Tasks
+                                <a href="tasks_list.php?project_id=<?php echo $project['id']; ?>" class="btn-small">
+                                    <i class="fas fa-tasks"></i> Tasks
                                 </a>
                             </div>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php else: ?>
-            <div class="empty-state">
-                <i class="fas fa-project-diagram"></i>
-                <h3>No Projects Found</h3>
-                <p><?= $_SESSION['role']==='worker' ? 'You have no assigned projects yet.' : ($_SESSION['role']==='pm' ? 'You have no assigned projects yet.' : 'No projects have been created yet.') ?></p>
-                <?php if ($_SESSION['role'] !== 'worker'): ?>
-                    <a href="projects_create.php" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Create Your First Project
-                    </a>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="auto-refresh-info">
+            <i class="fas fa-sync-alt"></i> This page auto-refreshes every 5 minutes
+        </div>
     </div>
- 
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Filter functionality
+        function filterProjects(status) {
+            const cards = document.querySelectorAll('.project-card');
+            const buttons = document.querySelectorAll('.filter-btn');
+
+            // Update active button
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Filter cards
+            cards.forEach(card => {
+                if (status === 'all' || card.dataset.status === status) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Auto-refresh every 5 minutes
+        setInterval(function() {
+            location.reload();
+        }, 5 * 60 * 1000);
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[v0] Project Overview Dashboard loaded');
+        });
+    </script>
 </body>
 </html>

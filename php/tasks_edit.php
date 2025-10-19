@@ -123,18 +123,6 @@ $workers = $stmt->fetchAll();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .progress-slider-container {
-            margin-top: 10px;
-        }
-        
-        .progress-value-display {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--primary);
-            margin-top: 8px;
-        }
-    </style>
 </head>
 <body class="sidebar-main-layout">
 
@@ -284,28 +272,6 @@ $workers = $stmt->fetchAll();
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="progress" class="form-label">
-                        Progress <span style="color: var(--accent);">*</span>
-                    </label>
-                    <div class="progress-slider-container">
-                        <input 
-                            type="range" 
-                            name="progress" 
-                            id="progress" 
-                            class="form-range"
-                            min="0" 
-                            max="100" 
-                            step="5"
-                            value="<?= (int)($task['progress'] ?? 0) ?>"
-                            oninput="updateProgressDisplay(this.value)"
-                        >
-                        <div class="progress-value-display" id="progressDisplay">
-                            <?= (int)($task['progress'] ?? 0) ?>%
-                        </div>
-                    </div>
-                </div>
-
                 <div style="display: flex; gap: 10px; margin-top: 30px;">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Update Task
@@ -319,10 +285,5 @@ $workers = $stmt->fetchAll();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function updateProgressDisplay(value) {
-            document.getElementById('progressDisplay').textContent = value + '%';
-        }
-    </script>
 </body>
 </html>

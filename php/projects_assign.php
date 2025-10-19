@@ -10,6 +10,24 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['pm','admin'])) {
 $project_id = $_GET['id'] ?? null;
 if (!$project_id) die("❌ Project ID missing");
 
+$projectStmt = $pdo->prepare("SELECT p.*, u.name as creator FROM projects p JOIN users u ON p.created_by = u.id WHERE p.id = ?");
+$projectStmt->execute([$project_id]);
+$project = $projectStmt->fetch();
+
+if (!$project) {
+    die("❌ Project not found");
+}
+
+if ($_SESSION['role'] === 'pm') {
+    $pmCheckStmt = $pdo->prepare("SELECT COUNT(*) as count FROM project_assignments WHERE project_id = ? AND user_id = ?");
+    $pmCheckStmt->execute([$project_id, $_SESSION['user_id']]);
+    $pmAssignment = $pmCheckStmt->fetch();
+    
+    if ($pmAssignment['count'] == 0) {
+        die("❌ You don't have permission to assign workers to this project. You must be assigned to the project first.");
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_POST['user_id'];
 
@@ -27,14 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Redirect to avoid form resubmission
     header("Location: projects_assign.php?id=" . urlencode($project_id));
     exit;
-}
-
-$projectStmt = $pdo->prepare("SELECT p.*, u.name as creator FROM projects p JOIN users u ON p.created_by = u.id WHERE p.id = ?");
-$projectStmt->execute([$project_id]);
-$project = $projectStmt->fetch();
-
-if (!$project) {
-    die("❌ Project not found");
 }
 
 // Get available Project Managers (not assigned to any active project)

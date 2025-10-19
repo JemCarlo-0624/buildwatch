@@ -10,7 +10,7 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['pm','admin'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $desc = trim($_POST['description']);
-    $status = $_POST['status'] ?? 'ongoing';
+    $status = $_POST['status'] ?? 'planning';
     $priority = $_POST['priority'] ?? 'medium';
     $client_id = !empty($_POST['client_id']) ? $_POST['client_id'] : null;
     $budget = !empty($_POST['budget']) ? floatval($_POST['budget']) : null;

@@ -7,7 +7,6 @@ require_once("../config/db.php");
 if (isset($_POST['approve_proposal'])) {
     $proposalId = (int)$_POST['proposal_id'];
     $assignedPm = (int)$_POST['assigned_pm'];
-    $budget = !empty($_POST['budget']) ? (float)$_POST['budget'] : null;
     $startDate = !empty($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-d');
     $endDate = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
     $category = !empty($_POST['category']) ? $_POST['category'] : null;
@@ -31,15 +30,14 @@ if (isset($_POST['approve_proposal'])) {
 
         // Create project from proposal with automatic schedule generation
         $insertProject = $pdo->prepare("
-            INSERT INTO projects (name, description, status, created_by, client_id, budget, category, start_date, end_date) 
-            VALUES (?, ?, 'planning', ?, ?, ?, ?, ?, ?)
+            INSERT INTO projects (name, description, status, created_by, client_id, category, start_date, end_date) 
+            VALUES (?, ?, 'planning', ?, ?, ?, ?, ?)
         ");
         $insertProject->execute([
             $proposal['title'],
             $proposal['description'],
             $assignedPm,
             $proposal['client_id'],
-            $budget,
             $category,
             $startDate,
             $endDate
@@ -645,34 +643,6 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="budget" class="form-label">
-                                    <i class="fas fa-dollar-sign text-muted"></i> Budget
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="budget" name="budget" 
-                                           placeholder="Enter project budget" step="0.01" min="0">
-                                </div>
-                                <small class="text-muted">Optional - Project budget allocation</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="category" class="form-label">
-                                    <i class="fas fa-tag text-muted"></i> Category
-                                </label>
-                                <select class="form-select" id="category" name="category">
-                                    <option value="">Select a category</option>
-                                    <option value="residential">Residential</option>
-                                    <option value="commercial">Commercial</option>
-                                    <option value="infrastructure">Infrastructure</option>
-                                    <option value="renovation">Renovation</option>
-                                    <option value="maintenance">Maintenance</option>
-                                </select>
-                                <small class="text-muted">Optional - Project classification</small>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
                                 <label for="start_date" class="form-label">
                                     <i class="fas fa-calendar-day text-success"></i> Project Start Date <span class="required">*</span>
                                 </label>
@@ -724,12 +694,7 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
             
             // Reset form fields
             document.getElementById('assigned_pm').value = '';
-            document.getElementById('budget').value = '';
-            document.getElementById('category').value = '';
-            
-            // Set start date to today by default
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('start_date').value = today;
+            document.getElementById('start_date').value = '';
             
             // Pre-fill dates from client's proposal if available
             if (proposal) {

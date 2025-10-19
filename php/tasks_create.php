@@ -28,18 +28,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Due date is required.";
     } else {
         try {
+            $stmt = $pdo->prepare("SELECT COUNT(*) as task_count FROM tasks WHERE project_id = ?");
+            $stmt->execute([$project_id]);
+            $result = $stmt->fetch();
+            $isFirstTask = $result['task_count'] == 0;
+
+            // Insert the new task
             $stmt = $pdo->prepare("
                 INSERT INTO tasks (project_id, title, description, assigned_to, due_date) 
                 VALUES (?, ?, ?, ?, ?)
             ");
             $stmt->execute([$project_id, $title, $description, $assigned_to, $due_date]);
 
-            // Only update last_activity_at timestamp
-            $stmt = $pdo->prepare("
-                UPDATE projects 
-                SET last_activity_at = NOW()
-                WHERE id = ?
-            ");
+            if ($isFirstTask) {
+                $stmt = $pdo->prepare("
+                    UPDATE projects 
+                    SET status = 'ongoing', last_activity_at = NOW()
+                    WHERE id = ?
+                ");
+            } else {
+                $stmt = $pdo->prepare("
+                    UPDATE projects 
+                    SET last_activity_at = NOW()
+                    WHERE id = ?
+                ");
+            }
             $stmt->execute([$project_id]);
 
             header("Location: tasks_list.php");
