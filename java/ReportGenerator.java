@@ -167,59 +167,69 @@ public class ReportGenerator {
         return data;
     }
 
+    /**
+     * Fetch comprehensive project data from database (schema-tolerant)
+     *
+     * - Detects if optional columns (e.g. `budget`) exist and builds the SELECT dynamically.
+     * - Prevents SQLSyntaxErrorException on schemas that don't include optional fields.
+     */
     private static ProjectData fetchProjectData(Connection conn, int projectId) throws Exception {
-        String query = "SELECT p.id, p.name, p.description, p.status, " +
-                      "p.completion_percentage, p.priority, p.budget, p.timeline, " +
-                      "p.start_date, p.end_date, p.category, p.created_at, " +
-                      "p.last_activity_at, p.total_hours_spent, p.estimated_hours, " +
-                      "p.created_by, p.client_id, " +
-                      "u.name as created_by_name " +
-                      "FROM projects p " +
-                      "LEFT JOIN users u ON p.created_by = u.id " +
-                      "WHERE p.id = ?";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, projectId);
-            ResultSet rs = stmt.executeQuery();
-            
-            if (!rs.next()) {
-                throw new Exception("Project not found with ID: " + projectId);
+        // determine which columns exist for projects table
+        Set<String> cols = new HashSet<>();
+        DatabaseMetaData meta = conn.getMetaData();
+        try (ResultSet rsCols = meta.getColumns(conn.getCatalog(), null, "projects", null)) {
+            while (rsCols.next()) {
+                cols.add(rsCols.getString("COLUMN_NAME"));
             }
-            
-            System.err.println("[DEBUG] Project found: " + rs.getString("name"));
-            
-            ProjectData data = new ProjectData();
-            data.id = rs.getInt("id");
-            data.name = rs.getString("name");
-            data.description = rs.getString("description");
-            data.status = rs.getString("status");
-            data.createdByName = rs.getString("created_by_name");
-            data.clientId = rs.getInt("client_id");
-            
-            data.priority = rs.getString("priority");
-            data.category = rs.getString("category");
-            data.timeline = rs.getString("timeline");
-            data.completionPercentage = rs.getInt("completion_percentage");
-            
-            // Date fields
-            data.startDate = rs.getDate("start_date");
-            data.endDate = rs.getDate("end_date");
-            data.createdAt = rs.getTimestamp("created_at");
-            data.lastActivityAt = rs.getTimestamp("last_activity_at");
-            
-            // Budget and hours
-            data.budget = rs.getDouble("budget");
-            data.totalHoursSpent = rs.getDouble("total_hours_spent");
-            data.estimatedHours = rs.getDouble("estimated_hours");
-            
-            fetchTasks(conn, data);
-            
-            fetchTeamMembers(conn, data);
-            
-            // Calculate metrics
-            data.calculateMetrics();
-            
-            return data;
+        }
+
+        // base required columns
+        List<String> selectCols = new ArrayList<>(Arrays.asList(
+            "p.id", "p.name", "p.description", "p.status",
+            "p.completion_percentage", "p.priority",
+            "p.start_date", "p.end_date", "p.category",
+            "p.created_at", "p.last_activity_at", "p.created_by", "p.client_id"
+        ));
+
+        // optional columns to include only if present
+        Map<String,String> optional = new LinkedHashMap<>();
+        optional.put("budget", "p.budget");
+        optional.put("total_hours_spent", "p.total_hours_spent");
+        optional.put("estimated_hours", "p.estimated_hours");
+        optional.put("timeline", "p.timeline");
+
+        for (Map.Entry<String,String> e : optional.entrySet()) {
+            if (cols.contains(e.getKey())) {
+                selectCols.add(e.getValue());
+            }
+        }
+
+        // include created_by_name via users join
+        String sql = "SELECT " + String.join(", ", selectCols) + ", u.name AS created_by_name " +
+                     "FROM projects p LEFT JOIN users u ON p.created_by = u.id WHERE p.id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, projectId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) throw new Exception("Project not found with ID: " + projectId);
+
+                ProjectData data = new ProjectData();
+                data.id = rs.getInt("id");
+                data.name = rs.getString("name");
+                data.description = rs.getString("description");
+                data.status = rs.getString("status");
+                data.completionPercentage = rs.getInt("completion_percentage");
+                data.priority = rs.getString("priority");
+                data.startDate = rs.getDate("start_date");
+                data.endDate = rs.getDate("end_date");
+                data.category = rs.getString("category");
+                data.createdAt = rs.getTimestamp("created_at");
+                data.lastActivityAt = rs.getTimestamp("last_activity_at");
+                data.createdByName = rs.getString("created_by_name");
+                data.clientId = rs.getInt("client_id");
+
+                return data;
+            }
         }
     }
     

@@ -720,22 +720,37 @@ if (!$project) {
 
         async function fetchProjectDetails() {
             try {
-                const response = await fetch(`fetch_client_project_details_data.php?id=${CONFIG.projectId}`);
-                
+                // include session cookies (important if server checks login) and avoid cached responses while debugging
+                const response = await fetch(`fetch_client_project_details_data.php?id=${CONFIG.projectId}`, {
+                    credentials: 'same-origin',
+                    cache: 'no-store'
+                });
+
+                // read raw text so we can see HTML/PHP warnings if JSON is malformed
+                const raw = await response.text();
+
                 if (!response.ok) {
-                    console.error('HTTP error:', response.status, response.statusText);
+                    console.error('HTTP error:', response.status, response.statusText, 'raw response:', raw);
                     return null;
                 }
-                
-                const data = await response.json();
+
+                // try parse JSON and log raw body on failure
+                let data;
+                try {
+                    data = JSON.parse(raw);
+                } catch (err) {
+                    console.error('Invalid JSON received from server:', err);
+                    console.error('Raw response body:', raw);
+                    return null;
+                }
 
                 if (data.error) {
-                    console.error('Error from server:', data.error);
+                    console.error('Error from server payload:', data.error, data);
                     return null;
                 }
 
                 if (!data.success) {
-                    console.error('Request unsuccessful:', data);
+                    console.error('Request unsuccessful payload:', data);
                     return null;
                 }
 
