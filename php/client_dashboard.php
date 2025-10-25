@@ -412,6 +412,7 @@ try {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
         let currentBudgetId = null;
+        let currentProjectId = null; // Added to track current project for report generation
 
         function showBudgetReview(budgetId, event) {
             if (event) {
@@ -552,6 +553,109 @@ try {
                     </div>
                 `;
             });
+        }
+
+        function generateReport(event, projectId) {
+            event.stopPropagation();
+            currentProjectId = projectId;
+            document.getElementById('reportModal').style.display = 'block';
+            document.getElementById('reportProgress').style.display = 'none';
+            document.getElementById('reportResult').style.display = 'none';
+            document.getElementById('reportResult').innerHTML = '';
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+            currentProjectId = null;
+            document.getElementById('reportProgress').style.display = 'none';
+            document.getElementById('reportResult').style.display = 'none';
+        }
+
+        async function generateReportFormat(format) {
+            if (!currentProjectId) return;
+            
+            const progressDiv = document.getElementById('reportProgress');
+            const resultDiv = document.getElementById('reportResult');
+            
+            progressDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            resultDiv.innerHTML = '';
+            
+            try {
+                console.log('Generating report for project:', currentProjectId, 'format:', format);
+                const response = await fetch(`generate_report.php?project_id=${currentProjectId}&format=${format}`);
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                progressDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success-message">
+                            <i class="fas fa-check-circle"></i>
+                            <h4>Report Generated Successfully!</h4>
+                            <p>Your ${format.toUpperCase()} report is ready.</p>
+                            <div class="report-actions">
+                                <a href="${data.reportUrl}" class="btn btn-primary" download>
+                                    <i class="fas fa-download"></i> Download Report
+                                </a>
+                                ${format === 'html' ? `
+                                    <a href="${data.reportUrl}" class="btn btn-secondary" target="_blank">
+                                        <i class="fas fa-external-link-alt"></i> View Report
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    let errorDetails = data.error || 'An error occurred while generating the report.';
+                    if (data.details) {
+                        errorDetails += '<br><br><strong>Details:</strong><br><pre style="text-align: left; background: #f5f5f5; padding: 10px; border-radius: 5px; font-size: 12px; max-height: 200px; overflow-y: auto;">' + 
+                            escapeHtml(data.details) + '</pre>';
+                    }
+                    if (data.returnCode) {
+                        errorDetails += '<br><small>Return code: ' + data.returnCode + '</small>';
+                    }
+                    
+                    resultDiv.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h4>Report Generation Failed</h4>
+                            <p>${errorDetails}</p>
+                            <button class="btn btn-secondary" onclick="closeReportModal()">Close</button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Report generation error:', error);
+                progressDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h4>Connection Error</h4>
+                        <p>Failed to connect to the report generator. Please try again.</p>
+                        <p><small>Error: ${error.message}</small></p>
+                        <button class="btn btn-secondary" onclick="closeReportModal()">Close</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('reportModal');
+            if (event.target === modal) {
+                closeReportModal();
+            }
         }
 
         // Security function - escape HTML in comments

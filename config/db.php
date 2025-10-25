@@ -1,4 +1,9 @@
 <?php
+// Add this at the top of the file
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../logs/php_error.log');
+error_reporting(E_ALL);
+
 // Database configuration
 $host = "localhost";
 $db   = "buildwatch";

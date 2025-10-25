@@ -87,9 +87,10 @@ class ReportGenerator {
                 }
             }
             
-            // Include created_by_name via users join
-            $sql = "SELECT " . implode(", ", $selectCols) . ", u.name AS created_by_name " .
-                   "FROM projects p LEFT JOIN users u ON p.created_by = u.id WHERE p.id = ?";
+            $sql = "SELECT " . implode(", ", $selectCols) . ", u.name AS created_by_name, " .
+                   "c.name AS client_name, c.email AS client_email, c.company AS client_company " .
+                   "FROM projects p LEFT JOIN users u ON p.created_by = u.id " .
+                   "LEFT JOIN clients c ON p.client_id = c.id WHERE p.id = ?";
             
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([$projectId]);
@@ -115,6 +116,10 @@ class ReportGenerator {
             $data->createdByName = $row['created_by_name'] ?? 'N/A';
             $data->clientId = (int)$row['client_id'];
             
+            $data->clientName = $row['client_name'] ?? 'N/A';
+            $data->clientEmail = $row['client_email'] ?? 'N/A';
+            $data->clientCompany = $row['client_company'] ?? 'N/A';
+            
             // Set optional fields if they exist
             $data->budget = isset($row['budget']) ? (float)$row['budget'] : 0.0;
             $data->totalHoursSpent = isset($row['total_hours_spent']) ? (float)$row['total_hours_spent'] : 0.0;
@@ -125,6 +130,10 @@ class ReportGenerator {
             $this->fetchTasks($data);
             $this->fetchTeamMembers($data);
             
+            $this->fetchProposalData($data);
+            $this->fetchBudgetData($data);
+            $this->fetchBudgetBreakdown($data);
+            
             // Calculate metrics
             $data->calculateMetrics();
             
@@ -133,6 +142,137 @@ class ReportGenerator {
         } catch (Exception $e) {
             error_log("Error fetching project data: " . $e->getMessage());
             throw $e;
+        }
+    }
+    
+    /**
+     * Fetch proposal information for the project
+     */
+    private function fetchProposalData(&$data) {
+        try {
+            // Get the most recent proposal for this client
+            $sql = "SELECT id, title, description, status, budget, start_date, end_date, client_decision " .
+                   "FROM project_proposals WHERE client_id = ? ORDER BY submitted_at DESC LIMIT 1";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$data->clientId]);
+            $proposal = $stmt->fetch();
+            
+            if ($proposal) {
+                $data->proposalId = (int)$proposal['id'];
+                $data->proposalTitle = $proposal['title'];
+                $data->proposalDescription = $proposal['description'];
+                $data->proposalStatus = $proposal['status'];
+                $data->proposalBudget = (float)($proposal['budget'] ?? 0);
+                $data->proposalStartDate = $proposal['start_date'];
+                $data->proposalEndDate = $proposal['end_date'];
+                $data->proposalClientDecision = $proposal['client_decision'];
+            }
+        } catch (Exception $e) {
+            error_log("Error fetching proposal data: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Fetch budget information for the project
+     */
+    private function fetchBudgetData(&$data) {
+        try {
+            // Get budget linked to the proposal we just fetched
+            if (!isset($data->proposalId)) {
+                return;
+            }
+            
+            $sql = "SELECT pb.id, pb.proposal_id, pb.proposed_amount, pb.evaluated_amount, " .
+                   "pb.status, pb.remarks, pb.admin_comment, pb.client_decision " .
+                   "FROM project_budgets pb " .
+                   "WHERE pb.proposal_id = ? ORDER BY pb.created_at DESC LIMIT 1";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$data->proposalId]);
+            $budget = $stmt->fetch();
+            
+            if ($budget) {
+                $data->budgetId = (int)$budget['id'];
+                $data->proposedAmount = (float)$budget['proposed_amount'];
+                $data->evaluatedAmount = (float)$budget['evaluated_amount'];
+                $data->budgetStatus = $budget['status'];
+                $data->budgetRemarks = $budget['remarks'];
+                $data->adminComment = $budget['admin_comment'];
+                $data->clientBudgetDecision = $budget['client_decision'];
+                
+                // Fetch budget reviews for this budget
+                $this->fetchBudgetReviews($data, (int)$budget['proposal_id']);
+            }
+        } catch (Exception $e) {
+            error_log("Error fetching budget data: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Fetch budget breakdown items
+     */
+    private function fetchBudgetBreakdown(&$data) {
+        try {
+            if (!isset($data->budgetId)) {
+                return;
+            }
+            
+            $sql = "SELECT id, item_name, category, estimated_cost, created_at " .
+                   "FROM budget_breakdowns WHERE budget_id = ? ORDER BY created_at ASC";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$data->budgetId]);
+            
+            $data->budgetBreakdowns = [];
+            $totalBreakdownCost = 0;
+            
+            while ($row = $stmt->fetch()) {
+                $breakdown = new BudgetBreakdown();
+                $breakdown->id = (int)$row['id'];
+                $breakdown->itemName = $row['item_name'];
+                $breakdown->category = $row['category'];
+                $breakdown->estimatedCost = (float)$row['estimated_cost'];
+                $breakdown->createdAt = $row['created_at'];
+                
+                $data->budgetBreakdowns[] = $breakdown;
+                $totalBreakdownCost += $breakdown->estimatedCost;
+            }
+            
+            $data->totalBreakdownCost = $totalBreakdownCost;
+        } catch (Exception $e) {
+            error_log("Error fetching budget breakdown: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Fetch budget review history
+     */
+    private function fetchBudgetReviews(&$data, $proposalId) {
+        try {
+            $sql = "SELECT id, admin_id, evaluated_amount, status, remarks, created_at, u.name AS admin_name " .
+                   "FROM budget_reviews br " .
+                   "LEFT JOIN users u ON br.admin_id = u.id " .
+                   "WHERE br.proposal_id = ? ORDER BY br.created_at DESC";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$proposalId]);
+            
+            $data->budgetReviews = [];
+            
+            while ($row = $stmt->fetch()) {
+                $review = new BudgetReview();
+                $review->id = (int)$row['id'];
+                $review->adminName = $row['admin_name'] ?? 'N/A';
+                $review->evaluatedAmount = (float)$row['evaluated_amount'];
+                $review->status = $row['status'];
+                $review->remarks = $row['remarks'];
+                $review->createdAt = $row['created_at'];
+                
+                $data->budgetReviews[] = $review;
+            }
+        } catch (Exception $e) {
+            error_log("Error fetching budget reviews: " . $e->getMessage());
         }
     }
     
@@ -268,6 +408,9 @@ tr:hover { background: #f9f9f9; }
 .status-ongoing { background: #d1ecf1; color: #0c5460; }
 .status-on-hold { background: #fff3cd; color: #856404; }
 .status-planning { background: #e2e3e5; color: #383d41; }
+.status-approved { background: #d4edda; color: #155724; }
+.status-rejected { background: #f8d7da; color: #721c24; }
+.status-pending-client { background: #fff3cd; color: #856404; }
 .priority-high { color: #e74c3c; font-weight: 600; }
 .priority-medium { color: #f39c12; font-weight: 600; }
 .priority-low { color: #95a5a6; font-weight: 600; }
@@ -325,6 +468,37 @@ CSS;
     }
     
     /**
+     * Create budget breakdown table HTML
+     */
+    private function createBudgetBreakdownTable($data) {
+        if (empty($data->budgetBreakdowns)) {
+            return "<p style=\"color: #888; font-style: italic;\">No budget breakdown items available.</p>";
+        }
+        
+        $table = "<div style=\"overflow-x: auto;\">\n";
+        $table .= "<table>\n<thead>\n<tr>\n";
+        $table .= "<th>Item Name</th><th>Category</th><th>Estimated Cost</th>\n";
+        $table .= "</tr>\n</thead>\n<tbody>\n";
+        
+        foreach ($data->budgetBreakdowns as $item) {
+            $table .= "<tr>\n";
+            $table .= "<td>" . $this->escapeHtml($item->itemName) . "</td>\n";
+            $table .= "<td>" . $this->escapeHtml(ucfirst($item->category)) . "</td>\n";
+            $table .= "<td>₱" . number_format($item->estimatedCost, 2) . "</td>\n";
+            $table .= "</tr>\n";
+        }
+        
+        $table .= "<tr style=\"background: #f0f0f0; font-weight: bold;\">\n";
+        $table .= "<td colspan=\"2\">Total Breakdown Cost</td>\n";
+        $table .= "<td>₱" . number_format($data->totalBreakdownCost, 2) . "</td>\n";
+        $table .= "</tr>\n";
+        
+        $table .= "</tbody>\n</table>\n";
+        $table .= "</div>\n";
+        return $table;
+    }
+    
+    /**
      * Generate HTML report
      */
     private function generateHTMLReport($data, $outputPath = null) {
@@ -358,16 +532,70 @@ CSS;
         $html .= "<h3>Project Overview</h3>\n";
         $html .= "<div class=\"overview-grid\">\n";
         $html .= "<div><strong>Project Manager:</strong> " . $this->escapeHtml($data->createdByName) . "</div>\n";
+        $html .= "<div><strong>Client:</strong> " . $this->escapeHtml($data->clientName) . "</div>\n";
+        $html .= "<div><strong>Client Email:</strong> " . $this->escapeHtml($data->clientEmail) . "</div>\n";
         $html .= "<div><strong>Status:</strong> <span class=\"status-badge status-" . strtolower($data->status) . "\">" .
                 $this->escapeHtml($data->status) . "</span></div>\n";
         $html .= "<div><strong>Priority:</strong> <span class=\"priority-" . strtolower($data->priority) . "\">" .
                 $this->escapeHtml(strtoupper($data->priority)) . "</span></div>\n";
         $html .= "<div><strong>Category:</strong> " . $this->escapeHtml($data->category ?? "N/A") . "</div>\n";
         $html .= "<div><strong>Timeline:</strong> " . $this->escapeHtml($data->timeline ?? "N/A") . "</div>\n";
-        $html .= "<div><strong>Budget:</strong> $" . number_format($data->budget, 2) . "</div>\n";
         $html .= "</div>\n";
         $html .= "<p style=\"margin-top: 15px;\"><strong>Description:</strong> " . $this->escapeHtml($data->description) . "</p>\n";
         $html .= "</div>\n";
+        
+        if (isset($data->proposalId)) {
+            $html .= "<div class=\"section\">\n";
+            $html .= "<h3>Proposal & Budget Information</h3>\n";
+            $html .= "<div class=\"overview-grid\">\n";
+            $html .= "<div><strong>Proposal Title:</strong> " . $this->escapeHtml($data->proposalTitle) . "</div>\n";
+            $html .= "<div><strong>Proposal Status:</strong> <span class=\"status-badge status-" . strtolower($data->proposalStatus) . "\">" .
+                    $this->escapeHtml($data->proposalStatus) . "</span></div>\n";
+            $html .= "<div><strong>Proposed Amount:</strong> ₱" . number_format($data->proposedAmount, 2) . "</div>\n";
+            $html .= "<div><strong>Evaluated Amount:</strong> ₱" . number_format($data->evaluatedAmount, 2) . "</div>\n";
+            $html .= "<div><strong>Budget Status:</strong> <span class=\"status-badge status-" . strtolower($data->budgetStatus) . "\">" .
+                    $this->escapeHtml($data->budgetStatus) . "</span></div>\n";
+            $html .= "<div><strong>Client Decision:</strong> " . $this->escapeHtml($data->proposalClientDecision ?? "Pending") . "</div>\n";
+            $html .= "</div>\n";
+            
+            if ($data->budgetRemarks) {
+                $html .= "<p style=\"margin-top: 15px;\"><strong>Budget Remarks:</strong> " . $this->escapeHtml($data->budgetRemarks) . "</p>\n";
+            }
+            
+            $html .= "</div>\n";
+            
+            // Budget breakdown section
+            if (!empty($data->budgetBreakdowns)) {
+                $html .= "<div class=\"section\">\n";
+                $html .= "<h3>Budget Breakdown</h3>\n";
+                $html .= $this->createBudgetBreakdownTable($data);
+                $html .= "</div>\n";
+            }
+            
+            // Budget review history
+            if (!empty($data->budgetReviews)) {
+                $html .= "<div class=\"section\">\n";
+                $html .= "<h3>Budget Review History</h3>\n";
+                $html .= "<div style=\"overflow-x: auto;\">\n";
+                $html .= "<table>\n<thead>\n<tr>\n";
+                $html .= "<th>Admin</th><th>Evaluated Amount</th><th>Status</th><th>Date</th>\n";
+                $html .= "</tr>\n</thead>\n<tbody>\n";
+                
+                foreach ($data->budgetReviews as $review) {
+                    $html .= "<tr>\n";
+                    $html .= "<td>" . $this->escapeHtml($review->adminName) . "</td>\n";
+                    $html .= "<td>₱" . number_format($review->evaluatedAmount, 2) . "</td>\n";
+                    $html .= "<td><span class=\"status-badge status-" . strtolower($review->status) . "\">" .
+                            $this->escapeHtml($review->status) . "</span></td>\n";
+                    $html .= "<td>" . date('M d, Y H:i', strtotime($review->createdAt)) . "</td>\n";
+                    $html .= "</tr>\n";
+                }
+                
+                $html .= "</tbody>\n</table>\n";
+                $html .= "</div>\n";
+                $html .= "</div>\n";
+            }
+        }
         
         // Key metrics cards
         $html .= "<div class=\"metrics-grid\">\n";
@@ -456,11 +684,25 @@ CSS;
                 'status' => $data->status,
                 'clientName' => $data->clientName,
                 'clientEmail' => $data->clientEmail,
+                'clientCompany' => $data->clientCompany ?? 'N/A',
                 'managerName' => $data->createdByName,
                 'completionPercentage' => $data->completionPercentage,
                 'budget' => $data->budget,
                 'actualCost' => $data->actualCost,
                 'location' => $data->location
+            ],
+            'proposal' => [
+                'id' => $data->proposalId ?? null,
+                'title' => $data->proposalTitle ?? null,
+                'status' => $data->proposalStatus ?? null,
+                'clientDecision' => $data->proposalClientDecision ?? null
+            ],
+            'budgetInfo' => [
+                'proposedAmount' => $data->proposedAmount ?? 0,
+                'evaluatedAmount' => $data->evaluatedAmount ?? 0,
+                'status' => $data->budgetStatus ?? null,
+                'totalBreakdownCost' => $data->totalBreakdownCost ?? 0,
+                'breakdownItems' => []
             ],
             'metrics' => [
                 'totalTasks' => $data->totalTasks,
@@ -474,8 +716,32 @@ CSS;
                 'daysRemaining' => $data->daysRemaining
             ],
             'tasks' => [],
+            'budgetReviews' => [],
             'insights' => $data->getInsights()
         ];
+        
+        // Add budget breakdown items
+        if (!empty($data->budgetBreakdowns)) {
+            foreach ($data->budgetBreakdowns as $item) {
+                $json['budgetInfo']['breakdownItems'][] = [
+                    'itemName' => $item->itemName,
+                    'category' => $item->category,
+                    'estimatedCost' => $item->estimatedCost
+                ];
+            }
+        }
+        
+        // Add budget reviews
+        if (!empty($data->budgetReviews)) {
+            foreach ($data->budgetReviews as $review) {
+                $json['budgetReviews'][] = [
+                    'adminName' => $review->adminName,
+                    'evaluatedAmount' => $review->evaluatedAmount,
+                    'status' => $review->status,
+                    'createdAt' => $review->createdAt
+                ];
+            }
+        }
         
         foreach ($data->tasks as $task) {
             $json['tasks'][] = [
@@ -513,6 +779,37 @@ CSS;
         $text .= "PROJECT OVERVIEW\n";
         $text .= "--------------------------------------------------------------------------------\n";
         $text .= $data->getOverviewText() . "\n\n";
+        
+        if (isset($data->proposalId)) {
+            $text .= "PROPOSAL & BUDGET INFORMATION\n";
+            $text .= "--------------------------------------------------------------------------------\n";
+            $text .= sprintf("Proposal Title: %s\n", $data->proposalTitle);
+            $text .= sprintf("Proposal Status: %s\n", $data->proposalStatus);
+            $text .= sprintf("Proposed Amount: ₱%.2f\n", $data->proposedAmount);
+            $text .= sprintf("Evaluated Amount: ₱%.2f\n", $data->evaluatedAmount);
+            $text .= sprintf("Budget Status: %s\n", $data->budgetStatus);
+            $text .= sprintf("Client Decision: %s\n\n", $data->proposalClientDecision ?? "Pending");
+            
+            if (!empty($data->budgetBreakdowns)) {
+                $text .= "BUDGET BREAKDOWN\n";
+                $text .= "--------------------------------------------------------------------------------\n";
+                foreach ($data->budgetBreakdowns as $item) {
+                    $text .= sprintf("• %s (%s): ₱%.2f\n", $item->itemName, ucfirst($item->category), $item->estimatedCost);
+                }
+                $text .= sprintf("Total Breakdown Cost: ₱%.2f\n\n", $data->totalBreakdownCost);
+            }
+            
+            if (!empty($data->budgetReviews)) {
+                $text .= "BUDGET REVIEW HISTORY\n";
+                $text .= "--------------------------------------------------------------------------------\n";
+                foreach ($data->budgetReviews as $review) {
+                    $text .= sprintf("• %s - ₱%.2f (%s) - %s\n", 
+                        $review->adminName, $review->evaluatedAmount, $review->status, 
+                        date('M d, Y H:i', strtotime($review->createdAt)));
+                }
+                $text .= "\n";
+            }
+        }
         
         $text .= "KEY METRICS\n";
         $text .= "--------------------------------------------------------------------------------\n";
@@ -590,11 +887,32 @@ class ProjectData {
     public $totalHoursSpent = 0.0;
     public $estimatedHours = 0.0;
     
-    // Legacy fields for compatibility
     public $clientName = "N/A";
     public $clientEmail = "N/A";
+    public $clientCompany = "N/A";
     public $actualCost = 0.0;
     public $location = "N/A";
+    
+    public $proposalId;
+    public $proposalTitle;
+    public $proposalDescription;
+    public $proposalStatus;
+    public $proposalBudget = 0.0;
+    public $proposalStartDate;
+    public $proposalEndDate;
+    public $proposalClientDecision;
+    
+    public $budgetId;
+    public $proposedAmount = 0.0;
+    public $evaluatedAmount = 0.0;
+    public $budgetStatus;
+    public $budgetRemarks;
+    public $adminComment;
+    public $clientBudgetDecision;
+    
+    public $budgetBreakdowns = [];
+    public $totalBreakdownCost = 0.0;
+    public $budgetReviews = [];
     
     public $tasks = [];
     public $teamMembers = [];
@@ -657,12 +975,14 @@ class ProjectData {
         return sprintf(
             "Project Name: %s\n" .
             "Project Manager: %s\n" .
+            "Client: %s\n" .
+            "Client Email: %s\n" .
             "Status: %s\n" .
             "Priority: %s\n" .
             "Category: %s\n" .
             "Description: %s",
-            $this->name, $this->createdByName, $this->status, $this->priority, 
-            $this->category ?? "N/A", $this->description
+            $this->name, $this->createdByName, $this->clientName, $this->clientEmail,
+            $this->status, $this->priority, $this->category ?? "N/A", $this->description
         );
     }
     
@@ -717,6 +1037,9 @@ class ProjectData {
     
     public function getBudgetAnalysis() {
         $analysis = sprintf("Total Budget: $%.2f\n", $this->budget);
+        $analysis .= sprintf("Proposed Amount: ₱%.2f\n", $this->proposedAmount);
+        $analysis .= sprintf("Evaluated Amount: ₱%.2f\n", $this->evaluatedAmount);
+        $analysis .= sprintf("Budget Breakdown Total: ₱%.2f\n", $this->totalBreakdownCost);
         $analysis .= sprintf("Total Hours Spent: %.1f hours\n", $this->totalHoursSpent);
         $analysis .= sprintf("Estimated Hours: %.1f hours\n", $this->estimatedHours);
         
@@ -798,6 +1121,13 @@ class ProjectData {
             $insights .= "⚠ Project has exceeded estimated hours. Review scope and timeline.\n\n";
         }
         
+        // Budget insights
+        if ($this->evaluatedAmount > $this->proposedAmount && $this->proposedAmount > 0) {
+            $difference = $this->evaluatedAmount - $this->proposedAmount;
+            $insights .= sprintf("⚠ Budget has been increased by ₱%.2f (%.1f%%) during evaluation.\n\n", 
+                $difference, ($difference / $this->proposedAmount) * 100);
+        }
+        
         // Team insights
         if (count($this->teamMembers) < 2 && $this->totalTasks > 10) {
             $insights .= "⚠ Consider adding more team members given the number of tasks.\n\n";
@@ -816,6 +1146,10 @@ class ProjectData {
         
         if ($this->pendingTasks > 5) {
             $insights .= "• Assign pending tasks to team members to maintain momentum.\n";
+        }
+        
+        if ($this->budgetStatus === 'pending_client') {
+            $insights .= "• Follow up with client on budget decision.\n";
         }
         
         $insights .= "• Maintain regular communication with stakeholders.\n";
@@ -837,6 +1171,29 @@ class ProjectData {
         if ($this->estimatedHours == 0) return 0;
         return ($this->totalHoursSpent / $this->estimatedHours) * 100;
     }
+}
+
+/**
+ * Data class to hold budget breakdown information
+ */
+class BudgetBreakdown {
+    public $id;
+    public $itemName;
+    public $category;
+    public $estimatedCost;
+    public $createdAt;
+}
+
+/**
+ * Data class to hold budget review information
+ */
+class BudgetReview {
+    public $id;
+    public $adminName;
+    public $evaluatedAmount;
+    public $status;
+    public $remarks;
+    public $createdAt;
 }
 
 /**
@@ -864,4 +1221,3 @@ class TeamMember {
     public $role;
     public $assignedAt;
 }
-?>

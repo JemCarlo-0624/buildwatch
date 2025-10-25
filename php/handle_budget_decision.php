@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Validate inputs
 $budget_id = filter_input(INPUT_POST, 'budget_id', FILTER_VALIDATE_INT);
-$decision = filter_input(INPUT_POST, 'decision', FILTER_SANITIZE_STRING);
+$decision  = filter_input(INPUT_POST, 'decision', FILTER_SANITIZE_STRING);
 
 if (!$budget_id || !in_array($decision, ['accept', 'reject'])) {
     http_response_code(400);
@@ -29,14 +29,22 @@ if (!$budget_id || !in_array($decision, ['accept', 'reject'])) {
 }
 
 try {
-    // Log which database PHP is connected to (for debugging)
-    error_log("Connected to DB: " . $pdo->query("SELECT DATABASE()")->fetchColumn());
+    error_log("Starting budget decision process for budget_id: " . $budget_id);
 
     $pdo->beginTransaction();
 
-    // Get budget and proposal details
+    // Fetch proposal + budget info
     $stmt = $pdo->prepare("
-        SELECT pb.id, pb.proposal_id, pp.client_id, pp.title
+        SELECT 
+            pb.id,
+            pb.proposal_id,
+            pb.status AS budget_status,
+            pp.admin_id,
+            pp.client_id,
+            pp.title,
+            pp.description,
+            pp.start_date,
+            pp.end_date
         FROM project_budgets pb
         JOIN project_proposals pp ON pb.proposal_id = pp.id
         WHERE pb.id = ? AND pp.client_id = ?
@@ -44,16 +52,72 @@ try {
     $stmt->execute([$budget_id, $_SESSION['client_id']]);
     $budget = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    error_log("Fetched budget data: " . print_r($budget, true));
+
     if (!$budget) {
         throw new Exception("Budget not found or access denied");
     }
 
-    // ✅ Check if columns exist before updating
-    $columns = $pdo->query("SHOW COLUMNS FROM project_budgets")->fetchAll(PDO::FETCH_COLUMN);
-    $hasUpdatedAt = in_array('updated_at', $columns);
+    // Validate required fields
+    $requiredFields = ['title', 'description', 'admin_id', 'client_id', 'start_date', 'end_date'];
+    foreach ($requiredFields as $field) {
+        if (!isset($budget[$field]) || $budget[$field] === '') {
+            throw new Exception("Missing required field: {$field}");
+        }
+    }
 
     // Decision handling
     if ($decision === 'accept') {
+        // Create project record
+        $stmt = $pdo->prepare("
+            INSERT INTO projects (
+                name,
+                description,
+                status,
+                completion_percentage,
+                priority,
+                created_by,
+                client_id,
+                timeline,
+                start_date,
+                end_date,
+                category,
+                created_at,
+                last_activity_at
+            ) VALUES (
+                :name,
+                :description,
+                'ongoing',
+                0,
+                'medium',
+                :created_by,
+                :client_id,
+                NULL,
+                :start_date,
+                :end_date,
+                'construction',
+                NOW(),
+                NOW()
+            )
+        ");
+
+        $projectData = [
+            ':name'        => $budget['title'],
+            ':description' => $budget['description'],
+            ':created_by'  => $budget['admin_id'],
+            ':client_id'   => $budget['client_id'],
+            ':start_date'  => $budget['start_date'],
+            ':end_date'    => $budget['end_date']
+        ];
+
+        if (!$stmt->execute($projectData)) {
+            $error = $stmt->errorInfo();
+            throw new Exception("Failed to create project: " . $error[2]);
+        }
+
+        $project_id = $pdo->lastInsertId();
+        error_log("Project created with ID: " . $project_id);
+
         // Update proposal
         $stmt = $pdo->prepare("
             UPDATE project_proposals
@@ -64,20 +128,20 @@ try {
         ");
         $stmt->execute([$budget['proposal_id']]);
 
-        // Update budget (conditionally handle missing column)
-        $updateQuery = "
+        // Update budget
+        $stmt = $pdo->prepare("
             UPDATE project_budgets
             SET client_decision = 'approved',
-                status = 'approved'" . ($hasUpdatedAt ? ", updated_at = NOW()" : "") . "
+                status = 'approved',
+                updated_at = NOW()
             WHERE id = ?
-        ";
-        $stmt = $pdo->prepare($updateQuery);
+        ");
         $stmt->execute([$budget_id]);
 
-        $message = "Client has approved the budget for proposal: " . htmlspecialchars($budget['title']);
-        $success_msg = "Budget approved successfully!";
+        $message = "Client has approved the budget and project has been created for: " . htmlspecialchars($budget['title']);
+        $success_msg = "Budget approved and project created successfully!";
     } else {
-        // Update proposal
+        // Client rejected
         $stmt = $pdo->prepare("
             UPDATE project_proposals
             SET status = 'rejected',
@@ -87,21 +151,20 @@ try {
         ");
         $stmt->execute([$budget['proposal_id']]);
 
-        // Update budget (conditionally handle missing column)
-        $updateQuery = "
+        $stmt = $pdo->prepare("
             UPDATE project_budgets
             SET client_decision = 'rejected',
-                status = 'rejected'" . ($hasUpdatedAt ? ", updated_at = NOW()" : "") . "
+                status = 'rejected',
+                updated_at = NOW()
             WHERE id = ?
-        ";
-        $stmt = $pdo->prepare($updateQuery);
+        ");
         $stmt->execute([$budget_id]);
 
         $message = "Client has rejected the budget for proposal: " . htmlspecialchars($budget['title']);
         $success_msg = "Budget rejected successfully!";
     }
 
-    // Add notification for admin (client_id = 1)
+    // Notification to admin
     try {
         $stmt = $pdo->prepare("
             INSERT INTO notifications (client_id, type, title, message, link, created_at)

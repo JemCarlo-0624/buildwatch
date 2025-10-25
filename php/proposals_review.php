@@ -525,12 +525,15 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
             
             <?php if (!empty($proposals)): ?>
                 <?php foreach ($proposals as $p): ?>
-                <a href="proposal_details.php?proposal_id=<?php echo $p['id']; ?>" style="text-decoration: none; color: inherit; display: block;">
+                <a href="<?php echo $p['status'] === 'pending' ? 'admin_review_budget.php?proposal_id=' . $p['id'] : 'proposal_details.php?proposal_id=' . $p['id']; ?>" style="text-decoration: none; color: inherit; display: block;">
                 <div class="proposal-item" style="cursor: pointer; transition: all 0.2s ease;">
                     <div class="proposal-header-row">
                         <div>
                             <h3 class="proposal-title"><?php echo htmlspecialchars($p['title']); ?></h3>
                             <div class="proposal-id">Proposal ID: #<?php echo (int)$p['id']; ?></div>
+                        </div>
+                        <div class="status-badge status-<?php echo $p['status']; ?>">
+                            <?php echo ucfirst($p['status']); ?>
                         </div>
                     </div>
 

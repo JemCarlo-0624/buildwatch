@@ -1,0 +1,143 @@
+[25-Oct-2025 17:57:22 Europe/Berlin] Connected to DB: buildwatch
+[25-Oct-2025 18:00:29 Europe/Berlin] Connected to DB: buildwatch
+[25-Oct-2025 18:10:38 Europe/Berlin] Connected to DB: buildwatch
+[25-Oct-2025 18:11:43 Europe/Berlin] Connected to DB: buildwatch
+[25-Oct-2025 18:14:05 Europe/Berlin] Connected to DB: buildwatch
+[25-Oct-2025 18:16:57 Europe/Berlin] Connected to DB: buildwatch
+[25-Oct-2025 18:16:57 Europe/Berlin] PHP Warning:  Undefined array key "admin_id" in D:\Programming\xampp\htdocs\buildwatch\php\handle_budget_decision.php on line 107
+[25-Oct-2025 18:16:57 Europe/Berlin] Creating project with data: Array
+(
+    [:name] => Multi-Specialty Medical Clinic Building
+    [:description] => Construction of a modern two-story medical clinic facility with 8 consultation rooms, minor surgery suite, diagnostic imaging room, laboratory, pharmacy, reception and waiting area, medical records room, staff facilities, and emergency treatment area. Design prioritizes patient privacy, infection control, and accessibility. Total floor area: 650 square meters.
+    [:created_by] => 
+    [:client_id] => 1
+    [:start_date] => 2026-03-01
+    [:end_date] => 2026-12-15
+)
+
+[25-Oct-2025 18:16:57 Europe/Berlin] Budget decision error: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'created_by' cannot be null
+[25-Oct-2025 18:18:27 Europe/Berlin] Connected to DB: buildwatch
+[25-Oct-2025 18:18:27 Europe/Berlin] Budget decision error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'pp.admin_id' in 'field list'
+[25-Oct-2025 18:19:44 Europe/Berlin] Connected to DB: buildwatch
+[25-Oct-2025 18:19:44 Europe/Berlin] Budget decision error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'pb.created_by' in 'field list'
+[25-Oct-2025 18:21:42 Europe/Berlin] Connected to DB: buildwatch
+[25-Oct-2025 18:21:42 Europe/Berlin] Fetched budget data: Array
+(
+    [id] => 16
+    [proposal_id] => 16
+    [admin_id] => 
+    [client_id] => 1
+    [title] => Multi-Specialty Medical Clinic Building
+    [description] => Construction of a modern two-story medical clinic facility with 8 consultation rooms, minor surgery suite, diagnostic imaging room, laboratory, pharmacy, reception and waiting area, medical records room, staff facilities, and emergency treatment area. Design prioritizes patient privacy, infection control, and accessibility. Total floor area: 650 square meters.
+    [start_date] => 2026-03-01
+    [end_date] => 2026-12-15
+)
+
+[25-Oct-2025 18:21:42 Europe/Berlin] Budget decision error: Missing required field: admin_id
+[25-Oct-2025 18:22:54 Europe/Berlin] Starting budget decision process for budget_id: 16
+[25-Oct-2025 18:22:54 Europe/Berlin] Budget decision error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'pp.admin_id' in 'field list'
+[25-Oct-2025 18:24:34 Europe/Berlin] Starting budget decision process for budget_id: 16
+[25-Oct-2025 18:24:34 Europe/Berlin] Fetched budget data: Array
+(
+    [id] => 16
+    [proposal_id] => 16
+    [budget_status] => pending_client
+    [admin_id] => 
+    [client_id] => 1
+    [title] => Multi-Specialty Medical Clinic Building
+    [description] => Construction of a modern two-story medical clinic facility with 8 consultation rooms, minor surgery suite, diagnostic imaging room, laboratory, pharmacy, reception and waiting area, medical records room, staff facilities, and emergency treatment area. Design prioritizes patient privacy, infection control, and accessibility. Total floor area: 650 square meters.
+    [start_date] => 2026-03-01
+    [end_date] => 2026-12-15
+)
+
+[25-Oct-2025 18:24:34 Europe/Berlin] Missing required field: admin_id. Budget data: Array
+(
+    [id] => 16
+    [proposal_id] => 16
+    [budget_status] => pending_client
+    [admin_id] => 
+    [client_id] => 1
+    [title] => Multi-Specialty Medical Clinic Building
+    [description] => Construction of a modern two-story medical clinic facility with 8 consultation rooms, minor surgery suite, diagnostic imaging room, laboratory, pharmacy, reception and waiting area, medical records room, staff facilities, and emergency treatment area. Design prioritizes patient privacy, infection control, and accessibility. Total floor area: 650 square meters.
+    [start_date] => 2026-03-01
+    [end_date] => 2026-12-15
+)
+
+[25-Oct-2025 18:24:34 Europe/Berlin] Budget decision error: Missing required field: admin_id
+[25-Oct-2025 18:26:33 Europe/Berlin] Starting budget decision process for budget_id: 16
+[25-Oct-2025 18:26:33 Europe/Berlin] Fetched budget data: Array
+(
+    [id] => 16
+    [proposal_id] => 16
+    [budget_status] => pending_client
+    [admin_id] => 1
+    [client_id] => 1
+    [title] => Multi-Specialty Medical Clinic Building
+    [description] => Construction of a modern two-story medical clinic facility with 8 consultation rooms, minor surgery suite, diagnostic imaging room, laboratory, pharmacy, reception and waiting area, medical records room, staff facilities, and emergency treatment area. Design prioritizes patient privacy, infection control, and accessibility. Total floor area: 650 square meters.
+    [start_date] => 2026-03-01
+    [end_date] => 2026-12-15
+)
+
+[25-Oct-2025 18:26:33 Europe/Berlin] Creating project with data: Array
+(
+    [:name] => Multi-Specialty Medical Clinic Building
+    [:description] => Construction of a modern two-story medical clinic facility with 8 consultation rooms, minor surgery suite, diagnostic imaging room, laboratory, pharmacy, reception and waiting area, medical records room, staff facilities, and emergency treatment area. Design prioritizes patient privacy, infection control, and accessibility. Total floor area: 650 square meters.
+    [:created_by] => 1
+    [:client_id] => 1
+    [:start_date] => 2026-03-01
+    [:end_date] => 2026-12-15
+)
+
+[25-Oct-2025 18:26:33 Europe/Berlin] Project created with ID: 1
+[25-Oct-2025 18:26:33 Europe/Berlin] PHP Warning:  Undefined variable $hasUpdatedAt in D:\Programming\xampp\htdocs\buildwatch\php\handle_budget_decision.php on line 143
+[25-Oct-2025 18:34:48 Europe/Berlin] [v0] Creating project for proposal_id: 3, client_id: 1
+[25-Oct-2025 18:34:48 Europe/Berlin] [v0] Project created with ID: 1
+[25-Oct-2025 18:34:48 Europe/Berlin] [v0] Project assigned to user: 1
+[25-Oct-2025 18:35:11 Europe/Berlin] [v1] Report generation request received
+[25-Oct-2025 18:35:11 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[25-Oct-2025 18:35:11 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 1
+    [format] => html
+)
+
+[25-Oct-2025 18:35:11 Europe/Berlin] Error fetching budget reviews: SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'id' in field list is ambiguous
+[25-Oct-2025 18:36:08 Europe/Berlin] Starting budget decision process for budget_id: 1
+[25-Oct-2025 18:36:08 Europe/Berlin] Fetched budget data: Array
+(
+    [id] => 1
+    [proposal_id] => 1
+    [budget_status] => pending_client
+    [admin_id] => 1
+    [client_id] => 1
+    [title] => Office Building Renovation
+    [description] => Complete renovation of the main office building including interior remodeling, HVAC system upgrade, and modern lighting installation.
+    [start_date] => 2025-11-15
+    [end_date] => 2026-03-15
+)
+
+[25-Oct-2025 18:36:08 Europe/Berlin] Project created with ID: 2
+[25-Oct-2025 18:36:29 Europe/Berlin] [v0] Creating project for proposal_id: 4, client_id: 1
+[25-Oct-2025 18:36:29 Europe/Berlin] [v0] Project created with ID: 3
+[25-Oct-2025 18:36:29 Europe/Berlin] [v0] Project assigned to user: 1
+[25-Oct-2025 18:36:53 Europe/Berlin] [v1] Report generation request received
+[25-Oct-2025 18:36:53 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[25-Oct-2025 18:36:53 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 2
+    [format] => html
+)
+
+[25-Oct-2025 18:36:53 Europe/Berlin] Error fetching budget reviews: SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'id' in field list is ambiguous

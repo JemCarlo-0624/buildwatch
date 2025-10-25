@@ -540,7 +540,7 @@ $projectManagers = $pmStmt->fetchAll(PDO::FETCH_ASSOC);
                 <i class="fas fa-calculator"></i> Budget Evaluation & Review
             </div>
 
-            <form method="POST" action="admin_approve_budget.php" id="budgetForm">
+            <form method="POST" action="admin_review_budget.php" id="budgetForm">
                 <input type="hidden" name="budget_id" value="<?php echo $proposal['budget_id'] ?? ''; ?>">
                 <input type="hidden" name="proposal_id" value="<?php echo $proposal_id; ?>">
 
@@ -557,19 +557,9 @@ $projectManagers = $pmStmt->fetchAll(PDO::FETCH_ASSOC);
                         required
                         min="0"
                         step="0.01"
+                        <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>
                     >
                     <small>Your professional evaluation of the total project cost</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="status">
-                        <i class="fas fa-check-circle"></i> Budget Status <span style="color: #d42f13;">*</span>
-                    </label>
-                    <select id="status" name="status" required>
-                        <option value="">Select Status</option>
-                        <option value="approved" <?php echo ($proposal['budget_status'] ?? '') === 'approved' ? 'selected' : ''; ?>>Approve</option>
-                        <option value="rejected" <?php echo ($proposal['budget_status'] ?? '') === 'rejected' ? 'selected' : ''; ?>>Reject</option>
-                    </select>
                 </div>
 
                 <div class="form-group">
@@ -581,6 +571,7 @@ $projectManagers = $pmStmt->fetchAll(PDO::FETCH_ASSOC);
                         name="remarks" 
                         placeholder="Add any notes or remarks about this budget evaluation..."
                         rows="4"
+                        <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>
                     ><?php echo htmlspecialchars($proposal['remarks'] ?? ''); ?></textarea>
                     <small>Optional: Include any adjustments, concerns, or recommendations</small>
                 </div>
@@ -600,21 +591,28 @@ $projectManagers = $pmStmt->fetchAll(PDO::FETCH_ASSOC);
                             <div class="breakdown-row">
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <input type="text" name="item_name[]" placeholder="Item Name" 
-                                           value="<?php echo htmlspecialchars($breakdown['item_name']); ?>" required>
+                                           value="<?php echo htmlspecialchars($breakdown['item_name']); ?>" 
+                                           <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>
+                                           required>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <input type="number" name="cost[]" placeholder="Estimated Cost" 
-                                           value="<?php echo $breakdown['estimated_cost']; ?>" required min="0" step="0.01" oninput="updateSummary()">
+                                           value="<?php echo $breakdown['estimated_cost']; ?>" 
+                                           <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>
+                                           required min="0" step="0.01" oninput="updateSummary()">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <select name="category[]" onchange="updateSummary()">
+                                    <select name="category[]" 
+                                            <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>
+                                            onchange="updateSummary()">
                                         <option value="materials" <?php echo $breakdown['category'] === 'materials' ? 'selected' : ''; ?>>Materials</option>
                                         <option value="labor" <?php echo $breakdown['category'] === 'labor' ? 'selected' : ''; ?>>Labor</option>
                                         <option value="equipment" <?php echo $breakdown['category'] === 'equipment' ? 'selected' : ''; ?>>Equipment</option>
                                         <option value="misc" <?php echo $breakdown['category'] === 'misc' ? 'selected' : ''; ?>>Misc</option>
                                     </select>
                                 </div>
-                                <button type="button" class="btn-remove-row" onclick="removeRow(this)">
+                                <button type="button" class="btn-remove-row" onclick="removeRow(this)"
+                                        <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>>
                                     <i class="fas fa-trash"></i> Remove
                                 </button>
                             </div>
@@ -622,27 +620,34 @@ $projectManagers = $pmStmt->fetchAll(PDO::FETCH_ASSOC);
                         <?php else: ?>
                             <div class="breakdown-row">
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <input type="text" name="item_name[]" placeholder="Item Name">
+                                    <input type="text" name="item_name[]" placeholder="Item Name"
+                                           <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <input type="number" name="cost[]" placeholder="Estimated Cost" min="0" step="0.01" oninput="updateSummary()">
+                                    <input type="number" name="cost[]" placeholder="Estimated Cost" 
+                                           <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>
+                                           min="0" step="0.01" oninput="updateSummary()">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <select name="category[]" onchange="updateSummary()">
+                                    <select name="category[]" 
+                                            <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>
+                                            onchange="updateSummary()">
                                         <option value="materials">Materials</option>
                                         <option value="labor">Labor</option>
                                         <option value="equipment">Equipment</option>
                                         <option value="misc">Misc</option>
                                     </select>
                                 </div>
-                                <button type="button" class="btn-remove-row" onclick="removeRow(this)">
+                                <button type="button" class="btn-remove-row" onclick="removeRow(this)"
+                                        <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>>
                                     <i class="fas fa-trash"></i> Remove
                                 </button>
                             </div>
                         <?php endif; ?>
                     </div>
 
-                    <button type="button" class="btn-add-row" onclick="addRow()">
+                    <button type="button" class="btn-add-row" onclick="addRow()"
+                            <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>>
                         <i class="fas fa-plus"></i> Add Row
                     </button>
 
@@ -665,7 +670,8 @@ $projectManagers = $pmStmt->fetchAll(PDO::FETCH_ASSOC);
 
                 <!-- Action buttons for proposal -->
                 <div class="action-buttons">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary"
+                            <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>>
                         <i class="fas fa-save"></i> Submit Budget Review
                     </button>
                     <?php if ($proposal['status'] === 'pending'): ?>

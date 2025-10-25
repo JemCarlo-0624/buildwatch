@@ -423,17 +423,6 @@ $breakdowns = $breakdownStmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
 
                 <div class="form-group">
-                    <label for="status">
-                        <i class="fas fa-check-circle"></i> Budget Status <span style="color: #d42f13;">*</span>
-                    </label>
-                    <select id="status" name="status" required>
-                        <option value="">Select Status</option>
-                        <option value="approved" <?php echo $budget['status'] === 'approved' ? 'selected' : ''; ?>>Approve</option>
-                        <option value="rejected" <?php echo $budget['status'] === 'rejected' ? 'selected' : ''; ?>>Reject</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
                     <label for="remarks">
                         <i class="fas fa-comment"></i> Remarks & Notes
                     </label>
@@ -605,9 +594,8 @@ $breakdowns = $breakdownStmt->fetchAll(PDO::FETCH_ASSOC);
 
     document.getElementById('budgetForm').addEventListener('submit', function(e) {
         const evaluatedAmount = document.getElementById('evaluated_amount').value;
-        const status = document.getElementById('status').value;
 
-        if (!evaluatedAmount || !status) {
+        if (!evaluatedAmount) {
             e.preventDefault();
             alert('Please fill in all required fields.');
             return false;

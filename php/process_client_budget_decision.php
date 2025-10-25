@@ -31,7 +31,7 @@ try {
 
     // Get proposal and budget details
     $stmt = $pdo->prepare("
-        SELECT pp.id, pp.title, pb.id as budget_id
+        SELECT pp.id, pp.title, pp.description, pp.client_id, pp.start_date, pp.end_date, pb.id as budget_id
         FROM project_proposals pp
         LEFT JOIN project_budgets pb ON pp.id = pb.proposal_id
         WHERE pp.id = ? AND pp.client_id = ?
@@ -62,8 +62,55 @@ try {
             $stmt->execute([$proposal['budget_id']]);
         }
 
+        error_log("[v0] Creating project for proposal_id: $proposal_id, client_id: " . $proposal['client_id']);
+        
+        // Check if project already exists for this proposal
+        $checkProject = $pdo->prepare("
+            SELECT id FROM projects WHERE client_id = ? AND name = ?
+        ");
+        $checkProject->execute([$proposal['client_id'], $proposal['title']]);
+        $existingProject = $checkProject->fetch(PDO::FETCH_ASSOC);
+
+        if (!$existingProject) {
+            // Create new project from approved proposal
+            $admin_id = 1; // Default admin user
+            $insertProject = $pdo->prepare("
+                INSERT INTO projects (name, description, status, created_by, client_id, start_date, end_date, last_activity_at) 
+                VALUES (?, ?, 'ongoing', ?, ?, ?, ?, NOW())
+            ");
+            $result = $insertProject->execute([
+                $proposal['title'],
+                $proposal['description'],
+                $admin_id,
+                $proposal['client_id'],
+                $proposal['start_date'],
+                $proposal['end_date']
+            ]);
+
+            if (!$result) {
+                error_log("[v0] Project insert failed: " . json_encode($insertProject->errorInfo()));
+                throw new Exception("Failed to create project: " . $insertProject->errorInfo()[2]);
+            }
+
+            $projectId = $pdo->lastInsertId();
+            error_log("[v0] Project created with ID: $projectId");
+
+            // Assign project to admin as default
+            $assignStmt = $pdo->prepare("INSERT INTO project_assignments (project_id, user_id) VALUES (?, ?)");
+            $assignResult = $assignStmt->execute([$projectId, $admin_id]);
+            
+            if (!$assignResult) {
+                error_log("[v0] Project assignment failed: " . json_encode($assignStmt->errorInfo()));
+                throw new Exception("Failed to assign project: " . $assignStmt->errorInfo()[2]);
+            }
+            
+            error_log("[v0] Project assigned to user: $admin_id");
+        } else {
+            error_log("[v0] Project already exists for this proposal");
+        }
+
         $message = "Client has approved the budget for proposal: " . htmlspecialchars($proposal['title']);
-        $success_msg = "Budget approved successfully!";
+        $success_msg = "Budget approved successfully! Project has been created.";
     } else {
         // Update proposal status to rejected
         $stmt = $pdo->prepare("
