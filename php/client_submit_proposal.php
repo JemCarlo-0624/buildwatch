@@ -21,10 +21,11 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
+    $proposed_budget = trim($_POST['proposed_budget'] ?? '');
     $start_date = trim($_POST['start_date'] ?? '');
     $end_date = trim($_POST['end_date'] ?? '');
 
-    if ($title && $description) {
+    if ($title && $description && $proposed_budget) {
         if ($start_date && $end_date) {
             $start = new DateTime($start_date);
             $end = new DateTime($end_date);
@@ -35,6 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (empty($error)) {
             try {
+                $pdo->beginTransaction();
+                
                 $stmt = $pdo->prepare("
                     INSERT INTO project_proposals (client_id, title, description, start_date, end_date, status, submitted_at)
                     VALUES (?, ?, ?, ?, ?, 'pending', NOW())
@@ -46,8 +49,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $start_date ?: null,
                     $end_date ?: null
                 ]);
+                $proposal_id = $pdo->lastInsertId();
+                
+                $budgetStmt = $pdo->prepare("
+                    INSERT INTO project_budgets (proposal_id, proposed_amount, status)
+                    VALUES (?, ?, 'pending')
+                ");
+                $budgetStmt->execute([$proposal_id, $proposed_budget]);
+                
+                $pdo->commit();
                 $success = true;
             } catch (PDOException $e) {
+                $pdo->rollBack();
                 error_log("Proposal submission error: " . $e->getMessage());
                 $error = "An error occurred while submitting your proposal. Please try again.";
             }
@@ -553,6 +566,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <li>Include detailed project description with scope and objectives</li>
                         <li>Specify your project timeline dates</li>
                         <li>Mention any specific materials, techniques, or standards required</li>
+                        <li>Provide an estimated budget for the project</li>
                     </ul>
                 </div>
 
@@ -637,7 +651,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <!-- removed budget field section -->
+                    <!-- Added proposed budget field section -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-money-bill-wave"></i> Budget Information
+                        </h3>
+                        
+                        <div class="form-group">
+                            <label for="proposed_budget">
+                                <i class="fas fa-peso-sign label-icon"></i> Proposed Budget <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="number" 
+                                id="proposed_budget" 
+                                name="proposed_budget"
+                                placeholder="Enter your estimated budget in Philippine Pesos (₱)"
+                                required
+                                min="0"
+                                step="0.01"
+                            >
+                            <small><i class="fas fa-info-circle"></i> Your estimated budget for this project. This helps us evaluate feasibility and provide accurate quotes.</small>
+                        </div>
+                    </div>
+
                     <div class="form-section">
                         <h3 class="form-section-title">
                             <i class="fas fa-calendar-alt"></i> Timeline
@@ -723,12 +759,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             form.addEventListener('submit', function(e) {
                 const title = document.getElementById('title').value.trim();
                 const description = document.getElementById('description').value.trim();
+                const proposedBudget = document.getElementById('proposed_budget').value.trim();
                 const startDate = document.getElementById('start_date').value;
                 const endDate = document.getElementById('end_date').value;
                 
-                if (!title || !description) {
+                if (!title || !description || !proposedBudget) {
                     e.preventDefault();
-                    alert('Please fill in all required fields (Project Title and Description).');
+                    alert('Please fill in all required fields (Project Title, Description, and Budget).');
                     return false;
                 }
                 

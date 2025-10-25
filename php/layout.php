@@ -14,12 +14,11 @@ if (!isset($_SESSION['user_id'])) {
 // Define role-based menu items
 $menuConfig = [
     'admin' => [
-        ['icon' => 'fa-tachometer-alt', 'label' => 'Dashboard', 'href' => 'dashboard_admin.php', 'section' => 'Admin Panel'],
-        ['icon' => 'fa-project-diagram', 'label' => 'Projects', 'href' => 'projects_list.php', 'section' => 'Admin Panel'],
-        ['icon' => 'fa-tasks', 'label' => 'Tasks', 'href' => 'tasks_list.php', 'section' => 'Admin Panel'],
-        ['icon' => 'fa-lightbulb', 'label' => 'Proposals', 'href' => 'proposals_review.php', 'section' => 'Admin Panel'],
-        ['icon' => 'fa-users', 'label' => 'Users', 'href' => 'users_list.php', 'section' => 'Admin Panel'],
         ['icon' => 'fa-cog', 'label' => 'Settings', 'href' => 'settings.php', 'section' => 'Admin Panel'],
+    ],
+    'client' => [  // Add this section
+        ['icon' => 'fa-dollar-sign', 'label' => 'Budget Review', 'href' => 'client_budget_review.php', 'section' => 'Client Panel'],
+        ['icon' => 'fa-project-diagram', 'label' => 'My Projects', 'href' => 'client_projects.php', 'section' => 'Client Panel'],
     ],
     'pm' => [
         ['icon' => 'fa-tachometer-alt', 'label' => 'Dashboard', 'href' => 'dashboard_pm.php', 'section' => 'PM Panel'],

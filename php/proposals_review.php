@@ -525,27 +525,12 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
             
             <?php if (!empty($proposals)): ?>
                 <?php foreach ($proposals as $p): ?>
-                <div class="proposal-item">
+                <a href="proposal_details.php?proposal_id=<?php echo $p['id']; ?>" style="text-decoration: none; color: inherit; display: block;">
+                <div class="proposal-item" style="cursor: pointer; transition: all 0.2s ease;">
                     <div class="proposal-header-row">
                         <div>
                             <h3 class="proposal-title"><?php echo htmlspecialchars($p['title']); ?></h3>
                             <div class="proposal-id">Proposal ID: #<?php echo (int)$p['id']; ?></div>
-                        </div>
-                        <div class="proposal-actions">
-                            <span class="status-badge status-<?php echo htmlspecialchars($p['status']); ?>">
-                                <?php echo ucfirst(htmlspecialchars($p['status'])); ?>
-                            </span>
-                            <?php if ($p['status'] === 'pending'): ?>
-                                <!-- Updated approve button to open modal instead of direct approval -->
-                                <button type="button" class="btn btn-success btn-sm" 
-                                        onclick="openApprovalModal(<?php echo $p['id']; ?>, '<?php echo htmlspecialchars($p['title'], ENT_QUOTES); ?>')">
-                                    <i class="fas fa-check"></i> Approve
-                                </button>
-                                <a href="?action=rejected&id=<?php echo $p['id']; ?>" class="btn btn-danger btn-sm" 
-                                   onclick="return confirm('Reject this proposal?')">
-                                    <i class="fas fa-times"></i> Reject
-                                </a>
-                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -578,6 +563,7 @@ $rejectedProposals = $pdo->query("SELECT COUNT(*) FROM project_proposals WHERE s
                     </div>
                     <?php endif; ?>
                 </div>
+                </a>
                 <?php endforeach; ?>
             <?php else: ?>
                 <div class="empty-state">
