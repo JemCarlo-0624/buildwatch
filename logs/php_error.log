@@ -201,3 +201,5 @@
 )
 
 [26-Oct-2025 02:50:58 Europe/Berlin] Project created with ID: 5
+[26-Oct-2025 03:38:07 Europe/Berlin] PHP Warning:  Constant BASE_PATH already defined in D:\Programming\xampp\htdocs\buildwatch\public\frontpage.php on line 3
+[26-Oct-2025 03:38:29 Europe/Berlin] PHP Warning:  Constant BASE_PATH already defined in D:\Programming\xampp\htdocs\buildwatch\public\frontpage.php on line 3
