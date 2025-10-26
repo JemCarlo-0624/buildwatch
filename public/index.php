@@ -1,27 +1,46 @@
 <?php
-/**
- * Main Entry Point - BuildWatch Router
- * All requests are routed through this file
- */
+// --- CONFIGURATION ---
+// Set the relative path to your project homepage (adjust as needed)
+$homepage = '/buildwatch/php/frontpage.php';
 
-// Define base paths
-define('BASE_PATH', dirname(__DIR__));
-define('PUBLIC_PATH', __DIR__);
-define('MODULES_PATH', BASE_PATH . '/modules');
-define('CORE_PATH', BASE_PATH . '/core');
-define('API_PATH', BASE_PATH . '/api');
-define('AUTH_PATH', BASE_PATH . '/auth');
-define('CONFIG_PATH', BASE_PATH . '/config');
+// --- HANDLE QUERY STRINGS ---
+// Preserve any query parameters from the original request
+$queryString = $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '';
 
-// Set error reporting
-ini_set('log_errors', 1);
-ini_set('error_log', BASE_PATH . '/logs/php_error.log');
-error_reporting(E_ALL);
+// --- BUILD FULL URL ---
+// Detect protocol (HTTP or HTTPS)
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+// Build the full URL for redirection
+$host = $_SERVER['HTTP_HOST'];
+$destination = $protocol . $host . $homepage . $queryString;
 
-// Load router
-require_once CORE_PATH . '/Router.php';
+// --- ERROR HANDLING ---
+// Check if the destination file exists on the server
+$localPath = $_SERVER['DOCUMENT_ROOT'] . $homepage;
+if (!file_exists($localPath)) {
+    // If not found, show a user-friendly error
+    http_response_code(404);
+    echo "<h1>404 Not Found</h1>";
+    echo "<p>The homepage could not be found. Please contact the administrator.</p>";
+    exit;
+}
 
-// Initialize and dispatch the router
-$router = new Router();
-$router->dispatch();
+// --- REDIRECT ---
+// Use a 302 Temporary Redirect (change to 301 for permanent)
+header("Location: $destination", true, 302);
+exit;
 ?>
+
+<!-- Fallback HTML for non-PHP environments -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildWatch - Redirecting...</title>
+</head>
+<body>
+    <h1>Redirecting to BuildWatch homepage...</h1>
+    <p>If you are not redirected automatically, <a href="<?php echo htmlspecialchars($homepage . $queryString); ?>">click here</a>.</p>
+</body>
+</html>

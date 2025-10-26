@@ -4,21 +4,21 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 header('Content-Type: application/json');
 
-// Verify client session
+// ✅ Verify client session
 if (!isset($_SESSION['client_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
 }
 
-// Ensure POST request
+// ✅ Ensure POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Invalid request method']);
     exit;
 }
 
-// Validate inputs
+// ✅ Validate inputs
 $budget_id = filter_input(INPUT_POST, 'budget_id', FILTER_VALIDATE_INT);
 $decision  = filter_input(INPUT_POST, 'decision', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: $_POST['decision'];
 
@@ -30,10 +30,9 @@ if (!$budget_id || !in_array($decision, ['accept', 'reject'])) {
 
 try {
     error_log("Starting budget decision process for budget_id: " . $budget_id);
-
     $pdo->beginTransaction();
 
-    // Fetch proposal + budget info
+    // ✅ Fetch proposal + budget info
     $stmt = $pdo->prepare("
         SELECT 
             pb.id,
@@ -52,54 +51,47 @@ try {
     $stmt->execute([$budget_id, $_SESSION['client_id']]);
     $budget = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    error_log("Fetched budget data: " . print_r($budget, true));
-
     if (!$budget) {
         throw new Exception("Budget not found or access denied");
     }
 
-    // Validate required fields
+    // ✅ Validate required fields
     $requiredFields = ['title', 'description', 'client_id', 'start_date', 'end_date'];
     foreach ($requiredFields as $field) {
-        if (!isset($budget[$field]) || $budget[$field] === '') {
+        if (empty($budget[$field])) {
             throw new Exception("Missing required field: {$field}");
         }
     }
 
-    // Decision handling
+    // ✅ Handle client decision
     if ($decision === 'accept') {
-        // Create project record
+        // --- Create a new project record ---
         $stmt = $pdo->prepare("
-            INSERT INTO projects (
-                name,
-                description,
-                status,
-                completion_percentage,
-                priority,
-                created_by,
-                client_id,
-                timeline,
-                start_date,
-                end_date,
-                category,
-                created_at,
-                last_activity_at
-            ) VALUES (
-                :name,
-                :description,
-                'ongoing',
-                0,
-                'medium',
-                :created_by,
-                :client_id,
-                NULL,
-                :start_date,
-                :end_date,
-                'construction',
-                NOW(),
-                NOW()
-            )
-        ");
+    INSERT INTO projects (
+        name,
+        description,
+        status,
+        completion_percentage,
+        priority,
+        created_by,
+        client_id,
+        timeline,
+        start_date,
+        end_date
+    ) VALUES (
+        :name,
+        :description,
+        'ongoing',
+        0,
+        'medium',
+        :created_by,
+        :client_id,
+        NULL,
+        :start_date,
+        :end_date
+    )
+");
+
 
         $projectData = [
             ':name'        => $budget['title'],
@@ -116,9 +108,9 @@ try {
         }
 
         $project_id = $pdo->lastInsertId();
-        error_log("Project created with ID: " . $project_id);
+        error_log("✅ Project created with ID: " . $project_id);
 
-        // Update proposal
+        // --- Update proposal status ---
         $stmt = $pdo->prepare("
             UPDATE project_proposals
             SET status = 'approved',
@@ -128,7 +120,7 @@ try {
         ");
         $stmt->execute([$budget['proposal_id']]);
 
-        // Update budget
+        // --- Update budget record ---
         $stmt = $pdo->prepare("
             UPDATE project_budgets
             SET client_decision = 'approved',
@@ -138,10 +130,10 @@ try {
         ");
         $stmt->execute([$budget_id]);
 
-        $message = "Client has approved the budget and project has been created for: " . htmlspecialchars($budget['title']);
+        $message = "Client has approved the budget and a project has been created for: " . htmlspecialchars($budget['title']);
         $success_msg = "Budget approved and project created successfully!";
     } else {
-        // Client rejected
+        // --- Client rejected the budget ---
         $stmt = $pdo->prepare("
             UPDATE project_proposals
             SET status = 'rejected',
@@ -164,22 +156,23 @@ try {
         $success_msg = "Budget rejected successfully!";
     }
 
-    // Notification to admin
+    // ✅ Send notification to admin
     try {
         $stmt = $pdo->prepare("
             INSERT INTO notifications (client_id, type, title, message, link, created_at)
             VALUES (?, 'budget_review', ?, ?, ?, NOW())
         ");
         $stmt->execute([
-            1,
+            1, // Admin ID (system)
             "Budget Decision",
             $message,
             "proposals_review.php?proposal_id=" . $budget['proposal_id']
         ]);
     } catch (Exception $e) {
-        error_log("Notification creation failed: " . $e->getMessage());
+        error_log("⚠️ Notification creation failed: " . $e->getMessage());
     }
 
+    // ✅ Commit all changes
     $pdo->commit();
 
     echo json_encode([
@@ -189,7 +182,7 @@ try {
 
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
-    error_log("Budget decision error: " . $e->getMessage());
+    error_log("❌ Budget decision error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,

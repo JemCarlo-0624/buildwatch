@@ -69,7 +69,7 @@ class ReportGenerator {
             $selectCols = [
                 'p.id', 'p.name', 'p.description', 'p.status',
                 'p.completion_percentage', 'p.priority',
-                'p.start_date', 'p.end_date', 'p.category',
+                'p.start_date', 'p.end_date',
                 'p.created_at', 'p.last_activity_at', 'p.created_by', 'p.client_id'
             ];
             
@@ -79,45 +79,70 @@ class ReportGenerator {
                    "LEFT JOIN clients c ON p.client_id = c.id WHERE p.id = ?";
             
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$projectId]);
-            $row = $stmt->fetch();
-            
-            if (!$row) {
-                return null;
-            }
-            
-            // Create ProjectData object
-            $data = new ProjectData();
-            $data->id = (int)$row['id'];
-            $data->name = $row['name'];
-            $data->description = $row['description'];
-            $data->status = $row['status'];
-            $data->completionPercentage = (int)$row['completion_percentage'];
-            $data->priority = $row['priority'];
-            $data->startDate = $row['start_date'];
-            $data->endDate = $row['end_date'];
-            $data->category = $row['category'] ?? 'N/A';
-            $data->createdAt = $row['created_at'];
-            $data->lastActivityAt = $row['last_activity_at'];
-            $data->createdByName = $row['created_by_name'] ?? 'N/A';
-            $data->clientId = (int)$row['client_id'];
-            
-            $data->clientName = $row['client_name'] ?? 'N/A';
-            $data->clientEmail = $row['client_email'] ?? 'N/A';
-            $data->clientCompany = $row['client_company'] ?? 'N/A';
-            
-            // Fetch tasks and team members
-            $this->fetchTasks($data);
-            $this->fetchTeamMembers($data);
-            
-            $this->fetchProposalData($data);
-            $this->fetchBudgetData($data);
-            $this->fetchBudgetBreakdown($data);
-            
-            // Calculate metrics
-            $data->calculateMetrics();
-            
-            return $data;
+$stmt->execute([$projectId]);
+$row = $stmt->fetch();
+
+if (!$row) {
+    return null;
+}
+
+// ✅ Create ProjectData object
+$data = new ProjectData();
+$data->id = (int)$row['id'];
+$data->name = $row['name'];
+$data->description = $row['description'];
+$data->status = $row['status'];
+$data->priority = $row['priority'];
+$data->startDate = $row['start_date'];
+$data->endDate = $row['end_date'];
+$data->category = $row['category'] ?? 'N/A';
+$data->createdAt = $row['created_at'];
+$data->lastActivityAt = $row['last_activity_at'];
+$data->createdByName = $row['created_by_name'] ?? 'N/A';
+$data->clientId = (int)$row['client_id'];
+
+$data->clientName = $row['client_name'] ?? 'N/A';
+$data->clientEmail = $row['client_email'] ?? 'N/A';
+$data->clientCompany = $row['client_company'] ?? 'N/A';
+
+// ✅ Calculate completionPercentage dynamically from tasks
+try {
+    $taskQuery = "
+        SELECT 
+            COUNT(*) AS total_tasks,
+            SUM(CASE WHEN progress >= 100 THEN 1 ELSE 0 END) AS completed_tasks,
+            ROUND(
+                CASE WHEN COUNT(*) = 0 THEN 0
+                     ELSE (SUM(CASE WHEN progress >= 100 THEN 1 ELSE 0 END) / COUNT(*)) * 100
+                END
+            , 0) AS completion_percentage
+        FROM tasks
+        WHERE project_id = ?
+    ";
+    $taskStmt = $this->pdo->prepare($taskQuery);
+    $taskStmt->execute([$projectId]);
+    $taskStats = $taskStmt->fetch();
+
+    $data->totalTasks = (int)$taskStats['total_tasks'];
+    $data->completedTasks = (int)$taskStats['completed_tasks'];
+    $data->completionPercentage = (int)$taskStats['completion_percentage'];
+} catch (Exception $e) {
+    $data->completionPercentage = 0; // fallback if query fails
+    error_log("Error calculating completion: " . $e->getMessage());
+}
+
+// ✅ Fetch related project data
+$this->fetchTasks($data);
+$this->fetchTeamMembers($data);
+$this->fetchProposalData($data);
+$this->fetchBudgetData($data);
+$this->fetchBudgetBreakdown($data);
+
+// ✅ Calculate other metrics
+$data->calculateMetrics();
+
+return $data;
+
             
         } catch (Exception $e) {
             error_log("Error fetching project data: " . $e->getMessage());

@@ -307,13 +307,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: auto;
         }
 
-        .btn-mark-done {
+        .btn-update-progress {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
             padding: 8px 16px;
-            background: var(--success);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: var(--radius-md);
@@ -322,28 +322,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cursor: pointer;
             transition: all var(--transition-normal);
             height: 36px;
-            box-shadow: 0 2px 6px rgba(46, 204, 113, 0.25);
+            box-shadow: 0 2px 6px rgba(10, 99, 165, 0.25);
             white-space: nowrap;
             flex: 1;
         }
 
-        .btn-mark-done:hover {
-            background: #27ae60;
-            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.35);
+        .btn-update-progress:hover {
+            background: #0a5a8c;
+            box-shadow: 0 4px 12px rgba(10, 99, 165, 0.35);
             transform: translateY(-1px);
         }
 
-        .btn-mark-done:active {
+        .btn-update-progress:active {
             transform: translateY(0);
-            box-shadow: 0 2px 6px rgba(46, 204, 113, 0.25);
+            box-shadow: 0 2px 6px rgba(10, 99, 165, 0.25);
         }
 
-        .btn-mark-done:focus {
-            outline: 2px solid var(--success);
+        .btn-update-progress:focus {
+            outline: 2px solid var(--primary);
             outline-offset: 2px;
         }
 
-        .btn-mark-done i {
+        .btn-update-progress i {
             font-size: 14px;
         }
 
@@ -367,81 +367,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 14px;
         }
 
-        /* Remove old timeline styles */
-        .timeline {
-            display: none;
-        }
-
-        .timeline-item {
-            display: none;
-        }
-
-        .timeline-item::before {
-            display: none;
-        }
-
-        .timeline-time {
-            display: none;
-        }
-
-        .timeline-overdue-badge {
-            display: none;
-        }
-
-        .timeline-completed-at {
-            display: none;
-        }
-
-        .timeline-status {
-            display: none;
-        }
-
-        .timeline-status-badge {
-            display: none;
-        }
-
-        .timeline-desc {
-            display: none;
-        }
-
-        .timeline-meta {
-            display: none;
-        }
-
-        .timeline-progress {
-            display: none;
-        }
-
-        .timeline-actions {
-            display: none;
-        }
-
-        .progress-update-form {
-            display: none;
-        }
-
-        .progress-input {
-            display: none;
-        }
-
-        .progress-input::-webkit-slider-thumb {
-            display: none;
-        }
-
-        .progress-input::-moz-range-thumb {
-            display: none;
-        }
-
-        .progress-value-display {
-            display: none;
-        }
-
-        .btn-update {
-            display: none;
-        }
-
-        /* Added centered modal styling */
-        .completion-modal {
+        /* Progress Modal Styling */
+        .progress-modal {
             display: none;
             position: fixed;
             top: 0;
@@ -454,7 +381,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             justify-content: center;
         }
 
-        .completion-modal.active {
+        .progress-modal.active {
             display: flex;
         }
 
@@ -462,7 +389,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: white;
             border-radius: var(--radius-lg);
             padding: var(--space-2xl);
-            max-width: 400px;
+            max-width: 500px;
             width: 90%;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             animation: slideUp 0.3s ease-out;
@@ -499,6 +426,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             display: flex;
             gap: var(--space-md);
             justify-content: flex-end;
+            margin-top: var(--space-lg);
         }
 
         .btn-modal {
@@ -522,14 +450,155 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .btn-modal-confirm {
-            background: var(--success);
+            background: var(--primary);
             color: white;
-            box-shadow: 0 2px 6px rgba(46, 204, 113, 0.25);
+            box-shadow: 0 2px 6px rgba(10, 99, 165, 0.25);
         }
 
         .btn-modal-confirm:hover {
-            background: #27ae60;
-            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.35);
+            background: #0a5a8c;
+            box-shadow: 0 4px 12px rgba(10, 99, 165, 0.35);
+        }
+
+        /* Progress Tracker Styles */
+        .progress-tracker {
+            margin: var(--space-lg) 0;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: var(--space-md);
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #e0e0e0;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .progress-bar-active {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 4px;
+            background: var(--primary);
+            transform: translateY(-50%);
+            z-index: 2;
+            transition: width 0.3s ease;
+        }
+
+        .progress-step {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .step-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #999;
+            transition: all 0.3s ease;
+        }
+
+        .step-label {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #999;
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+
+        .progress-step.active .step-indicator {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .progress-step.active .step-label {
+            color: var(--primary);
+        }
+
+        .progress-step.completed .step-indicator {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .progress-step.completed .step-label {
+            color: var(--success);
+        }
+
+        .progress-step.completed .step-indicator::after {
+            content: '✓';
+        }
+
+        .current-progress-display {
+            text-align: center;
+            margin-top: var(--space-md);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .progress-slider-container {
+            margin: var(--space-lg) 0;
+        }
+
+        .progress-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .progress-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--gray);
         }
 
         .empty-state {
@@ -577,11 +646,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 width: 95%;
                 padding: var(--space-lg);
             }
+
+            .progress-steps {
+                padding: 0 10px;
+            }
+
+            .step-label {
+                font-size: 10px;
+            }
         }
 
         /* Keyboard focus indicators for accessibility */
         .filter-btn:focus,
-        .btn-mark-done:focus {
+        .btn-update-progress:focus,
+        .progress-step:focus .step-indicator {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
         }
@@ -766,13 +844,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="task-card-actions">
                             <?php if (!$isCompleted): ?>
-                            <form method="post" class="mark-done-form" style="width: 100%;">
-                                <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
-                                <input type="hidden" name="progress" value="100">
-                                <button type="submit" class="btn-mark-done" aria-label="Mark task as done">
-                                    <i class="fas fa-check"></i> Mark as Done
-                                </button>
-                            </form>
+                            <button type="button" class="btn-update-progress" data-task-id="<?php echo $task['id']; ?>" data-current-progress="<?php echo $progress; ?>">
+                                <i class="fas fa-sync-alt"></i> Update Progress
+                            </button>
                             <?php else: ?>
                             <div class="task-completed-badge">
                                 <i class="fas fa-check-circle"></i> Completed
@@ -794,59 +868,168 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     </div>
 
-    <!-- Completion confirmation modal for error prevention -->
-    <div class="completion-modal" id="completionModal">
+    <!-- Progress Update Modal -->
+    <div class="progress-modal" id="progressModal">
         <div class="modal-content">
             <div class="modal-title">
-                <i class="fas fa-check-circle" style="color: var(--success); margin-right: 8px;"></i>
-                Mark Task as Complete?
+                <i class="fas fa-sync-alt" style="color: var(--primary); margin-right: 8px;"></i>
+                Update Task Progress
             </div>
-            <div class="modal-description">
-                You're about to mark this task as 100% complete. This action will record a completion timestamp and the task will be locked from further edits.
+            <div class="modal-description" id="modalTaskTitle">
+                <!-- Task title will be inserted here -->
             </div>
+            
+            <div class="progress-tracker">
+                <div class="progress-steps">
+                    <div class="progress-bar-active" id="progressBarActive"></div>
+                    <div class="progress-step" data-progress="0">
+                        <div class="step-indicator">0%</div>
+                        <div class="step-label">Not Started</div>
+                    </div>
+                    <div class="progress-step" data-progress="25">
+                        <div class="step-indicator">25%</div>
+                        <div class="step-label">Started</div>
+                    </div>
+                    <div class="progress-step" data-progress="50">
+                        <div class="step-indicator">50%</div>
+                        <div class="step-label">Halfway</div>
+                    </div>
+                    <div class="progress-step" data-progress="75">
+                        <div class="step-indicator">75%</div>
+                        <div class="step-label">Almost Done</div>
+                    </div>
+                    <div class="progress-step" data-progress="100">
+                        <div class="step-indicator">100%</div>
+                        <div class="step-label">Complete</div>
+                    </div>
+                </div>
+                
+                <div class="current-progress-display" id="currentProgressDisplay">
+                    Current Progress: 0%
+                </div>
+                
+                <div class="progress-slider-container">
+                    <input type="range" min="0" max="100" step="5" value="0" class="progress-slider" id="progressSlider">
+                    <div class="slider-labels">
+                        <span>0%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <form method="post" id="progressForm">
+                <input type="hidden" name="task_id" id="taskIdInput">
+                <input type="hidden" name="progress" id="progressInput" value="0">
+            </form>
+            
             <div class="modal-actions">
                 <button class="btn-modal btn-modal-cancel" id="cancelBtn">Cancel</button>
-                <button class="btn-modal btn-modal-confirm" id="confirmBtn">Confirm Completion</button>
+                <button class="btn-modal btn-modal-confirm" id="confirmBtn">Update Progress</button>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        
-        let pendingForm = null;
-        const completionModal = document.getElementById('completionModal');
+        // Progress update modal functionality
+        const progressModal = document.getElementById('progressModal');
         const cancelBtn = document.getElementById('cancelBtn');
         const confirmBtn = document.getElementById('confirmBtn');
-
-        document.querySelectorAll('.mark-done-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                pendingForm = this;
-                completionModal.classList.add('active');
+        const progressForm = document.getElementById('progressForm');
+        const taskIdInput = document.getElementById('taskIdInput');
+        const progressInput = document.getElementById('progressInput');
+        const progressSlider = document.getElementById('progressSlider');
+        const currentProgressDisplay = document.getElementById('currentProgressDisplay');
+        const progressBarActive = document.getElementById('progressBarActive');
+        const modalTaskTitle = document.getElementById('modalTaskTitle');
+        
+        let currentProgress = 0;
+        
+        // Update progress steps and slider
+        function updateProgressUI(progress) {
+            currentProgress = progress;
+            progressInput.value = progress;
+            progressSlider.value = progress;
+            currentProgressDisplay.textContent = `Current Progress: ${progress}%`;
+            
+            // Update progress bar
+            progressBarActive.style.width = `${progress}%`;
+            
+            // Update step indicators
+            document.querySelectorAll('.progress-step').forEach(step => {
+                const stepProgress = parseInt(step.getAttribute('data-progress'));
+                
+                // Remove all classes
+                step.classList.remove('active', 'completed');
+                
+                // Add appropriate classes
+                if (stepProgress <= progress) {
+                    step.classList.add('completed');
+                }
+                
+                if (stepProgress === progress) {
+                    step.classList.add('active');
+                }
+            });
+        }
+        
+        // Open modal when update progress button is clicked
+        document.querySelectorAll('.btn-update-progress').forEach(button => {
+            button.addEventListener('click', function() {
+                const taskId = this.getAttribute('data-task-id');
+                const currentProgress = parseInt(this.getAttribute('data-current-progress'));
+                const taskTitle = this.closest('.task-card').querySelector('.task-card-title').textContent;
+                
+                // Set modal content
+                taskIdInput.value = taskId;
+                modalTaskTitle.textContent = `Update progress for: "${taskTitle}"`;
+                
+                // Initialize progress UI
+                updateProgressUI(currentProgress);
+                
+                // Show modal
+                progressModal.classList.add('active');
             });
         });
-
+        
+        // Progress step click handler
+        document.querySelectorAll('.progress-step').forEach(step => {
+            step.addEventListener('click', function() {
+                const progress = parseInt(this.getAttribute('data-progress'));
+                updateProgressUI(progress);
+            });
+        });
+        
+        // Slider change handler
+        progressSlider.addEventListener('input', function() {
+            updateProgressUI(parseInt(this.value));
+        });
+        
+        // Cancel button handler
         cancelBtn.addEventListener('click', function() {
-            completionModal.classList.remove('active');
-            pendingForm = null;
+            progressModal.classList.remove('active');
         });
-
+        
+        // Confirm button handler
         confirmBtn.addEventListener('click', function() {
-            if (pendingForm) {
-                completionModal.classList.remove('active');
-                pendingForm.submit();
-            }
+            progressForm.submit();
         });
-
+        
         // Close modal when clicking outside
-        completionModal.addEventListener('click', function(e) {
+        progressModal.addEventListener('click', function(e) {
             if (e.target === this) {
                 this.classList.remove('active');
-                pendingForm = null;
+            }
+        });
+        
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && progressModal.classList.contains('active')) {
+                progressModal.classList.remove('active');
             }
         });
 
+        // Filter and search functionality
         const filterBtns = document.querySelectorAll('.filter-btn');
         const timelineItems = document.querySelectorAll('.task-card');
 
@@ -893,14 +1076,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (searchInput) searchInput.addEventListener('input', filterTasks);
-
-        // Keyboard navigation support
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && completionModal.classList.contains('active')) {
-                completionModal.classList.remove('active');
-                pendingForm = null;
-            }
-        });
     </script>
 </body>
 </html>

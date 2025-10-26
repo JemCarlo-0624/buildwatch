@@ -296,50 +296,49 @@ try {
                     </div>
                 <?php else: ?>
                     <div class="projects-grid">
-                        <?php foreach ($projects as $project): ?>
-                            <?php
-                                $totalTasks = (int)($project['total_tasks'] ?? 0);
-                                $completedTasks = (int)($project['completed_tasks'] ?? 0);
-                                $progress = $project['completion_percentage'] ?? 0;
-                                $status = $project['status'] ?? 'planning';
-                            ?>
-                            <div class="project-card" onclick="window.location.href='client_project_details.php?id=<?php echo $project['id']; ?>'">
-                                <div class="project-header">
-                                    <div class="project-name"><?php echo htmlspecialchars($project['name']); ?></div>
-                                    <span class="proposal-status status-<?php echo htmlspecialchars($status); ?>">
-                                        <?php echo ucfirst(htmlspecialchars($status)); ?>
-                                    </span>
-                                </div>
-                                
-                                <div class="proposal-description">
-                                    <?php echo htmlspecialchars(substr($project['description'] ?? '', 0, 150)); ?>
-                                    <?php if (strlen($project['description'] ?? '') > 150) echo '...'; ?>
-                                </div>
+                        <?php foreach ($projects as $project): ?><?php
+$totalTasks = (int)($project['total_tasks'] ?? 0);
+$completedTasks = (int)($project['completed_tasks'] ?? 0);
+$avgProgress = (float)($project['avg_task_progress'] ?? 0);
 
-                                <div class="project-progress">
-                                    <div class="progress-label">
-                                        <span>Progress</span>
-                                        <span><strong><?php echo $progress; ?>%</strong></span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: <?php echo $progress; ?>%"></div>
-                                    </div>
-                                </div>
+// ✅ Calculate accurate progress
+if ($totalTasks > 0) {
+    $progress = round(($completedTasks / $totalTasks) * 100);
+} elseif ($avgProgress > 0) {
+    $progress = round($avgProgress);
+} else {
+    $progress = 0;
+}
 
-                                <div class="project-stats">
-                                    <span><i class="fas fa-tasks"></i> <?php echo $totalTasks; ?> Tasks</span>
-                                    <span><i class="fas fa-check-circle"></i> <?php echo $completedTasks; ?> Completed</span>
-                                    <?php if (isset($project['end_date']) && $project['end_date']): ?>
-                                        <span><i class="fas fa-calendar"></i> Due: <?php echo date('M j, Y', strtotime($project['end_date'])); ?></span>
-                                    <?php elseif (isset($project['timeline']) && $project['timeline']): ?>
-                                        <span><i class="fas fa-clock"></i> <?php echo htmlspecialchars($project['timeline']); ?></span>
-                                    <?php endif; ?>
-                                </div>
+$status = htmlspecialchars($project['status'] ?? 'planning');
+?>
+<div class="project-card" onclick="window.location.href='client_project_details.php?id=<?php echo $project['id']; ?>'">
+    <div class="project-header">
+        <h4><?php echo htmlspecialchars($project['name']); ?></h4>
+        <span class="status-<?php echo $status; ?>"><?php echo ucfirst($status); ?></span>
+    </div>
+    <p><?php echo htmlspecialchars(substr($project['description'] ?? '', 0, 120)); ?>...</p>
 
-                                <a href="client_project_details.php?id=<?php echo $project['id']; ?>" class="view-details-btn" onclick="event.stopPropagation();">
-                                    <i class="fas fa-eye"></i> View Details
-                                </a>
-                                
+    <!-- ✅ Fixed progress bar -->
+    <div class="project-progress">
+        <div class="progress-label">
+            <span>Progress</span>
+            <strong><?php echo $progress; ?>%</strong>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: <?php echo $progress; ?>%;"></div>
+        </div>
+    </div>
+
+    <div class="project-stats">
+        <span><i class="fas fa-tasks"></i> <?php echo $totalTasks; ?> Tasks</span>
+        <span><i class="fas fa-check-circle"></i> <?php echo $completedTasks; ?> Done</span>
+    </div>
+
+    <a href="client_project_details.php?id=<?php echo $project['id']; ?>" 
+       class="view-details-btn" onclick="event.stopPropagation();">
+        <i class="fas fa-eye"></i> View Details
+    </a>                                
                                 <button class="generate-report-btn" onclick="generateReport(event, <?php echo $project['id']; ?>)">
                                     <i class="fas fa-file-pdf"></i> Generate Report
                                 </button>
