@@ -1,0 +1,251 @@
+/* ========================================
+   AUTHENTICATION PAGES
+   Unified styling for login/signup pages
+   ======================================== */
+
+/* Import design tokens if not already loaded */
+/* @import url('design-tokens.css'); */
+
+/* ========================================
+   AUTH CONTAINER
+   ======================================== */
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: var(--space-4);
+  background: var(--bg-primary);
+}
+
+.auth-form-wrapper {
+  background: var(--bg-card);
+  padding: var(--space-8);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 450px;
+}
+
+/* Back to Home Button */
+.back-to-home {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-secondary-50);
+  color: var(--color-secondary);
+  text-decoration: none;
+  font-size: var(--font-size-body-small);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-6);
+  transition: var(--transition-fast);
+  border: 1px solid var(--color-secondary);
+}
+
+.back-to-home:hover {
+  background: var(--color-secondary);
+  color: var(--color-white);
+  transform: translateX(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.back-to-home i {
+  font-size: var(--font-size-caption);
+  transition: var(--transition-transform);
+}
+
+.back-to-home:hover i {
+  transform: translateX(-2px);
+}
+
+/* ========================================
+   AUTH FORM HEADER
+   ======================================== */
+
+.auth-form-header {
+  margin-bottom: var(--space-6);
+}
+
+.auth-form-title {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2);
+}
+
+.auth-form-subtitle {
+  font-size: var(--font-size-body);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ========================================
+   AUTH FORM BODY
+   ======================================== */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--form-gap);
+}
+
+/* ========================================
+   ALERTS
+   ======================================== */
+
+.alert {
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-body-small);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border: 2px solid transparent;
+}
+
+.alert-danger {
+  background: var(--color-danger-50);
+  color: var(--color-danger-dark);
+  border-color: var(--color-danger);
+}
+
+.alert-success {
+  background: var(--color-success-50);
+  color: var(--color-success-dark);
+  border-color: var(--color-success);
+}
+
+.alert i {
+  font-size: 1.25rem;
+}
+
+/* ========================================
+   PASSWORD TOGGLE
+   ======================================== */
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle {
+  position: absolute;
+  right: var(--space-3);
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-color);
+  z-index: 1;
+}
+
+.password-toggle:hover {
+  color: var(--color-secondary);
+}
+
+.password-toggle i {
+  font-size: var(--font-size-body);
+}
+
+/* ========================================
+   FORM OPTIONS
+   ======================================== */
+
+.auth-form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-body-small);
+  gap: var(--space-2);
+}
+
+.auth-form-switch {
+  text-align: center;
+  font-size: var(--font-size-body-small);
+  color: var(--text-secondary);
+  margin-top: var(--space-6);
+}
+
+.auth-form-switch a {
+  color: var(--text-link);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+}
+
+.auth-form-switch a:hover {
+  text-decoration: underline;
+}
+
+/* ========================================
+   SUBMIT BUTTON
+   ======================================== */
+
+.auth-submit-btn {
+  width: 100%;
+  height: var(--button-height-lg);
+  margin-top: var(--space-4);
+}
+
+/* ========================================
+   BRANDING
+   ======================================== */
+
+.auth-brand {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.auth-brand-logo {
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: var(--letter-spacing-tighter);
+  margin-bottom: var(--space-2);
+}
+
+.auth-brand-name span:first-child {
+  color: var(--color-primary);
+}
+
+.auth-brand-name span:last-child {
+  color: var(--color-secondary);
+}
+
+.auth-brand-tagline {
+  font-size: var(--font-size-body-small);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-normal);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .auth-container {
+    padding: var(--space-3);
+  }
+
+  .auth-form-wrapper {
+    padding: var(--space-6);
+  }
+
+  .auth-form-title {
+    font-size: var(--font-size-h3);
+  }
+}
+

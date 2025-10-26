@@ -1,0 +1,424 @@
+/* ========================================
+   ACCESSIBILITY ENHANCEMENTS
+   WCAG 2.1 AA Compliance & Best Practices
+   ======================================== */
+
+/* Import design tokens if not already loaded */
+/* @import url('design-tokens.css'); */
+
+/* ========================================
+   KEYBOARD NAVIGATION
+   ======================================== */
+
+/* Enhanced focus indicators for keyboard users */
+*:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+/* Skip links for main content */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: var(--space-4);
+  z-index: var(--z-toast);
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-semibold);
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: var(--space-4);
+  outline: 3px solid var(--color-white);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   SCREEN READER ONLY
+   ======================================== */
+
+.sr-only,
+.screen-reader-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.sr-only-focusable:focus,
+.screen-reader-only-focusable:focus {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  padding: inherit !important;
+  margin: inherit !important;
+  overflow: visible !important;
+  clip: auto !important;
+  white-space: normal !important;
+}
+
+/* ========================================
+   ARIA LIVE REGIONS
+   ======================================== */
+
+[role="alert"],
+[role="status"],
+.aria-live-region {
+  /* Already has appropriate behavior via role attribute */
+  /* Added for semantic clarity */
+}
+
+/* ========================================
+   COLOR CONTRAST IMPROVEMENTS
+   ======================================== */
+
+/* Ensure sufficient contrast for all text */
+.btn:not(:disabled) {
+  /* All buttons already have sufficient contrast in design */
+}
+
+/* Links with sufficient contrast */
+a {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:focus-visible {
+  background-color: var(--color-primary-50);
+  outline-offset: 4px;
+}
+
+/* ========================================
+   TOUCH TARGET SIZES
+   ======================================== */
+
+/* Ensure all interactive elements meet minimum touch target */
+button,
+a,
+input[type="checkbox"],
+input[type="radio"],
+select,
+.form-input {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+/* Icon-only buttons still need minimum size */
+.btn-icon {
+  min-width: var(--touch-target-min) !important;
+  min-height: var(--touch-target-min) !important;
+}
+
+/* ========================================
+   FORM ACCESSIBILITY
+   ======================================== */
+
+/* Required field indicators */
+label.required::after,
+.form-label.required::after {
+  content: " *";
+  color: var(--color-danger);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Error states with clear indication */
+.form-input.is-invalid:focus-visible,
+input.is-invalid:focus-visible {
+  outline-color: var(--color-danger);
+  box-shadow: 0 0 0 3px var(--color-danger-50);
+}
+
+.form-input.is-valid:focus-visible,
+input.is-valid:focus-visible {
+  outline-color: var(--color-success);
+  box-shadow: 0 0 0 3px var(--color-success-50);
+}
+
+/* ========================================
+   MODAL ACCESSIBILITY
+   ======================================== */
+
+/* Ensure modals are keyboard accessible */
+.modal:focus-within {
+  outline: none;
+}
+
+/* Modal content should have focus indicator */
+.modal-content:focus {
+  outline: none;
+}
+
+/* Backdrop should be focusable but not interactive */
+.modal-backdrop {
+  pointer-events: none;
+}
+
+.modal-backdrop:focus {
+  outline: none;
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  /* Remove transform transitions */
+  .card:hover,
+  .btn:hover:not(:disabled),
+  .nav-item:hover {
+    transform: none !important;
+  }
+}
+
+/* ========================================
+   HIGH CONTRAST MODE
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: var(--color-gray-700);
+    --border-color-hover: var(--color-gray-900);
+  }
+  
+  .btn {
+    border-width: 2px;
+  }
+  
+  .card {
+    border-width: 2px;
+    border-color: var(--color-gray-700);
+  }
+}
+
+/* ========================================
+   PRINT ACCESSIBILITY
+   ======================================== */
+
+@media print {
+  /* Ensure all content is printable */
+  * {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  /* Hide decorative elements when printing */
+  .skip-link,
+  button:not(.print),
+  .btn-close,
+  .modal-close {
+    display: none !important;
+  }
+  
+  /* Ensure links are visible in print */
+  a {
+    text-decoration: underline;
+  }
+  
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 80%;
+  }
+}
+
+/* ========================================
+   LANDMARK REGIONS
+   ======================================== */
+
+main,
+[role="main"] {
+  display: block;
+}
+
+nav,
+[role="navigation"] {
+  display: block;
+}
+
+header,
+[role="banner"] {
+  display: block;
+}
+
+footer,
+[role="contentinfo"] {
+  display: block;
+}
+
+aside,
+[role="complementary"] {
+  display: block;
+}
+
+/* ========================================
+   SEMANTIC HTML ENHANCEMENTS
+   ======================================== */
+
+/* Ensure tables are accessible */
+table {
+  caption-side: top;
+}
+
+caption {
+  padding-bottom: var(--space-2);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+}
+
+th {
+  text-align: left;
+}
+
+/* Accessible form labels */
+label {
+  display: block;
+  cursor: pointer;
+}
+
+/* Ensure buttons with icons have text or ARIA labels */
+.btn:has(> i):not(:has(> span:not(:empty))) {
+  min-width: var(--touch-target-min);
+}
+
+/* ========================================
+   FOCUS TRAP FOR MODALS
+   ======================================== */
+
+/* This will be implemented via JavaScript */
+.modal-focus-trap {
+  /* Focus trap behavior is handled by JavaScript */
+  /* This class can be used as a hook for JavaScript implementations */
+}
+
+/* ========================================
+   ARIA STATES
+   ======================================== */
+
+/* Visual feedback for ARIA states */
+[aria-expanded="true"]::after {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  margin-left: var(--space-2);
+}
+
+[aria-expanded="false"]::after {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 4px solid currentColor;
+  margin-left: var(--space-2);
+}
+
+/* Disabled state visual feedback */
+[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Current/active state visual feedback */
+[aria-current="page"] {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   BUTTON ACCESSIBILITY
+   ======================================== */
+
+/* Button with loading state should be readable */
+.btn-loading {
+  position: relative;
+  color: transparent;
+}
+
+.btn-loading::before {
+  content: "Loading…";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: currentColor;
+}
+
+/* ========================================
+   VIDEO/AUDIO CAPTIONS
+   ======================================== */
+
+video,
+audio {
+  display: block;
+}
+
+/* ========================================
+   IMAGE ACCESSIBILITY
+   ======================================== */
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Decorative images should be hidden from screen readers */
+img[alt=""],
+img.decorative {
+  /* If alt is empty or decorative class exists, image is decorative */
+}
+
+/* ========================================
+   FORM FIELD ACCESSIBILITY
+   ======================================== */
+
+/* Group related form fields */
+fieldset {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+legend {
+  padding: 0 var(--space-2);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-h6);
+}
+
+/* Error message association */
+[aria-describedby] {
+  /* Form elements with aria-describedby should have visible error messages */
+}
+
+/* Required field announcement */
+[aria-required="true"] {
+  /* Visual indicator already handled by label.required::after */
+}
+

@@ -141,3 +141,63 @@
 )
 
 [25-Oct-2025 18:36:53 Europe/Berlin] Error fetching budget reviews: SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'id' in field list is ambiguous
+[26-Oct-2025 02:35:49 Europe/Berlin] [v1] Report generation request received
+[26-Oct-2025 02:35:49 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[26-Oct-2025 02:35:49 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 2
+    [format] => txt
+)
+
+[26-Oct-2025 02:35:49 Europe/Berlin] Error fetching budget reviews: SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'id' in field list is ambiguous
+[26-Oct-2025 02:41:58 Europe/Berlin] Starting budget decision process for budget_id: 6
+[26-Oct-2025 02:41:58 Europe/Berlin] Fetched budget data: Array
+(
+    [id] => 6
+    [proposal_id] => 6
+    [budget_status] => pending_client
+    [admin_id] => 
+    [client_id] => 1
+    [title] => Residential 2-Story House
+    [description] => Residential 2-Story House in Blue Beach Subdivision in Bonuan Tondaligan
+    [start_date] => 2025-10-29
+    [end_date] => 2026-02-25
+)
+
+[26-Oct-2025 02:41:58 Europe/Berlin] Budget decision error: Missing required field: admin_id
+[26-Oct-2025 02:49:42 Europe/Berlin] Starting budget decision process for budget_id: 6
+[26-Oct-2025 02:49:42 Europe/Berlin] Fetched budget data: Array
+(
+    [id] => 6
+    [proposal_id] => 6
+    [budget_status] => pending_client
+    [admin_id] => 
+    [client_id] => 1
+    [title] => Residential 2-Story House
+    [description] => Residential 2-Story House in Blue Beach Subdivision in Bonuan Tondaligan
+    [start_date] => 2025-10-29
+    [end_date] => 2026-02-25
+)
+
+[26-Oct-2025 02:49:42 Europe/Berlin] Project created with ID: 4
+[26-Oct-2025 02:50:58 Europe/Berlin] Starting budget decision process for budget_id: 2
+[26-Oct-2025 02:50:58 Europe/Berlin] Fetched budget data: Array
+(
+    [id] => 2
+    [proposal_id] => 2
+    [budget_status] => pending_client
+    [admin_id] => 1
+    [client_id] => 1
+    [title] => Warehouse Expansion Project
+    [description] => Expansion of existing warehouse facility to increase storage capacity by 40%. Includes foundation work, steel framework construction, and roofing.
+    [start_date] => 2025-12-01
+    [end_date] => 2026-05-30
+)
+
+[26-Oct-2025 02:50:58 Europe/Berlin] Project created with ID: 5

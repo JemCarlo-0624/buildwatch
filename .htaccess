@@ -1,0 +1,46 @@
+# BuildWatch - URL Rewriting Rules
+
+RewriteEngine On
+RewriteBase /buildwatch/
+
+# Allow direct access to assets (CSS, JS, images, etc.)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_URI} \.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot|pdf)$ [NC]
+RewriteRule ^ - [L]
+
+# Allow direct access to config files (but consider securing these)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_URI} \.(php|ini|conf)$ [NC]
+RewriteCond %{REQUEST_URI} !^/buildwatch/public/index\.php$ [NC]
+RewriteRule ^ - [L]
+
+# Route all other requests through the router
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php [QSA,L]
+
+# Prevent direct access to certain directories
+RedirectMatch 403 ^/db/.*$
+RedirectMatch 403 ^/logs/.*$
+
+# Security headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Disable directory browsing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "(^\.htaccess|^\.git|composer\.json|composer\.lock)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+

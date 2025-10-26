@@ -1,0 +1,109 @@
+/* ========================================
+   BUILDWATCH MAIN STYLESHEET
+   Import all design system components
+   ======================================== */
+
+/* 1. Design Tokens (must be first) - Already imported by base.css */
+/* 2. Base Styles */
+@import url('base.css');
+
+/* 3. Accessibility Enhancements */
+@import url('accessibility.css');
+
+/* ========================================
+   LEGACY SUPPORT
+   Maintain backward compatibility during transition
+   ======================================== */
+
+/* Legacy classes that may still be in use */
+.primary {
+  color: var(--color-primary);
+}
+
+.secondary {
+  color: var(--color-secondary);
+}
+
+.success {
+  color: var(--color-success);
+}
+
+.danger {
+  color: var(--color-danger);
+}
+
+.warning {
+  color: var(--color-warning);
+}
+
+/* ========================================
+   ADDITIONAL COMPONENTS
+   ======================================== */
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.status-pending {
+  background-color: var(--color-warning-50);
+  color: var(--color-warning-dark);
+}
+
+.status-approved,
+.status-active,
+.status-completed {
+  background-color: var(--color-success-50);
+  color: var(--color-success-dark);
+}
+
+.status-rejected,
+.status-cancelled {
+  background-color: var(--color-danger-50);
+  color: var(--color-danger-dark);
+}
+
+.status-planning,
+.status-onhold {
+  background-color: var(--color-warning-50);
+  color: var(--color-warning-dark);
+}
+
+/* Progress Bars */
+.progress-bar-container {
+  width: 100%;
+  height: 10px;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  transition: width 0.5s var(--ease-in-out);
+  border-radius: var(--radius-full);
+}
+
+/* Dividers */
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-color);
+  margin: var(--space-6) 0;
+}
+
+.divider-vertical {
+  width: 1px;
+  height: 100%;
+  background-color: var(--border-color);
+  margin: 0 var(--space-6);
+}
+
