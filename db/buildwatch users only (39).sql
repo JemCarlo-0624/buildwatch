@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 26, 2025 at 06:57 AM
+-- Generation Time: Oct 26, 2025 at 03:08 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -68,13 +68,6 @@ CREATE TABLE `clients` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `clients`
---
-
-INSERT INTO `clients` (`id`, `name`, `email`, `password`, `phone`, `company`, `created_at`) VALUES
-(1, 'Jan Julliene Narvasa', 'jjnarvasa@buildwatch.com', '$2y$10$L0990U6T0PrxZ93CSmEk3ulMNiIKelMILpgtpCFnh.ATN1pXUA3qu', '09129841241', 'Discaya', '2025-10-25 14:54:08');
-
 -- --------------------------------------------------------
 
 --
@@ -110,9 +103,9 @@ CREATE TABLE `projects` (
   `timeline` varchar(100) DEFAULT NULL,
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
-  `category` varchar(100) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `last_activity_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `last_activity_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `project_manager_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -265,8 +258,7 @@ ALTER TABLE `projects`
   ADD PRIMARY KEY (`id`),
   ADD KEY `created_by` (`created_by`),
   ADD KEY `client_id` (`client_id`),
-  ADD KEY `idx_status` (`status`),
-  ADD KEY `idx_category` (`category`);
+  ADD KEY `idx_status` (`status`);
 
 --
 -- Indexes for table `project_assignments`
@@ -328,7 +320,7 @@ ALTER TABLE `budget_reviews`
 -- AUTO_INCREMENT for table `clients`
 --
 ALTER TABLE `clients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `notifications`
