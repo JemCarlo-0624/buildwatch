@@ -30,27 +30,32 @@ if ($_SESSION['role'] === 'pm') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_POST['user_id'];
+    $assignment_type = $_POST['assignment_type'] ?? 'worker';
 
-    // Check if user is already assigned to an active (not completed) project
-    $checkStmt = $pdo->prepare("SELECT pa.project_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id WHERE pa.user_id = ? AND p.status != 'completed'");
-    $checkStmt->execute([$user_id]);
-    if ($checkStmt->fetch()) {
-        echo "<script>alert('This user is already assigned to an active project.');window.location.href=window.location.href;</script>";
-        exit;
+    if ($assignment_type === 'pm') {
+        $checkStmt = $pdo->prepare("SELECT pa.project_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id JOIN users u ON pa.user_id = u.id WHERE pa.user_id = ? AND p.status != 'completed' AND u.role = 'pm'");
+        $checkStmt->execute([$user_id]);
+        if ($checkStmt->fetch()) {
+            echo "<script>alert('This project manager is already assigned to an active project.');window.location.href=window.location.href;</script>";
+            exit;
+        }
+    } else {
+        $checkStmt = $pdo->prepare("SELECT pa.project_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id WHERE pa.user_id = ? AND p.status != 'completed'");
+        $checkStmt->execute([$user_id]);
+        if ($checkStmt->fetch()) {
+            echo "<script>alert('This user is already assigned to an active project.');window.location.href=window.location.href;</script>";
+            exit;
+        }
     }
 
-    // Assign user to project
     $stmt = $pdo->prepare("INSERT INTO project_assignments (project_id, user_id) VALUES (?, ?)");
     $stmt->execute([$project_id, $user_id]);
-    // Redirect to avoid form resubmission
     header("Location: projects_assign.php?id=" . urlencode($project_id));
     exit;
 }
 
-// Get available Project Managers (not assigned to any active project)
 $pms = $pdo->query("SELECT * FROM users u WHERE u.role = 'pm' AND u.id NOT IN (SELECT pa.user_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id WHERE p.status != 'completed')")->fetchAll();
 
-// Get available Workers (not assigned to any active project)
 $workers = $pdo->query("SELECT * FROM users u WHERE u.role = 'worker' AND u.id NOT IN (SELECT pa.user_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id WHERE p.status != 'completed')")->fetchAll();
 
 $stmt = $pdo->prepare("SELECT u.* FROM project_assignments pa JOIN users u ON pa.user_id=u.id WHERE pa.project_id=? AND u.role='pm'");
@@ -388,7 +393,35 @@ $assignedWorkers = $stmt->fetchAll();
                 <?php endif; ?>
             </div>
 
-            <!-- Separate section for assigning Workers -->
+            <div class="assignment-section">
+                <div class="section-header">
+                    <h3 class="section-title pm-section">
+                        <i class="fas fa-user-tie"></i>
+                        Assign Project Manager
+                    </h3>
+                </div>
+
+                <form method="post" class="worker-select-form">
+                    <div class="form-group-inline">
+                        <label for="pm-select">
+                            <i class="fas fa-users"></i> Select Project Manager
+                        </label>
+                        <select name="user_id" id="pm-select" required>
+                            <option value="">Choose a project manager...</option>
+                            <?php foreach ($pms as $pm): ?>
+                                <option value="<?= $pm['id'] ?>">
+                                    <?= htmlspecialchars($pm['name']) ?> - <?= htmlspecialchars($pm['email']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <input type="hidden" name="assignment_type" value="pm">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Assign PM
+                    </button>
+                </form>
+            </div>
+
             <div class="assignment-section">
                 <div class="section-header">
                     <h3 class="section-title worker-section">
@@ -411,13 +444,13 @@ $assignedWorkers = $stmt->fetchAll();
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <input type="hidden" name="assignment_type" value="worker">
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-plus"></i> Assign Worker
                     </button>
                 </form>
             </div>
 
-            <!-- Separate display section for assigned Project Managers -->
             <div class="assignment-section">
                 <div class="section-header">
                     <h3 class="section-title pm-section">
@@ -455,7 +488,6 @@ $assignedWorkers = $stmt->fetchAll();
                 <?php endif; ?>
             </div>
 
-            <!-- Separate display section for assigned Workers -->
             <div class="assignment-section">
                 <div class="section-header">
                     <h3 class="section-title worker-section">

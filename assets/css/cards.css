@@ -360,6 +360,43 @@
   color: var(--text-tertiary);
 }
 
+/* ========================================
+   WRAPPING & TRUNCATION
+   Prevent long, unbroken strings from overflowing cards
+   ======================================== */
+
+/* Ensure card text will wrap instead of overflowing. Keep this scoped to
+   commonly used card text elements so it doesn't affect unrelated layout. */
+.card,
+.card-title,
+.card-text,
+.card-subtitle,
+.project-card-title,
+.proposal-card-title,
+.project-card-description,
+.proposal-card-description,
+.card-empty-title,
+.card-empty-text {
+  /* break-word is legacy; overflow-wrap is the modern standard */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  /* allow normal wrapping behaviour (not preformatted) */
+  white-space: normal;
+}
+
+/* Truncate very long titles to two lines with an ellipsis. Apply only to
+   project/proposal card titles to avoid changing other title components. */
+.project-card-title,
+.proposal-card-title {
+  display: -webkit-box;
+  /* Standard property for future compatibility (may be ignored in older UAs) */
+  line-clamp: 2;
+  -webkit-line-clamp: 2; /* number of visible lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .meta-item {
   display: flex;
   align-items: center;

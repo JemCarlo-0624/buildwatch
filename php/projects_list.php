@@ -537,19 +537,19 @@ foreach ($projects as $p) {
         </div>
 
         <div class="nav-section">
-            <div class="nav-section-title">Navigation</div>
+            <div class="nav-section-title">Admin Panel</div>
             <?php if ($user_role === 'admin'): ?>
-                <a href="dashboard_admin.php" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
-                <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> Projects</a>
+                <a href="dashboard_admin.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="projects_list.php" class="nav-item active"><i class="fas fa-project-diagram"></i> Projects</a>
                 <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
                 <a href="proposals_review.php" class="nav-item"><i class="fas fa-lightbulb"></i> Proposals</a>
                 <a href="users_list.php" class="nav-item"><i class="fas fa-users"></i> Users</a>
             <?php elseif ($user_role === 'pm'): ?>
-                <a href="dashboard_pm.php" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
-                <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> Projects</a>
+                <a href="dashboard_pm.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="projects_list.php" class="nav-item active"><i class="fas fa-project-diagram"></i> Projects</a>
                 <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
             <?php else: ?>
-                <a href="dashboard_worker.php" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="dashboard_worker.php" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="tasks_worker.php" class="nav-item"><i class="fas fa-tasks"></i> My Tasks</a>
             <?php endif; ?>
         </div>

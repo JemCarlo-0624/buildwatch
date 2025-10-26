@@ -1006,66 +1006,36 @@ body {
   }
 }
 
-/* Added styling for budget breakdown display in modal */
-.budget-breakdown {
-  padding: var(--space-lg) 0;
+/* Fix: prevent text overflow inside proposal/project cards */
+.proposal-card,
+.project-card {
+  overflow: hidden;                /* ensure content can't overflow the card */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;  /* keep action button/footer at bottom */
+  min-height: 0;                   /* allow proper flex-item shrinking in grids */
 }
 
-.budget-comparison {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-lg);
-  margin-bottom: var(--space-lg);
+/* Titles: clamp to 2 lines with ellipsis (optional visual truncation) */
+.proposal-card .proposal-title,
+.project-card .project-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;           /* show max 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
-.budget-item {
-  background: var(--light-bg);
-  padding: var(--space-lg);
-  border-radius: var(--radius-md);
-  border-left: 4px solid var(--primary-teal);
-}
-
-.budget-item label {
-  display: block;
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  font-weight: 600;
-  margin-bottom: var(--space-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.budget-amount {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.budget-item.highlight .budget-amount {
-  color: var(--primary-teal);
-}
-
-.budget-item.text-danger {
-  border-left-color: var(--danger);
-}
-
-.budget-item.text-danger .budget-amount {
-  color: var(--danger);
-}
-
-.budget-item.text-success {
-  border-left-color: var(--success);
-}
-
-.budget-item.text-success .budget-amount {
-  color: var(--success);
-}
-
-.budget-item small {
-  display: block;
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  margin-top: var(--space-xs);
-  font-weight: 500;
+/* Descriptions and other text: allow breaks inside long words */
+.proposal-card .proposal-description,
+.project-card .project-description,
+.proposal-card .proposal-meta,
+.project-card .project-stats {
+  word-wrap: break-word;           /* legacy */
+  overflow-wrap: break-word;       /* modern */
+  white-space: normal;             /* allow wrapping */
+  word-break: break-word;          /* fallback for extremely long tokens */
 }

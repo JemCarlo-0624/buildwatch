@@ -352,28 +352,72 @@ try {
     </div>
 
     <!-- Budget review modal with improved styling -->
-    <div class="modal fade" id="budgetReviewModal" tabindex="-1" style="z-index: 9999;">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="fas fa-file-invoice-dollar"></i> Budget Review</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <div class="modal fade" id="budgetReviewModal" tabindex="-1" aria-labelledby="budgetReviewLabel" aria-hidden="true" style="z-index: 9999;">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="budgetReviewLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Over Budget Alert
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                
+                <div class="row g-3 mb-4 text-center">
+                    
+                    <div class="col-md-5">
+                        <div class="p-3 border rounded-3 h-100">
+                            <h6 class="text-muted mb-2">Your Proposed Budget</h6>
+                            <p class="h3 fw-bold text-primary mb-0" id="proposedBudget">₱890,000.00</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-center justify-content-center">
+                         <i class="fas fa-arrow-right fa-2x text-secondary"></i>
+                    </div>
+
+                    <div class="col-md-5">
+                        <div class="p-3 border border-3 border-danger rounded-3 h-100">
+                            <h6 class="text-muted mb-2">Admin Evaluation</h6>
+                            <p class="h3 fw-bold text-danger mb-0" id="adminEvaluation">₱900,000.00</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <div id="budgetBreakdown"></div>
+
+                <div class="alert alert-danger p-3 mb-4 rounded-3" role="alert">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h5 class="mb-0 fw-bold text-danger">Difference: ₱10,000.00</h5>
+                        </div>
+                        <div class="badge bg-danger text-uppercase p-2">
+                            Higher than Proposed
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                <div id="budgetBreakdown" class="p-3 border rounded-3 bg-light">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-list-ul me-2 text-primary"></i>Budget Breakdown Details</h6>
+                    <p class="text-muted small mb-0">Original breakdown table content goes here...</p>
+                </div>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left"></i> Close
+                </button>
+                <div class="d-flex gap-2">
                     <button type="button" class="btn btn-danger" onclick="handleBudgetDecision('reject')">
                         <i class="fas fa-times"></i> Reject
                     </button>
                     <button type="button" class="btn btn-success" onclick="handleBudgetDecision('accept')">
-                        <i class="fas fa-check"></i> Accept
+                        <i class="fas fa-check"></i> Approve
                     </button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Report generation modal with improved layout -->
     <div id="reportModal" class="modal">

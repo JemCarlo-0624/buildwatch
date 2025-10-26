@@ -527,80 +527,80 @@ $breakdowns = $breakdownStmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
    <script>
-    function addRow() {
-        const row = document.createElement('div');
-        row.className = 'breakdown-row';
-        row.innerHTML = `
-            <div class="form-group" style="margin-bottom: 0;">
-                <input type="text" name="item_name[]" placeholder="Item Name" required>
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <input type="number" name="cost[]" placeholder="Estimated Cost" min="0" step="0.01" required oninput="updateSummary()">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <select name="category[]" onchange="updateSummary()">
-                    <option value="materials">Materials</option>
-                    <option value="labor">Labor</option>
-                    <option value="equipment">Equipment</option>
-                    <option value="misc">Misc</option>
-                </select>
-            </div>
-            <button type="button" class="btn-remove-row" onclick="removeRow(this)">
-                <i class="fas fa-trash"></i> Remove
-            </button>
-        `;
-        document.getElementById('breakdown').appendChild(row);
-        updateSummary();
-    }
+function addRow() {
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML = `
+        <div class="form-group" style="margin-bottom: 0;">
+            <input type="text" name="item_name[]" placeholder="Item Name" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <input type="number" name="cost[]" placeholder="Estimated Cost" min="0" step="0.01" required oninput="updateSummary()">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <select name="category[]" onchange="updateSummary()">
+                <option value="materials">Materials</option>
+                <option value="labor">Labor</option>
+                <option value="equipment">Equipment</option>
+                <option value="misc">Misc</option>
+            </select>
+        </div>
+        <button type="button" class="btn-remove-row" onclick="removeRow(this)">
+            <i class="fas fa-trash"></i> Remove
+        </button>
+    `;
+    document.getElementById('breakdown').appendChild(row);
+    updateSummary();
+}
 
-    function removeRow(btn) {
-        btn.parentElement.remove();
-        updateSummary();
-    }
+function removeRow(btn) {
+    btn.parentElement.remove();
+    updateSummary();
+}
 
-    function updateSummary() {
-        const costs = document.querySelectorAll('input[name="cost[]"]');
-        let total = 0;
+function updateSummary() {
+    const costs = document.querySelectorAll('input[name="cost[]"]');
+    let total = 0;
 
-        costs.forEach(cost => {
-            total += parseFloat(cost.value) || 0;
-        });
-
-        const proposed = <?php echo $budget['proposed_amount']; ?>;
-        const difference = total - proposed;
-
-        // Update evaluated input field
-        const evaluatedInput = document.getElementById('evaluated_amount');
-        evaluatedInput.value = total.toFixed(2);
-
-        // Update display boxes
-        document.getElementById('evaluatedDisplay').textContent = 
-            '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-        document.getElementById('differenceDisplay').textContent = 
-            '₱' + difference.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-        // Add red color if over budget, green if under
-        const diffDisplay = document.getElementById('differenceDisplay');
-        diffDisplay.style.color = difference > 0 ? '#d42f13' : '#0a8f2d';
-    }
-
-    // Initialize on load
-    document.addEventListener('DOMContentLoaded', () => {
-        const costInputs = document.querySelectorAll('input[name="cost[]"]');
-        costInputs.forEach(input => input.addEventListener('input', updateSummary));
-        updateSummary();
+    costs.forEach(cost => {
+        total += parseFloat(cost.value) || 0;
     });
 
-    document.getElementById('budgetForm').addEventListener('submit', function(e) {
-        const evaluatedAmount = document.getElementById('evaluated_amount').value;
+    const proposed = <?php echo floatval($budget['proposed_amount']); ?>;
+    const difference = total - proposed;
 
-        if (!evaluatedAmount) {
-            e.preventDefault();
-            alert('Please fill in all required fields.');
-            return false;
-        }
-    });
+    // Update evaluated input field
+    const evaluatedInput = document.getElementById('evaluated_amount');
+    evaluatedInput.value = total.toFixed(2);
+
+    // Update display boxes
+    document.getElementById('evaluatedDisplay').textContent = 
+        '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    document.getElementById('differenceDisplay').textContent = 
+        '₱' + difference.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Add red color if over budget, green if under
+    const diffDisplay = document.getElementById('differenceDisplay');
+    diffDisplay.style.color = difference > 0 ? '#d42f13' : '#0a8f2d';
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    const costInputs = document.querySelectorAll('input[name="cost[]"]');
+    costInputs.forEach(input => input.addEventListener('input', updateSummary));
+    updateSummary();
+});
+
+document.getElementById('budgetForm').addEventListener('submit', function(e) {
+    const evaluatedAmount = document.getElementById('evaluated_amount').value;
+
+    if (!evaluatedAmount) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+        return false;
+    }
+});
 </script>
 
 </body>

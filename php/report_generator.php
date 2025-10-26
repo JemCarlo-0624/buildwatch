@@ -73,20 +73,6 @@ class ReportGenerator {
                 'p.created_at', 'p.last_activity_at', 'p.created_by', 'p.client_id'
             ];
             
-            // Optional columns to include only if present
-            $optional = [
-                'budget' => 'p.budget',
-                'total_hours_spent' => 'p.total_hours_spent',
-                'estimated_hours' => 'p.estimated_hours',
-                'timeline' => 'p.timeline'
-            ];
-            
-            foreach ($optional as $col => $select) {
-                if (in_array($col, $cols)) {
-                    $selectCols[] = $select;
-                }
-            }
-            
             $sql = "SELECT " . implode(", ", $selectCols) . ", u.name AS created_by_name, " .
                    "c.name AS client_name, c.email AS client_email, c.company AS client_company " .
                    "FROM projects p LEFT JOIN users u ON p.created_by = u.id " .
@@ -119,12 +105,6 @@ class ReportGenerator {
             $data->clientName = $row['client_name'] ?? 'N/A';
             $data->clientEmail = $row['client_email'] ?? 'N/A';
             $data->clientCompany = $row['client_company'] ?? 'N/A';
-            
-            // Set optional fields if they exist
-            $data->budget = isset($row['budget']) ? (float)$row['budget'] : 0.0;
-            $data->totalHoursSpent = isset($row['total_hours_spent']) ? (float)$row['total_hours_spent'] : 0.0;
-            $data->estimatedHours = isset($row['estimated_hours']) ? (float)$row['estimated_hours'] : 0.0;
-            $data->timeline = $row['timeline'] ?? 'N/A';
             
             // Fetch tasks and team members
             $this->fetchTasks($data);
@@ -538,8 +518,6 @@ CSS;
                 $this->escapeHtml($data->status) . "</span></div>\n";
         $html .= "<div><strong>Priority:</strong> <span class=\"priority-" . strtolower($data->priority) . "\">" .
                 $this->escapeHtml(strtoupper($data->priority)) . "</span></div>\n";
-        $html .= "<div><strong>Category:</strong> " . $this->escapeHtml($data->category ?? "N/A") . "</div>\n";
-        $html .= "<div><strong>Timeline:</strong> " . $this->escapeHtml($data->timeline ?? "N/A") . "</div>\n";
         $html .= "</div>\n";
         $html .= "<p style=\"margin-top: 15px;\"><strong>Description:</strong> " . $this->escapeHtml($data->description) . "</p>\n";
         $html .= "</div>\n";
@@ -604,8 +582,6 @@ CSS;
         $html .= $this->createMetricCard("Completed", (string)$data->completedTasks, "success");
         $html .= $this->createMetricCard("In Progress", (string)$data->inProgressTasks, "warning");
         $html .= $this->createMetricCard("Pending", (string)$data->pendingTasks, "info");
-        $html .= $this->createMetricCard("Hours Spent", number_format($data->totalHoursSpent, 1), "primary");
-        $html .= $this->createMetricCard("Est. Hours", number_format($data->estimatedHours, 1), "info");
         $html .= $this->createMetricCard("Team Size", (string)count($data->teamMembers), "primary");
         $html .= "</div>\n";
         
@@ -629,13 +605,7 @@ CSS;
         $html .= "<h3>Timeline Analysis</h3>\n";
         $html .= "<pre style=\"white-space: pre-wrap; font-family: inherit;\">" . $this->escapeHtml($data->getTimelineAnalysis()) . "</pre>\n";
         $html .= "</div>\n";
-        
-        // Budget analysis
-        $html .= "<div class=\"section\">\n";
-        $html .= "<h3>Budget & Hours Analysis</h3>\n";
-        $html .= "<pre style=\"white-space: pre-wrap; font-family: inherit;\">" . $this->escapeHtml($data->getBudgetAnalysis()) . "</pre>\n";
-        $html .= "</div>\n";
-        
+    
         // Task table
         $html .= "<div class=\"section\">\n";
         $html .= "<h3>Task Details</h3>\n";

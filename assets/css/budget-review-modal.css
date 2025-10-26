@@ -1,20 +1,31 @@
-/* Budget Review Modal Styles */
+/* ========================================
+   BUDGET REVIEW MODAL - Modern HCI Design
+   ======================================== */
+
+/* Complete redesign with modern HCI principles */
+
+/* ========================================
+   MODAL BACKDROP & CONTAINER
+   ======================================== */
+
 .modal {
   display: none;
   position: fixed;
-  z-index: 1000;
+  z-index: var(--z-modal-backdrop);
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  animation: fadeIn 0.3s ease;
+  background-color: var(--bg-overlay);
+  animation: fadeIn var(--duration-normal) var(--ease-out);
+  backdrop-filter: blur(4px);
 }
 
 .modal.active {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-4);
 }
 
 @keyframes fadeIn {
@@ -27,19 +38,21 @@
 }
 
 .modal-content {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  max-width: 600px;
-  width: 90%;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  max-width: 700px;
+  width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  animation: slideUp 0.3s ease;
+  animation: slideUp var(--duration-normal) var(--ease-out);
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes slideUp {
   from {
-    transform: translateY(50px);
+    transform: translateY(20px);
     opacity: 0;
   }
   to {
@@ -52,244 +65,380 @@
   max-width: 700px;
 }
 
+/* ========================================
+   MODAL HEADER - Clear Visual Hierarchy
+   ======================================== */
+
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 24px;
-  color: #333;
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  letter-spacing: var(--letter-spacing-tight);
 }
 
+/* Close Button - Accessible & Intuitive */
 .modal-close {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   cursor: pointer;
-  color: #999;
-  padding: 0;
-  width: 32px;
-  height: 32px;
+  color: var(--text-tertiary);
+  padding: var(--space-2);
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  border-radius: var(--radius-lg);
+  transition: var(--transition-normal);
+  flex-shrink: 0;
 }
 
 .modal-close:hover {
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
 }
+
+.modal-close:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ========================================
+   MODAL BODY - Content Area
+   ======================================== */
 
 .modal-body {
-  padding: 24px;
+  padding: var(--space-6);
+  overflow-y: auto;
+  flex: 1;
 }
 
+/* ========================================
+   BUDGET HEADER SECTION
+   ======================================== */
+
 .budget-header {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .budget-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
 }
 
 .budget-description {
-  color: #666;
-  font-size: 14px;
-  line-height: 1.5;
+  color: var(--text-secondary);
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-normal);
 }
+
+/* ========================================
+   BUDGET COMPARISON - Key Information
+   ======================================== */
 
 .budget-comparison {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .budget-box {
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  transition: var(--transition-normal);
+}
+
+.budget-box:hover {
+  border-color: var(--border-color-hover);
+  background: var(--bg-secondary);
 }
 
 .budget-box-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #999;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  letter-spacing: var(--letter-spacing-wide);
+  margin-bottom: var(--space-2);
+  display: block;
 }
 
 .budget-box-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  line-height: var(--line-height-tight);
 }
 
 .budget-difference {
-  font-size: 14px;
-  color: #e74c3c;
-  margin-top: 8px;
-  font-weight: 600;
+  font-size: var(--font-size-body-small);
+  color: var(--color-danger);
+  margin-top: var(--space-2);
+  font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .budget-difference.positive {
-  color: #27ae60;
+  color: var(--color-success);
 }
 
+.budget-difference::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+/* ========================================
+   BREAKDOWN SECTION - Detailed Information
+   ======================================== */
+
 .breakdown-section {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .breakdown-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
+  font-size: var(--font-size-h5);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .breakdown-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--font-size-body-small);
 }
 
 .breakdown-table th {
-  background: #f5f5f5;
-  padding: 12px;
+  background: var(--bg-tertiary);
+  padding: var(--space-3) var(--space-4);
   text-align: left;
-  font-weight: 600;
-  color: #666;
-  border-bottom: 2px solid #e0e0e0;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-color);
+  font-size: var(--font-size-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
 }
 
 .breakdown-table td {
-  padding: 12px;
-  border-bottom: 1px solid #e0e0e0;
-  color: #333;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
 }
 
-.breakdown-table tr:hover {
-  background: #fafafa;
+.breakdown-table tbody tr {
+  transition: var(--transition-fast);
+}
+
+.breakdown-table tbody tr:hover {
+  background: var(--bg-tertiary);
 }
 
 .breakdown-category {
-  font-weight: 500;
-  color: #2c3e50;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
 }
 
 .breakdown-cost {
   text-align: right;
-  font-weight: 600;
-  color: #27ae60;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
 }
 
+/* ========================================
+   ADMIN COMMENT - Contextual Information
+   ======================================== */
+
 .admin-comment {
-  background: #e8f4f8;
-  border-left: 4px solid #3498db;
-  padding: 16px;
-  border-radius: 4px;
-  margin-bottom: 24px;
+  background: linear-gradient(135deg, var(--color-info-50) 0%, var(--color-primary-50) 100%);
+  border-left: 4px solid var(--color-info);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-6);
 }
 
 .admin-comment-label {
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 8px;
-  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-info-dark);
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-caption);
   text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-comment-label::before {
+  content: "ℹ";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--color-info);
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 .admin-comment-text {
-  color: #555;
-  line-height: 1.6;
-  font-size: 14px;
+  color: var(--text-primary);
+  line-height: var(--line-height-relaxed);
+  font-size: var(--font-size-body-small);
 }
+
+/* ========================================
+   DECISION ACTIONS - Clear Call-to-Action
+   ======================================== */
 
 .decision-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #e0e0e0;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .btn-accept-budget,
 .btn-reject-budget {
   flex: 1;
-  padding: 12px 20px;
+  padding: var(--button-padding-x-md) var(--button-padding-x-lg);
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: var(--radius-lg);
+  font-size: var(--button-font-size-md);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition-normal);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.btn-accept-budget {
-  background: #27ae60;
-  color: white;
-}
-
-.btn-accept-budget:hover {
-  background: #229954;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
-}
-
-.btn-reject-budget {
-  background: #e74c3c;
-  color: white;
-}
-
-.btn-reject-budget:hover {
-  background: #c0392b;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
-}
-
-.btn-review-budget {
-  width: 100%;
-  margin-top: 12px;
-  padding: 10px 16px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  letter-spacing: var(--letter-spacing-wide);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
+  min-height: var(--button-height-md);
+}
+
+.btn-accept-budget {
+  background: var(--color-success);
+  color: white;
+  box-shadow: var(--shadow-success);
+}
+
+.btn-accept-budget:hover {
+  background: var(--color-success-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.25);
+}
+
+.btn-accept-budget:active {
+  transform: translateY(0);
+}
+
+.btn-accept-budget:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.btn-reject-budget {
+  background: var(--color-danger);
+  color: white;
+  box-shadow: var(--shadow-danger);
+}
+
+.btn-reject-budget:hover {
+  background: var(--color-danger-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(239, 68, 68, 0.25);
+}
+
+.btn-reject-budget:active {
+  transform: translateY(0);
+}
+
+.btn-reject-budget:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ========================================
+   REVIEW BUTTON - Secondary Action
+   ======================================== */
+
+.btn-review-budget {
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--button-padding-x-md) var(--button-padding-x-lg);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--button-font-size-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--button-height-md);
+  box-shadow: var(--shadow-primary);
 }
 
 .btn-review-budget:hover {
-  background: #2980b9;
+  background: var(--color-primary-dark);
   transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(11, 83, 148, 0.25);
 }
+
+.btn-review-budget:active {
+  transform: translateY(0);
+}
+
+.btn-review-budget:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ========================================
+   LOADING & STATUS STATES
+   ======================================== */
 
 .loading-spinner {
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #3498db;
+  border: 3px solid var(--color-gray-200);
+  border-top: 3px solid var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -303,43 +452,188 @@
   }
 }
 
+/* ========================================
+   FEEDBACK MESSAGES - Clear Communication
+   ======================================== */
+
 .error-message {
-  background: #fadbd8;
-  color: #c0392b;
-  padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  font-size: 14px;
+  background: var(--color-danger-50);
+  color: var(--color-danger-dark);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-body-small);
+  border-left: 4px solid var(--color-danger);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.error-message::before {
+  content: "✕";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--color-danger);
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  flex-shrink: 0;
 }
 
 .success-message {
-  background: #d5f4e6;
-  color: #27ae60;
-  padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  font-size: 14px;
+  background: var(--color-success-50);
+  color: var(--color-success-dark);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-body-small);
+  border-left: 4px solid var(--color-success);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
 }
 
-@media (max-width: 600px) {
+.success-message::before {
+  content: "✓";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--color-success);
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN - Mobile First
+   ======================================== */
+
+@media (max-width: 768px) {
+  .modal.active {
+    padding: var(--space-2);
+  }
+
   .modal-content {
-    width: 95%;
     max-height: 95vh;
+    border-radius: var(--radius-xl);
+  }
+
+  .modal-header {
+    padding: var(--space-4);
+  }
+
+  .modal-body {
+    padding: var(--space-4);
   }
 
   .budget-comparison {
     grid-template-columns: 1fr;
+    gap: var(--space-3);
   }
 
   .decision-actions {
     flex-direction: column;
+    gap: var(--space-2);
   }
 
+  .btn-accept-budget,
+  .btn-reject-budget {
+    padding: var(--button-padding-x-md) var(--button-padding-x-md);
+  }
+
+  .breakdown-table {
+    font-size: var(--font-size-caption);
+  }
+
+  .breakdown-table th,
+  .breakdown-table td {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .modal-header h2 {
+    font-size: var(--font-size-h4);
+  }
+
+  .budget-box-value {
+    font-size: var(--font-size-h4);
+  }
+}
+
+@media (max-width: 480px) {
   .modal-header {
-    padding: 16px;
+    padding: var(--space-3);
   }
 
   .modal-body {
-    padding: 16px;
+    padding: var(--space-3);
+  }
+
+  .budget-header {
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+
+  .budget-comparison {
+    gap: var(--space-2);
+  }
+
+  .budget-box {
+    padding: var(--space-3);
+  }
+
+  .modal-header h2 {
+    font-size: var(--font-size-h5);
+  }
+
+  .budget-title {
+    font-size: var(--font-size-h5);
+  }
+
+  .budget-box-value {
+    font-size: var(--font-size-h5);
+  }
+
+  .decision-actions {
+    gap: var(--space-2);
+  }
+
+  .btn-accept-budget,
+  .btn-reject-budget {
+    font-size: var(--button-font-size-sm);
+    padding: var(--button-padding-x-sm) var(--button-padding-x-md);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY - Focus & Keyboard Navigation
+   ======================================== */
+
+/* Ensure all interactive elements are keyboard accessible */
+.modal-close:focus-visible,
+.btn-accept-budget:focus-visible,
+.btn-reject-budget:focus-visible,
+.btn-review-budget:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .modal,
+  .modal-content,
+  .modal-close:hover,
+  .btn-accept-budget:hover,
+  .btn-reject-budget:hover,
+  .btn-review-budget:hover,
+  .breakdown-table tbody tr:hover {
+    animation: none;
+    transition: none;
+    transform: none;
   }
 }

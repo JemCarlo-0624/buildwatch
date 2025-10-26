@@ -513,12 +513,12 @@ foreach ($tasks as $task) {
             <a href="tasks_list.php" class="nav-item active">
                 <i class="fas fa-tasks"></i> Tasks
             </a>
+            <a href="proposals_review.php" class="nav-item">
+            <i class="fas fa-lightbulb"></i> Proposals
+            </a>
             <?php if ($_SESSION['role'] === 'admin'): ?>
             <a href="users_list.php" class="nav-item">
                 <i class="fas fa-users"></i> Users
-            </a>
-            <a href="proposals_review.php" class="nav-item">
-                <i class="fas fa-file-alt"></i> Proposals
             </a>
             <?php endif; ?>
         </div>

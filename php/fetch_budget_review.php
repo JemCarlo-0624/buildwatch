@@ -2010,40 +2010,132 @@ try {
         });
 
         // ========================================
-        // BUDGET REVIEW FUNCTIONS
+        // BUDGET REVIEW FUNCTIONS - Modern HCI Design
         // ========================================
         function openBudgetReview(proposalId) {
             const proposal = state.currentProposals.find(p => p.id === proposalId);
             if (!proposal) return;
             
-            // Load the budget review content
+            const proposedBudget = parseFloat(proposal.budget) || 0;
+            const adminBudget = parseFloat(proposal.admin_budget) || proposedBudget;
+            const difference = adminBudget - proposedBudget;
+            const differencePercent = proposedBudget > 0 ? ((difference / proposedBudget) * 100).toFixed(1) : 0;
+            
+            // Format currency with proper localization
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2
+                }).format(value);
+            };
+            
+            // Determine visual indicators for budget difference
+            const differenceClass = difference >= 0 ? 'positive' : '';
+            const differenceIcon = difference >= 0 ? '↑' : '↓';
+            const differenceText = difference >= 0 ? 'Higher than proposed' : 'Lower than proposed';
+            const differenceAbsolute = Math.abs(difference);
+            
+            // - Clear visual hierarchy with header, comparison, details, and actions
+            // - Progressive disclosure of information
+            // - Clear call-to-action buttons with visual feedback
+            // - Accessibility features (ARIA labels, keyboard navigation)
             const content = `
-                <div class="budget-review-content">
-                    <h3>Review Budget for "${proposal.title}"</h3>
-                    <p>Proposed budget: ${proposal.budget || 'Not specified'}</p>
-                    <p>Submitted by: ${proposal.client_name}</p>
-                    <p>Submitted on: ${formatDate(proposal.submitted_at)}</p>
-                    
-                    <div class="budget-review-actions">
-                        <button class="btn btn-primary" onclick="submitBudgetReview(${proposalId})">
-                            <i class="fas fa-check"></i> Approve Budget
-                        </button>
-                        <button class="btn btn-secondary" onclick="rejectBudgetReview(${proposalId})">
-                            <i class="fas fa-times"></i> Reject Budget
-                        </button>
+                <div class="budget-header">
+                    <h3 class="budget-title">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        ${proposal.title}
+                    </h3>
+                    <p class="budget-description">
+                        Submitted by <strong>${proposal.client_name}</strong> on ${formatDate(proposal.submitted_at)}
+                    </p>
+                </div>
+
+                <div class="budget-comparison" role="region" aria-label="Budget Comparison">
+                    <div class="budget-box" role="article">
+                        <span class="budget-box-label">Your Proposed Budget</span>
+                        <div class="budget-box-value">${formatCurrency(proposedBudget)}</div>
+                        <small style="color: var(--text-tertiary); font-size: var(--font-size-caption);">Original submission</small>
                     </div>
+                    <div class="budget-box" role="article">
+                        <span class="budget-box-label">Admin Evaluation</span>
+                        <div class="budget-box-value">${formatCurrency(adminBudget)}</div>
+                        <small style="color: var(--text-tertiary); font-size: var(--font-size-caption);">Reviewed amount</small>
+                    </div>
+                </div>
+
+                <div class="budget-difference ${differenceClass}" role="status" aria-live="polite">
+                    <strong>${differenceIcon} ${differenceText}</strong>
+                    <span style="margin-left: var(--space-2);">${formatCurrency(differenceAbsolute)} (${differencePercent}%)</span>
+                </div>
+
+                ${proposal.admin_comment ? `
+                    <div class="admin-comment" role="note">
+                        <div class="admin-comment-label">
+                            <i class="fas fa-comment-dots"></i> Admin Notes
+                        </div>
+                        <div class="admin-comment-text">${proposal.admin_comment}</div>
+                    </div>
+                ` : ''}
+
+                <div class="decision-actions" role="group" aria-label="Budget Decision Actions">
+                    <button class="btn-accept-budget" onclick="submitBudgetReview(${proposalId})" 
+                            title="Approve this budget and proceed" 
+                            aria-label="Accept budget for ${proposal.title}">
+                        <i class="fas fa-check-circle"></i> Accept Budget
+                    </button>
+                    <button class="btn-reject-budget" onclick="rejectBudgetReview(${proposalId})" 
+                            title="Reject this budget and request changes" 
+                            aria-label="Reject budget for ${proposal.title}">
+                        <i class="fas fa-times-circle"></i> Reject Budget
+                    </button>
                 </div>
             `;
             
             document.getElementById('budgetReviewContent').innerHTML = content;
-            document.getElementById('budgetReviewModal').style.display = 'block';
+            const modal = document.getElementById('budgetReviewModal');
+            modal.classList.add('active');
+            modal.style.display = 'flex';
+            
+            // Set focus to the modal for keyboard navigation
+            modal.focus();
+            
+            // Close modal on Escape key
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    closeBudgetReview();
+                    document.removeEventListener('keydown', handleEscape);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+            
+            // Close modal when clicking outside (backdrop)
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeBudgetReview();
+                }
+            });
         }
 
         function closeBudgetReview() {
-            document.getElementById('budgetReviewModal').style.display = 'none';
+            const modal = document.getElementById('budgetReviewModal');
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+            
+            const reviewButton = document.querySelector('[onclick*="openBudgetReview"]');
+            if (reviewButton) {
+                reviewButton.focus();
+            }
         }
 
         function submitBudgetReview(proposalId) {
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            button.disabled = true;
+            button.setAttribute('aria-busy', 'true');
+            
             const formData = new FormData();
             formData.append('proposal_id', proposalId);
             formData.append('action', 'approve');
@@ -2056,14 +2148,12 @@ try {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update the proposal status
                     const proposal = state.currentProposals.find(p => p.id === proposalId);
                     if (proposal) {
                         proposal.status = 'approved';
                         proposal.has_budget = true;
                     }
                     
-                    // Update the UI
                     renderProposals(state.currentProposals, {
                         statusChanges: [{
                             id: proposalId,
@@ -2073,22 +2163,56 @@ try {
                         }]
                     });
                     
-                    // Close the modal
                     closeBudgetReview();
                     
-                    // Show success notification
                     showNotification({
+                        type: 'success',
                         title: 'Budget Approved',
-                        message: `"${proposal.title}" budget has been approved!`
+                        message: `"${proposal.title}" budget has been approved successfully!`,
+                        duration: 5000
                     });
                 } else {
-                    alert('Error submitting budget review: ' + data.error);
+                    showNotification({
+                        type: 'error',
+                        title: 'Approval Failed',
+                        message: 'Failed to approve budget: ' + (data.error || 'Unknown error. Please try again.')
+                    });
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    button.setAttribute('aria-busy', 'false');
                 }
             })
-            .catch(error => console.error('Error submitting budget review:', error));
+            .catch(error => {
+                console.error('Error submitting budget review:', error);
+                showNotification({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'An error occurred while processing your request. Please try again.'
+                });
+                button.innerHTML = originalText;
+                button.disabled = false;
+                button.setAttribute('aria-busy', 'false');
+            });
         }
 
         function rejectBudgetReview(proposalId) {
+            const proposal = state.currentProposals.find(p => p.id === proposalId);
+            if (!proposal) return;
+            
+            const confirmReject = confirm(
+                `Are you sure you want to reject the budget for "${proposal.title}"?\n\n` +
+                `This will require the client to resubmit their proposal.`
+            );
+            
+            if (!confirmReject) return;
+            
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            button.disabled = true;
+            button.setAttribute('aria-busy', 'true');
+            
             const formData = new FormData();
             formData.append('proposal_id', proposalId);
             formData.append('action', 'reject');
@@ -2101,13 +2225,11 @@ try {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update the proposal status
                     const proposal = state.currentProposals.find(p => p.id === proposalId);
                     if (proposal) {
                         proposal.status = 'rejected';
                     }
                     
-                    // Update the UI
                     renderProposals(state.currentProposals, {
                         statusChanges: [{
                             id: proposalId,
@@ -2117,19 +2239,36 @@ try {
                         }]
                     });
                     
-                    // Close the modal
                     closeBudgetReview();
                     
-                    // Show success notification
                     showNotification({
+                        type: 'warning',
                         title: 'Budget Rejected',
-                        message: `"${proposal.title}" budget has been rejected. Please resubmit with revised budget details.`
+                        message: `"${proposal.title}" budget has been rejected. The client will be notified.`,
+                        duration: 5000
                     });
                 } else {
-                    alert('Error rejecting budget review: ' + data.error);
+                    showNotification({
+                        type: 'error',
+                        title: 'Rejection Failed',
+                        message: 'Failed to reject budget: ' + (data.error || 'Unknown error. Please try again.')
+                    });
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    button.setAttribute('aria-busy', 'false');
                 }
             })
-            .catch(error => console.error('Error rejecting budget review:', error));
+            .catch(error => {
+                console.error('Error rejecting budget review:', error);
+                showNotification({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'An error occurred while processing your request. Please try again.'
+                });
+                button.innerHTML = originalText;
+                button.disabled = false;
+                button.setAttribute('aria-busy', 'false');
+            });
         }
     </script>
 </body>

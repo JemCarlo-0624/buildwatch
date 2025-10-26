@@ -270,7 +270,7 @@ try {
 
         <div class="nav-section">
             <div class="nav-section-title">Admin Panel</div>
-            <a href="dashboard_admin.php" class="nav-item active" aria-current="page"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="dashboard_admin.php" class="nav-item active" aria-current="page"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             <a href="projects_list.php" class="nav-item"><i class="fas fa-project-diagram"></i> Projects</a>
             <a href="tasks_list.php" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
             <a href="proposals_review.php" class="nav-item"><i class="fas fa-lightbulb"></i> Proposals</a>

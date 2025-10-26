@@ -79,15 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <style>
         /* HCI-focused improvements: better visual hierarchy, accessibility, feedback, and error prevention */
         
-        /* Timeline-based task layout with improved HCI principles */
-        .timeline-container {
-            background: white;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            overflow: hidden;
-            padding: var(--space-2xl);
-        }
-
         /* Filter controls for better task scanning and cognitive load reduction */
         .filter-controls {
             display: flex;
@@ -151,134 +142,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: var(--gray);
         }
 
-        .timeline {
-            position: relative;
-            margin-left: 25px;
-            border-left: 3px solid #e0e0e0;
-            padding-left: 20px;
+        /* New card grid layout replacing timeline */
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--space-lg);
+            margin-top: var(--space-2xl);
         }
 
-        .timeline-item {
-            position: relative;
-            margin-bottom: 30px;
-            padding: var(--space-lg);
-            background: #f8f9fa;
+        .task-card {
+            background: white;
+            border: 1px solid #e0e0e0;
             border-radius: var(--radius-md);
+            padding: var(--space-lg);
             transition: all var(--transition-normal);
-            border: 1px solid transparent;
-        }
-
-        .timeline-item:hover {
-            background: #f0f1f3;
-            transform: translateX(5px);
-            border-color: #ddd;
-        }
-
-        .timeline-item.completed {
-            opacity: 0.85;
-            background: #f0f8f5;
-        }
-
-        .timeline-item.completed:hover {
-            transform: none;
-        }
-
-        /* Enhanced visual urgency for overdue tasks */
-        .timeline-item.overdue {
-            background: #fff5f5;
-            border-left: 4px solid var(--accent);
-        }
-
-        .timeline-item.overdue:hover {
-            background: #ffe8e8;
-        }
-
-        /* Timeline dot indicators */
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -12px;
-            top: 20px;
-            width: 14px;
-            height: 14px;
-            background-color: #ccc;
-            border-radius: 50%;
-            border: 3px solid #fff;
-            transition: 0.3s ease;
-            box-shadow: 0 0 0 2px white;
-        }
-
-        /* Completed task - green dot */
-        .timeline-item.completed::before {
-            background-color: var(--success);
-            box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
-        }
-
-        /* Active/In Progress task - blue dot */
-        .timeline-item.active::before {
-            background-color: var(--primary);
-            box-shadow: 0 0 8px rgba(10, 99, 165, 0.6);
-        }
-
-        /* Pending/Not started task - gray dot */
-        .timeline-item.pending::before {
-            background-color: #adb5bd;
-            box-shadow: 0 0 0 2px white;
-        }
-
-        /* Overdue task - red dot for high visibility */
-        .timeline-item.overdue::before {
-            background-color: var(--accent);
-            box-shadow: 0 0 8px rgba(212, 47, 19, 0.6);
-        }
-
-        .timeline-time {
-            font-size: 0.85rem;
-            color: var(--gray);
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        /* Improved overdue indicator with better visibility */
-        .timeline-overdue-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 10px;
-            background: rgba(212, 47, 19, 0.1);
-            color: var(--accent);
-            border-radius: var(--radius-sm);
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .timeline-completed-at {
-            font-size: 0.8rem;
-            color: var(--success);
-            margin-bottom: 8px;
-            font-weight: 500;
             display: flex;
-            align-items: center;
-            gap: 5px;
+            flex-direction: column;
+            height: 100%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
-        .timeline-completed-at i {
-            color: var(--success);
+        .task-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(10, 99, 165, 0.15);
+            transform: translateY(-2px);
         }
 
-        .timeline-status {
+        .task-card.completed {
+            background: #f0f8f5;
+            opacity: 0.9;
+        }
+
+        .task-card.overdue {
+            border-left: 4px solid var(--accent);
+            background: #fff5f5;
+        }
+
+        .task-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .task-card-title {
             font-size: 1rem;
             font-weight: 600;
             color: var(--dark);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
             word-break: break-word;
+            flex: 1;
         }
 
-        .timeline-status-badge {
+        .task-card-status-badge {
             display: inline-block;
             padding: 3px 8px;
             border-radius: var(--radius-sm);
@@ -286,6 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-weight: 600;
             text-transform: uppercase;
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .status-completed {
@@ -303,41 +220,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #6c757d;
         }
 
-        .timeline-desc {
-            margin-top: 8px;
-            color: var(--gray);
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .timeline-meta {
+        .task-card-meta {
             display: flex;
-            gap: 15px;
-            margin-top: 12px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
             font-size: 0.85rem;
+            color: var(--gray);
         }
 
         .meta-item {
             display: flex;
             align-items: center;
-            gap: 5px;
-            color: var(--gray);
+            gap: 6px;
         }
 
         .meta-item i {
             color: var(--primary);
+            width: 16px;
         }
 
-        .timeline-progress {
-            margin-top: 12px;
+        .task-card-description {
+            color: var(--gray);
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: var(--space-md);
+            flex: 1;
+        }
+
+        .task-card-progress {
+            margin-bottom: var(--space-md);
+        }
+
+        .progress-label {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
 
         .progress-bar-wrapper {
-            flex: 1;
             height: 6px;
             background: #e0e0e0;
             border-radius: 3px;
@@ -350,114 +274,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transition: width 0.3s ease;
         }
 
-        .progress-text {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--dark);
-            min-width: 40px;
-        }
-
-        .timeline-actions {
-            margin-top: 16px;
+        .task-card-alerts {
             display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+        }
+
+        .alert-badge {
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .progress-update-form {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-        }
-
-        .progress-input {
-            height: 8px;
-            -webkit-appearance: none;
-            appearance: none;
-            background: linear-gradient(to right, #e0e0e0 0%, #e0e0e0 100%);
-            border-radius: 4px;
-            outline: none;
-            cursor: pointer;
-            flex: 1;
-            min-width: 100px;
-            transition: background 0.2s;
-        }
-
-        .progress-input::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: var(--primary);
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(10, 99, 165, 0.3);
-        }
-
-        .progress-input::-webkit-slider-thumb:hover {
-            background: #084a7d;
-            box-shadow: 0 4px 8px rgba(10, 99, 165, 0.4);
-            transform: scale(1.1);
-        }
-
-        .progress-input::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: var(--primary);
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(10, 99, 165, 0.3);
-        }
-
-        .progress-input::-moz-range-thumb:hover {
-            background: #084a7d;
-            box-shadow: 0 4px 8px rgba(10, 99, 165, 0.4);
-            transform: scale(1.1);
-        }
-
-        .progress-input:disabled {
-            background: #e0e0e0;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .progress-input:disabled::-webkit-slider-thumb {
-            background: #adb5bd;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        .progress-input:disabled::-moz-range-thumb {
-            background: #adb5bd;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        .progress-value-display {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--primary);
-            min-width: 45px;
-            text-align: center;
-            background: rgba(10, 99, 165, 0.08);
-            padding: 6px 10px;
+            gap: 5px;
+            padding: 4px 10px;
             border-radius: var(--radius-sm);
-            border: 1px solid rgba(10, 99, 165, 0.15);
-            white-space: nowrap;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
 
-        /* Compact button styling for single-line layout */
-        .btn-update {
+        .alert-overdue {
+            background: rgba(212, 47, 19, 0.1);
+            color: var(--accent);
+        }
+
+        .alert-completed {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+
+        .task-card-actions {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: auto;
+        }
+
+        .btn-mark-done {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
             padding: 8px 16px;
-            background: var(--primary);
+            background: var(--success);
             color: white;
             border: none;
             border-radius: var(--radius-md);
@@ -465,54 +321,133 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-weight: 600;
             cursor: pointer;
             transition: all var(--transition-normal);
-            min-width: 100px;
             height: 36px;
-            box-shadow: 0 2px 6px rgba(10, 99, 165, 0.25);
+            box-shadow: 0 2px 6px rgba(46, 204, 113, 0.25);
             white-space: nowrap;
-            flex-shrink: 0;
+            flex: 1;
         }
 
-        .btn-update:hover:not(:disabled) {
-            background: #084a7d;
-            box-shadow: 0 4px 12px rgba(10, 99, 165, 0.35);
+        .btn-mark-done:hover {
+            background: #27ae60;
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.35);
             transform: translateY(-1px);
         }
 
-        .btn-update:active:not(:disabled) {
+        .btn-mark-done:active {
             transform: translateY(0);
-            box-shadow: 0 2px 6px rgba(10, 99, 165, 0.25);
+            box-shadow: 0 2px 6px rgba(46, 204, 113, 0.25);
         }
 
-        .btn-update:disabled {
-            background: #adb5bd;
-            cursor: not-allowed;
-            opacity: 0.65;
-            box-shadow: none;
-        }
-
-        .btn-update:disabled:hover {
-            background: #adb5bd;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .btn-update:focus {
-            outline: 2px solid var(--primary);
+        .btn-mark-done:focus {
+            outline: 2px solid var(--success);
             outline-offset: 2px;
         }
 
-        .btn-update i {
+        .btn-mark-done i {
             font-size: 14px;
         }
 
-        /* Completion confirmation modal for error prevention */
+        .task-completed-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid rgba(46, 204, 113, 0.2);
+            flex: 1;
+            text-align: center;
+        }
+
+        .task-completed-badge i {
+            font-size: 14px;
+        }
+
+        /* Remove old timeline styles */
+        .timeline {
+            display: none;
+        }
+
+        .timeline-item {
+            display: none;
+        }
+
+        .timeline-item::before {
+            display: none;
+        }
+
+        .timeline-time {
+            display: none;
+        }
+
+        .timeline-overdue-badge {
+            display: none;
+        }
+
+        .timeline-completed-at {
+            display: none;
+        }
+
+        .timeline-status {
+            display: none;
+        }
+
+        .timeline-status-badge {
+            display: none;
+        }
+
+        .timeline-desc {
+            display: none;
+        }
+
+        .timeline-meta {
+            display: none;
+        }
+
+        .timeline-progress {
+            display: none;
+        }
+
+        .timeline-actions {
+            display: none;
+        }
+
+        .progress-update-form {
+            display: none;
+        }
+
+        .progress-input {
+            display: none;
+        }
+
+        .progress-input::-webkit-slider-thumb {
+            display: none;
+        }
+
+        .progress-input::-moz-range-thumb {
+            display: none;
+        }
+
+        .progress-value-display {
+            display: none;
+        }
+
+        .btn-update {
+            display: none;
+        }
+
+        /* Added centered modal styling */
         .completion-modal {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
             align-items: center;
@@ -528,32 +463,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: var(--radius-lg);
             padding: var(--space-2xl);
             max-width: 400px;
-            box-shadow: var(--shadow-xl);
-            animation: slideUp 0.3s ease;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s ease-out;
         }
 
         @keyframes slideUp {
             from {
-                transform: translateY(20px);
                 opacity: 0;
+                transform: translateY(20px);
             }
             to {
-                transform: translateY(0);
                 opacity: 1;
+                transform: translateY(0);
             }
         }
 
         .modal-title {
-            font-size: 18px;
+            font-size: 1.25rem;
             font-weight: 600;
             color: var(--dark);
             margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
         }
 
         .modal-description {
             color: var(--gray);
-            margin-bottom: var(--space-lg);
+            font-size: 0.95rem;
             line-height: 1.5;
+            margin-bottom: var(--space-lg);
         }
 
         .modal-actions {
@@ -563,12 +502,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .btn-modal {
-            padding: 8px 16px;
+            padding: 10px 20px;
             border: none;
-            border-radius: var(--radius-sm);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: 500;
             transition: all var(--transition-normal);
+            min-width: 120px;
         }
 
         .btn-modal-cancel {
@@ -583,10 +524,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-modal-confirm {
             background: var(--success);
             color: white;
+            box-shadow: 0 2px 6px rgba(46, 204, 113, 0.25);
         }
 
         .btn-modal-confirm:hover {
             background: #27ae60;
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.35);
         }
 
         .empty-state {
@@ -611,29 +554,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 padding: var(--space-lg);
             }
 
-            .timeline {
-                margin-left: 15px;
-                padding-left: 15px;
-            }
-
-            .timeline-item::before {
-                left: -8px;
-            }
-
-            /* Stack actions vertically on mobile */
-            .timeline-actions {
+            /* Responsive card grid for mobile */
+            .tasks-grid {
                 grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .progress-update-form {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .btn-update {
-                width: 100%;
-                min-width: unset;
+                gap: var(--space-md);
             }
 
             .filter-controls {
@@ -648,12 +572,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .filter-btn {
                 width: 100%;
             }
+
+            .modal-content {
+                width: 95%;
+                padding: var(--space-lg);
+            }
         }
 
         /* Keyboard focus indicators for accessibility */
         .filter-btn:focus,
-        .progress-input:focus,
-        .btn-update:focus {
+        .btn-mark-done:focus {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
         }
@@ -741,28 +669,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
 
-        <!-- Timeline-based task display -->
-        <div class="timeline-container">
-            <!-- Filter controls for better task scanning and cognitive load reduction -->
-            <div class="filter-controls">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search tasks..." aria-label="Search tasks">
-                </div>
-                <button class="filter-btn active" data-filter="all" aria-pressed="true">All Tasks</button>
-                <button class="filter-btn" data-filter="pending" aria-pressed="false">Pending</button>
-                <button class="filter-btn" data-filter="active" aria-pressed="false">In Progress</button>
-                <button class="filter-btn" data-filter="completed" aria-pressed="false">Completed</button>
-                <?php if ($overdueTasks > 0): ?>
-                <button class="filter-btn" data-filter="overdue" aria-pressed="false">Overdue</button>
-                <?php endif; ?>
-            </div>
-
+        <!-- Card grid layout -->
+        <div class="tasks-grid" id="tasksTimeline">
             <?php if (!empty($tasks)): ?>
-            <div class="timeline" id="tasksTimeline">
                 <?php foreach ($tasks as $task): ?>
                     <?php 
-                    // Determine task status for timeline
+                    // Determine task status for card
                     $progress = (int)$task['progress'];
                     $isCompleted = $progress == 100;
                     $isActive = $progress > 0 && $progress < 100;
@@ -801,75 +713,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $progressColor = $progress == 100 ? 'var(--success)' : ($progress > 50 ? 'var(--primary)' : 'var(--warning)');
                     ?>
-                    <div class="timeline-item <?php echo $statusClass; ?>" data-search="<?php echo htmlspecialchars(strtolower($task['title'] . ' ' . $task['project_name'])); ?>" data-filter="<?php echo $filterClass; ?>">
-                        <div class="timeline-time"><?php echo $timeDisplay; ?></div>
-                        
-                        <!-- Enhanced overdue indicator for better visibility -->
-                        <?php if ($isOverdue): ?>
-                        <div class="timeline-overdue-badge">
-                            <i class="fas fa-clock"></i>
-                            Overdue
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($isCompleted && !empty($task['completed_at'])): ?>
-                        <div class="timeline-completed-at">
-                            <i class="fas fa-check-circle"></i>
-                            Completed on <?php echo date('M j, Y \a\t g:i A', strtotime($task['completed_at'])); ?>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <div class="timeline-status">
-                            <?php echo htmlspecialchars($task['title']); ?>
-                            <span class="timeline-status-badge <?php echo $statusBadgeClass; ?>">
+                    <div class="task-card <?php echo $statusClass; ?>" data-search="<?php echo htmlspecialchars(strtolower($task['title'] . ' ' . $task['project_name'])); ?>" data-filter="<?php echo $filterClass; ?>">
+                        <div class="task-card-header">
+                            <div class="task-card-title"><?php echo htmlspecialchars($task['title']); ?></div>
+                            <span class="task-card-status-badge <?php echo $statusBadgeClass; ?>">
                                 <?php echo $statusText; ?>
                             </span>
                         </div>
                         
-                        <?php if (!empty($task['description'])): ?>
-                        <div class="timeline-desc">
-                            <?php echo htmlspecialchars(substr($task['description'], 0, 150)); ?><?php echo strlen($task['description']) > 150 ? '...' : ''; ?>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <div class="timeline-meta">
+                        <div class="task-card-meta">
                             <div class="meta-item">
                                 <i class="fas fa-folder"></i>
                                 <span><?php echo htmlspecialchars($task['project_name']); ?></span>
                             </div>
                             <div class="meta-item">
-                                <i class="fas fa-chart-pie"></i>
-                                <span><?php echo $progress; ?>% Complete</span>
+                                <i class="fas fa-calendar"></i>
+                                <span><?php echo $timeDisplay; ?></span>
                             </div>
                         </div>
                         
-                        <div class="timeline-actions">
-                            <form method="post" class="progress-update-form">
+                        <?php if (!empty($task['description'])): ?>
+                        <div class="task-card-description">
+                            <?php echo htmlspecialchars(substr($task['description'], 0, 100)); ?><?php echo strlen($task['description']) > 100 ? '...' : ''; ?>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <div class="task-card-alerts">
+                            <?php if ($isOverdue): ?>
+                            <div class="alert-badge alert-overdue">
+                                <i class="fas fa-clock"></i>
+                                Overdue
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($isCompleted && !empty($task['completed_at'])): ?>
+                            <div class="alert-badge alert-completed">
+                                <i class="fas fa-check-circle"></i>
+                                Completed on <?php echo date('M j, Y', strtotime($task['completed_at'])); ?>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="task-card-progress">
+                            <div class="progress-label">
+                                <span>Progress</span>
+                                <span><?php echo $progress; ?>%</span>
+                            </div>
+                            <div class="progress-bar-wrapper">
+                                <div class="progress-bar-fill" style="width: <?php echo $progress; ?>%; background: <?php echo $progressColor; ?>;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="task-card-actions">
+                            <?php if (!$isCompleted): ?>
+                            <form method="post" class="mark-done-form" style="width: 100%;">
                                 <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
-                                <input 
-                                    type="range" 
-                                    name="progress" 
-                                    value="<?php echo $progress; ?>" 
-                                    min="0" 
-                                    max="100" 
-                                    step="5"
-                                    class="progress-input" 
-                                    data-task-id="<?php echo $task['id']; ?>"
-                                    <?php echo $isCompleted ? 'disabled' : ''; ?>
-                                    aria-label="Task progress slider"
-                                    required
-                                >
-                                <span class="progress-value-display" id="progress-display-<?php echo $task['id']; ?>">
-                                    <?php echo $progress; ?>%
-                                </span>
-                                <button type="submit" class="btn-update" <?php echo $isCompleted ? 'disabled' : ''; ?> aria-label="Update task progress">
-                                    <i class="fas fa-save"></i> Update
+                                <input type="hidden" name="progress" value="100">
+                                <button type="submit" class="btn-mark-done" aria-label="Mark task as done">
+                                    <i class="fas fa-check"></i> Mark as Done
                                 </button>
                             </form>
+                            <?php else: ?>
+                            <div class="task-completed-badge">
+                                <i class="fas fa-check-circle"></i> Completed
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
-            </div>
             <?php else: ?>
             <div class="empty-state">
                 <i class="fas fa-tasks"></i>
@@ -903,34 +814,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         
-        // Update progress display when slider moves
-        document.querySelectorAll('.progress-input').forEach(slider => {
-            slider.addEventListener('input', function() {
-                const taskId = this.getAttribute('data-task-id');
-                const display = document.getElementById('progress-display-' + taskId);
-                if (display) {
-                    display.textContent = this.value + '%';
-                }
-            });
-        });
-
         let pendingForm = null;
         const completionModal = document.getElementById('completionModal');
         const cancelBtn = document.getElementById('cancelBtn');
         const confirmBtn = document.getElementById('confirmBtn');
 
-        document.querySelectorAll('.progress-update-form').forEach(form => {
+        document.querySelectorAll('.mark-done-form').forEach(form => {
             form.addEventListener('submit', function(e) {
-                const progressInput = this.querySelector('.progress-input');
-                const newProgress = parseInt(progressInput.value);
-                const currentProgress = parseInt(progressInput.getAttribute('value'));
-
-                // Show confirmation only when marking as complete (100%)
-                if (newProgress === 100 && currentProgress !== 100) {
-                    e.preventDefault();
-                    pendingForm = this;
-                    completionModal.classList.add('active');
-                }
+                e.preventDefault();
+                pendingForm = this;
+                completionModal.classList.add('active');
             });
         });
 
@@ -955,7 +848,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
 
         const filterBtns = document.querySelectorAll('.filter-btn');
-        const timelineItems = document.querySelectorAll('.timeline-item');
+        const timelineItems = document.querySelectorAll('.task-card');
 
         filterBtns.forEach(btn => {
             btn.addEventListener('click', function() {
@@ -982,20 +875,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Search functionality
         const searchInput = document.getElementById('searchInput');
-        const timeline = document.getElementById('tasksTimeline');
+        const tasksGrid = document.getElementById('tasksTimeline');
 
         function filterTasks() {
             const searchTerm = searchInput.value.toLowerCase();
             const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
 
-            timelineItems.forEach(item => {
-                const searchData = item.getAttribute('data-search');
-                const itemFilter = item.getAttribute('data-filter');
+            tasksGrid.querySelectorAll('.task-card').forEach(card => {
+                const searchData = card.getAttribute('data-search');
+                const itemFilter = card.getAttribute('data-filter');
                 
                 const matchesSearch = !searchTerm || searchData.includes(searchTerm);
                 const matchesFilter = activeFilter === 'all' || itemFilter === activeFilter;
                 
-                item.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
+                card.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
             });
         }
 
@@ -1011,4 +904,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
-        

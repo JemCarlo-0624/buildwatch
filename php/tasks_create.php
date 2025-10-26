@@ -63,8 +63,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch projects
-$projects = $pdo->query("SELECT * FROM projects ORDER BY created_at DESC")->fetchAll();
+$user_id = $_SESSION['user_id'];
+$user_role = $_SESSION['role'];
+
+if ($user_role === 'admin') {
+    // Admin sees all projects
+    $projects = $pdo->query("SELECT * FROM projects ORDER BY created_at DESC")->fetchAll();
+} else {
+    // PM sees only projects assigned to them
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT p.* FROM projects p
+        WHERE p.id IN (SELECT project_id FROM project_assignments WHERE user_id = ?)
+        ORDER BY p.created_at DESC
+    ");
+    $stmt->execute([$user_id]);
+    $projects = $stmt->fetchAll();
+}
 
 // Fetch workers (will be loaded dynamically via JavaScript)
 ?>
