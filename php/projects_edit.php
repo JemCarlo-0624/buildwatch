@@ -28,13 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare("
         UPDATE projects 
         SET name=?, description=?, status=?, priority=?, 
-            timeline=?, start_date=?, end_date=?, category=?, 
+            timeline=?, start_date=?, end_date=?, 
             completion_percentage=?, last_activity_at=NOW()
         WHERE id=?
     ");
     $stmt->execute([
         $name, $desc, $status, $priority, $timeline, 
-        $start_date, $end_date, $category, 
+        $start_date, $end_date, 
         $completion_percentage, $id
     ]);
 
@@ -203,71 +203,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="start_date" class="form-label">
-                            <i class="fas fa-calendar-alt text-primary"></i> Start Date
-                        </label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" 
-                               value="<?= htmlspecialchars($project['start_date'] ?? '') ?>">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="end_date" class="form-label">
-                            <i class="fas fa-calendar-check text-primary"></i> End Date
-                        </label>
-                        <input type="date" class="form-control" id="end_date" name="end_date" 
-                               value="<?= htmlspecialchars($project['end_date'] ?? '') ?>">
-                    </div>
-                </div>
+    <div class="col-md-6">
+        <label for="start_date" class="form-label">
+            <i class="fas fa-calendar-alt text-primary"></i> Start Date
+        </label>
+        <input type="date" class="form-control" id="start_date" name="start_date" 
+               value="<?= htmlspecialchars($project['start_date'] ?? '') ?>">
+    </div>
+    <div class="col-md-6">
+        <label for="end_date" class="form-label">
+            <i class="fas fa-calendar-check text-primary"></i> End Date
+        </label>
+        <input type="date" class="form-control" id="end_date" name="end_date" 
+               value="<?= htmlspecialchars($project['end_date'] ?? '') ?>">
+    </div>
+</div>
 
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="timeline" class="form-label">
-                            <i class="fas fa-hourglass-half text-primary"></i> Timeline Description
-                        </label>
-                        <input type="text" class="form-control" id="timeline" name="timeline" 
-                               value="<?= htmlspecialchars($project['timeline'] ?? '') ?>" 
-                               placeholder="e.g. 6 months, Q1 2024">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="category" class="form-label">
-                            <i class="fas fa-tag text-primary"></i> Category
-                        </label>
-                        <select class="form-select" id="category" name="category">
-                            <option value="">Select category</option>
-                            <option value="residential" <?= ($project['category'] ?? '') == 'residential' ? 'selected' : '' ?>>Residential</option>
-                            <option value="commercial" <?= ($project['category'] ?? '') == 'commercial' ? 'selected' : '' ?>>Commercial</option>
-                            <option value="infrastructure" <?= ($project['category'] ?? '') == 'infrastructure' ? 'selected' : '' ?>>Infrastructure</option>
-                            <option value="industrial" <?= ($project['category'] ?? '') == 'industrial' ? 'selected' : '' ?>>Industrial</option>
-                            <option value="maintenance" <?= ($project['category'] ?? '') == 'maintenance' ? 'selected' : '' ?>>Maintenance</option>
-                        </select>
-                    </div>
-                </div>
+<div class="row mb-4">
+    <div class="col-md-6">
+        <label for="timeline" class="form-label">
+            <i class="fas fa-hourglass-half text-primary"></i> Timeline Description
+        </label>
+        <input type="text" class="form-control" id="timeline" name="timeline" 
+               value="<?= htmlspecialchars($project['timeline'] ?? '') ?>" 
+               placeholder="e.g. 6 months, Q1 2024">
+    </div>
+    <div class="col-md-6">
+        <label for="status" class="form-label">
+            <i class="fas fa-info-circle text-primary"></i> Project Status
+        </label>
+        <select class="form-select" id="status" name="status">
+            <option value="planning" <?= $project['status']=='planning'?'selected':'' ?>>Planning</option>
+            <option value="ongoing" <?= $project['status']=='ongoing'?'selected':'' ?>>Ongoing</option>
+            <option value="completed" <?= $project['status']=='completed'?'selected':'' ?>>Completed</option>
+            <option value="on-hold" <?= $project['status']=='on-hold'?'selected':'' ?>>On Hold</option>
+        </select>
+    </div>
+</div>
 
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="priority" class="form-label">
-                            <i class="fas fa-exclamation-circle text-primary"></i> Priority
-                        </label>
-                        <select class="form-select" id="priority" name="priority">
-                            <option value="low" <?= ($project['priority'] ?? 'medium') == 'low' ? 'selected' : '' ?>>Low</option>
-                            <option value="medium" <?= ($project['priority'] ?? 'medium') == 'medium' ? 'selected' : '' ?>>Medium</option>
-                            <option value="high" <?= ($project['priority'] ?? 'medium') == 'high' ? 'selected' : '' ?>>High</option>
-                            <option value="urgent" <?= ($project['priority'] ?? 'medium') == 'urgent' ? 'selected' : '' ?>>Urgent</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="status" class="form-label">
-                            <i class="fas fa-info-circle text-primary"></i> Project Status
-                        </label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="planning" <?= $project['status']=='planning'?'selected':'' ?>>Planning</option>
-                            <option value="ongoing" <?= $project['status']=='ongoing'?'selected':'' ?>>Ongoing</option>
-                            <option value="completed" <?= $project['status']=='completed'?'selected':'' ?>>Completed</option>
-                            <option value="on-hold" <?= $project['status']=='on-hold'?'selected':'' ?>>On Hold</option>
-                        </select>
-                    </div>
-                </div>
-
+<div class="row mb-4">
+    <div class="col-md-6">
+        <label for="priority" class="form-label">
+            <i class="fas fa-exclamation-circle text-primary"></i> Priority
+        </label>
+        <select class="form-select" id="priority" name="priority">
+            <option value="low" <?= ($project['priority'] ?? 'medium') == 'low' ? 'selected' : '' ?>>Low</option>
+            <option value="medium" <?= ($project['priority'] ?? 'medium') == 'medium' ? 'selected' : '' ?>>Medium</option>
+            <option value="high" <?= ($project['priority'] ?? 'medium') == 'high' ? 'selected' : '' ?>>High</option>
+            <option value="urgent" <?= ($project['priority'] ?? 'medium') == 'urgent' ? 'selected' : '' ?>>Urgent</option>
+        </select>
+    </div>
+    </div>
                 <div class="mb-4 p-3 bg-light rounded">
                     <label class="form-label">
                         <i class="fas fa-chart-line text-primary"></i> Project Completion
