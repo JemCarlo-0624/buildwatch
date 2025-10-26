@@ -32,15 +32,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_POST['user_id'];
     $assignment_type = $_POST['assignment_type'] ?? 'worker';
 
+    // Validate user existence
+    $userCheck = $pdo->prepare("SELECT id, role FROM users WHERE id = ?");
+    $userCheck->execute([$user_id]);
+    $user = $userCheck->fetch();
+    if (!$user) {
+        die("❌ Invalid user selected.");
+    }
+
+    // Check if user already assigned to an active project
     if ($assignment_type === 'pm') {
-        $checkStmt = $pdo->prepare("SELECT pa.project_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id JOIN users u ON pa.user_id = u.id WHERE pa.user_id = ? AND p.status != 'completed' AND u.role = 'pm'");
+        $checkStmt = $pdo->prepare("
+            SELECT pa.project_id 
+            FROM project_assignments pa
+            JOIN projects p ON pa.project_id = p.id
+            WHERE pa.user_id = ? AND p.status != 'completed'
+        ");
         $checkStmt->execute([$user_id]);
         if ($checkStmt->fetch()) {
             echo "<script>alert('This project manager is already assigned to an active project.');window.location.href=window.location.href;</script>";
             exit;
         }
+
+        // ✅ Update projects table to set this PM as the project manager
+        $updateProject = $pdo->prepare("UPDATE projects SET project_manager_id = ? WHERE id = ?");
+        $updateProject->execute([$user_id, $project_id]);
     } else {
-        $checkStmt = $pdo->prepare("SELECT pa.project_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id WHERE pa.user_id = ? AND p.status != 'completed'");
+        $checkStmt = $pdo->prepare("
+            SELECT pa.project_id 
+            FROM project_assignments pa
+            JOIN projects p ON pa.project_id = p.id
+            WHERE pa.user_id = ? AND p.status != 'completed'
+        ");
         $checkStmt->execute([$user_id]);
         if ($checkStmt->fetch()) {
             echo "<script>alert('This user is already assigned to an active project.');window.location.href=window.location.href;</script>";
@@ -48,11 +71,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $stmt = $pdo->prepare("INSERT INTO project_assignments (project_id, user_id) VALUES (?, ?)");
-    $stmt->execute([$project_id, $user_id]);
+    // ✅ Insert assignment (if not already assigned)
+    $existsStmt = $pdo->prepare("SELECT COUNT(*) FROM project_assignments WHERE project_id = ? AND user_id = ?");
+    $existsStmt->execute([$project_id, $user_id]);
+    if ($existsStmt->fetchColumn() == 0) {
+        $stmt = $pdo->prepare("INSERT INTO project_assignments (project_id, user_id) VALUES (?, ?)");
+        $stmt->execute([$project_id, $user_id]);
+    }
+
     header("Location: projects_assign.php?id=" . urlencode($project_id));
     exit;
 }
+
 
 $pms = $pdo->query("SELECT * FROM users u WHERE u.role = 'pm' AND u.id NOT IN (SELECT pa.user_id FROM project_assignments pa JOIN projects p ON pa.project_id = p.id WHERE p.status != 'completed')")->fetchAll();
 

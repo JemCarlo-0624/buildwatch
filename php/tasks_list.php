@@ -5,38 +5,72 @@ require_once("../config/db.php");
 
 $project_id = isset($_GET['project_id']) ? (int)$_GET['project_id'] : null;
 $project_name = null;
+$user_id = $_SESSION['user_id'];
+$user_role = $_SESSION['role'];
 
-// Fetch tasks - filter by project_id if provided
-if ($project_id) {
-    $stmt = $pdo->prepare("
-        SELECT t.*, p.name AS project_name, u.name AS worker_name
-        FROM tasks t
-        JOIN projects p ON t.project_id = p.id
-        JOIN users u ON t.assigned_to = u.id
-        WHERE t.project_id = ?
-        ORDER BY t.created_at DESC
-    ");
-    $stmt->execute([$project_id]);
-    
-    // Get project name for display
-    $project_stmt = $pdo->prepare("SELECT name FROM projects WHERE id = ?");
-    $project_stmt->execute([$project_id]);
-    $project = $project_stmt->fetch();
-    $project_name = $project ? $project['name'] : null;
+// Fetch tasks - with role-based visibility
+// Fetch tasks - with role-based visibility
+if ($user_role === 'admin') {
+    // ✅ Admin can view all tasks
+    if ($project_id) {
+        $stmt = $pdo->prepare("
+            SELECT t.*, p.name AS project_name, u.name AS worker_name
+            FROM tasks t
+            JOIN projects p ON t.project_id = p.id
+            JOIN users u ON t.assigned_to = u.id
+            WHERE t.project_id = ?
+            ORDER BY t.created_at DESC
+        ");
+        $stmt->execute([$project_id]);
+
+        $project_stmt = $pdo->prepare("SELECT name FROM projects WHERE id = ?");
+        $project_stmt->execute([$project_id]);
+        $project = $project_stmt->fetch();
+        $project_name = $project ? $project['name'] : null;
+    } else {
+        $stmt = $pdo->query("
+            SELECT t.*, p.name AS project_name, u.name AS worker_name
+            FROM tasks t
+            JOIN projects p ON t.project_id = p.id
+            JOIN users u ON t.assigned_to = u.id
+            ORDER BY p.name, t.created_at DESC
+        ");
+        $stmt->execute();
+    }
 } else {
-    // Fetch all tasks if no project_id specified
-    $stmt = $pdo->query("
-        SELECT t.*, p.name AS project_name, u.name AS worker_name
-        FROM tasks t
-        JOIN projects p ON t.project_id = p.id
-        JOIN users u ON t.assigned_to = u.id
-        ORDER BY p.name, t.created_at DESC
-    ");
-    $stmt->execute();
+    // ✅ PM can only view tasks from their own projects
+    if ($project_id) {
+        $stmt = $pdo->prepare("
+            SELECT t.*, p.name AS project_name, u.name AS worker_name
+            FROM tasks t
+            JOIN projects p ON t.project_id = p.id
+            JOIN users u ON t.assigned_to = u.id
+            WHERE t.project_id = ? AND p.project_manager_id = ?
+            ORDER BY t.created_at DESC
+        ");
+        $stmt->execute([$project_id, $user_id]);
+
+        $project_stmt = $pdo->prepare("SELECT name FROM projects WHERE id = ? AND project_manager_id = ?");
+        $project_stmt->execute([$project_id, $user_id]);
+        $project = $project_stmt->fetch();
+        $project_name = $project ? $project['name'] : null;
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT t.*, p.name AS project_name, u.name AS worker_name
+            FROM tasks t
+            JOIN projects p ON t.project_id = p.id
+            JOIN users u ON t.assigned_to = u.id
+            WHERE p.project_manager_id = ?
+            ORDER BY p.name, t.created_at DESC
+        ");
+        $stmt->execute([$user_id]);
+    }
 }
+
 
 $tasks = $stmt->fetchAll();
 
+// Organize tasks by project
 $tasksByProject = [];
 foreach ($tasks as $task) {
     $projId = $task['project_id'];
@@ -52,11 +86,10 @@ foreach ($tasks as $task) {
 
 // Calculate statistics
 $totalTasks = count($tasks);
-$completedTasks = count(array_filter($tasks, function($task) { return $task['progress'] == 100; }));
-$inProgressTasks = count(array_filter($tasks, function($task) { return $task['progress'] > 0 && $task['progress'] < 100; }));
-$notStartedTasks = count(array_filter($tasks, function($task) { return $task['progress'] == 0; }));
+$completedTasks = count(array_filter($tasks, fn($task) => $task['progress'] == 100));
+$inProgressTasks = count(array_filter($tasks, fn($task) => $task['progress'] > 0 && $task['progress'] < 100));
+$notStartedTasks = count(array_filter($tasks, fn($task) => $task['progress'] == 0));
 
-// Calculate overdue tasks
 $overdueTasks = 0;
 foreach ($tasks as $task) {
     if (!empty($task['due_date']) && strtotime($task['due_date']) < time() && $task['progress'] < 100) {
@@ -64,6 +97,8 @@ foreach ($tasks as $task) {
     }
 }
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
