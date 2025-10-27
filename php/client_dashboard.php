@@ -89,6 +89,7 @@ try {
                 <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" 
                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-bell"></i>
+                    <span class="badge bg-danger notification-badge" id="notificationBadge" style="display: none;">0</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end" id="notificationsMenu">
                     <span class="dropdown-item text-muted">Loading notifications...</span>
@@ -456,6 +457,121 @@ $status = htmlspecialchars($project['status'] ?? 'planning');
     <script>
         let currentBudgetId = null;
         let currentProjectId = null; // Added to track current project for report generation
+        
+        // Notification handling
+        function fetchNotifications() {
+            fetch('fetch_client_notifications.php', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateNotificationDropdown(data.notifications, data.unread_count);
+                } else {
+                    document.getElementById('notificationsMenu').innerHTML = 
+                        '<span class="dropdown-item text-muted">No notifications</span>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching notifications:', error);
+                document.getElementById('notificationsMenu').innerHTML = 
+                    '<span class="dropdown-item text-muted">Error loading notifications</span>';
+            });
+        }
+        
+        function updateNotificationDropdown(notifications, unreadCount) {
+            const menu = document.getElementById('notificationsMenu');
+            const badge = document.getElementById('notificationBadge');
+            
+            // Update badge
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+            
+            // Update dropdown content
+            if (notifications.length === 0) {
+                menu.innerHTML = '<span class="dropdown-item text-muted">No notifications</span>';
+                return;
+            }
+            
+            let html = '';
+            notifications.forEach(notif => {
+                const time = formatNotificationTime(notif.created_at);
+                const unreadClass = notif.is_read == 0 ? 'notification-unread' : '';
+                html += `
+                    <div class="dropdown-item ${unreadClass}" onclick="markNotificationRead(${notif.id}, '${notif.link}')">
+                        <div class="notification-content">
+                            <div class="notification-message">${escapeHtml(notif.message)}</div>
+                            <div class="notification-time">${time}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            menu.innerHTML = html;
+        }
+        
+        function formatNotificationTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+        
+        function markNotificationRead(notificationId, link) {
+            if (!notificationId) {
+                if (link) window.location.href = link;
+                return;
+            }
+            
+            fetch('mark_notification_read.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `notification_id=${notificationId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Refresh notifications after marking as read
+                    fetchNotifications();
+                }
+                // Navigate to the link if provided
+                if (link) {
+                    window.location.href = link;
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+                // Still navigate to the link even if marking failed
+                if (link) {
+                    window.location.href = link;
+                }
+            });
+        }
+        
+        // Fetch notifications on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchNotifications();
+            
+            // Optional: Poll for new notifications every 30 seconds
+            setInterval(fetchNotifications, 30000);
+        });
 
         function showBudgetReview(budgetId, event) {
             if (event) {

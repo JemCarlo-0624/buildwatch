@@ -19,7 +19,7 @@ try {
             n.is_read,
             n.created_at
         FROM notifications n
-        WHERE n.user_id = ?
+        WHERE n.client_id = ?
         ORDER BY n.is_read ASC, n.created_at DESC
         LIMIT 10
     ");
@@ -31,7 +31,7 @@ try {
     $countStmt = $pdo->prepare("
         SELECT COUNT(*) 
         FROM notifications 
-        WHERE user_id = ? AND is_read = 0
+        WHERE client_id = ? AND is_read = 0
     ");
     $countStmt->execute([$_SESSION['client_id']]);
     $unreadCount = $countStmt->fetchColumn();
