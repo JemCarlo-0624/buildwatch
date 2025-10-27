@@ -85,16 +85,50 @@ try {
             </div>
         </div>
         <div class="header-right">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" 
-                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge bg-danger notification-badge" id="notificationBadge" style="display: none;">0</span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end" id="notificationsMenu">
-                    <span class="dropdown-item text-muted">Loading notifications...</span>
-                </div>
-            </li>
+<li class="nav-item dropdown">
+  <a 
+    class="nav-link dropdown-toggle position-relative" 
+    href="#" 
+    id="notificationsDropdown" 
+    role="button" 
+    data-bs-toggle="dropdown" 
+    aria-expanded="false"
+  >
+    <i 
+      class="fas fa-bell" 
+      id="notificationBell"
+      style="color: #ff4d4d; filter: drop-shadow(0 0 4px rgba(255, 77, 77, 0.6)); transition: transform 0.2s ease, filter 0.2s ease;"
+    ></i>
+    <span 
+      class="badge bg-danger notification-badge position-absolute top-0 start-100 translate-middle" 
+      id="notificationBadge" 
+      style="display: none; font-size: 0.7rem; min-width: 18px;"
+    >
+      0
+    </span>
+  </a>
+
+  <div class="dropdown-menu dropdown-menu-end" id="notificationsMenu">
+    <span class="dropdown-item text-muted">Loading notifications...</span>
+  </div>
+</li>
+
+<script>
+  // Subtle pop animation for the bell
+  const bell = document.getElementById('notificationBell');
+  const dropdown = document.getElementById('notificationsDropdown');
+
+  dropdown.addEventListener('mouseenter', () => {
+    bell.style.transform = 'scale(1.2)';
+    bell.style.filter = 'drop-shadow(0 0 6px rgba(255, 77, 77, 0.9))';
+  });
+
+  dropdown.addEventListener('mouseleave', () => {
+    bell.style.transform = 'scale(1)';
+    bell.style.filter = 'drop-shadow(0 0 4px rgba(255, 77, 77, 0.6))';
+  });
+</script>
+
             <div class="user-info">
                 <div class="user-avatar"><?php echo strtoupper(substr($client_name, 0, 1)); ?></div>
                 <div class="user-details">
@@ -504,7 +538,7 @@ $status = htmlspecialchars($project['status'] ?? 'planning');
                 const time = formatNotificationTime(notif.created_at);
                 const unreadClass = notif.is_read == 0 ? 'notification-unread' : '';
                 html += `
-                    <div class="dropdown-item ${unreadClass}" onclick="markNotificationRead(${notif.id}, '${notif.link}')">
+                    <div class="dropdown-item ${unreadClass}" style=" cursor: default; pointer-events: none;">
                         <div class="notification-content">
                             <div class="notification-message">${escapeHtml(notif.message)}</div>
                             <div class="notification-time">${time}</div>

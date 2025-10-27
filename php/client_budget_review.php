@@ -1,6 +1,4 @@
 <?php
-require_once("auth_check.php");
-requireRole(["client"]);
 require_once("../config/db.php");
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -13,15 +11,16 @@ if (!isset($_SESSION['client_id'])) {
 $stmt = $pdo->prepare("
     SELECT 
         pb.*,
-        pp.project_name,
-        pp.budget as proposed_budget,
-        u.name as admin_name
+        pp.title AS project_name,
+        pp.budget AS proposed_budget,
+        u.name AS admin_name
     FROM project_budgets pb
     JOIN project_proposals pp ON pb.proposal_id = pp.id
     LEFT JOIN users u ON pp.admin_id = u.id
     WHERE pp.client_id = ?
     ORDER BY pb.created_at DESC
 ");
+
 $stmt->execute([$_SESSION['client_id']]);
 $budgets = $stmt->fetchAll();
 ?>
