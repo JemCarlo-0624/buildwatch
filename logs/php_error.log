@@ -771,3 +771,55 @@ Stack trace:
 )
 
 [27-Oct-2025 14:48:08 Europe/Berlin] Error fetching budget reviews: SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'id' in field list is ambiguous
+[28-Oct-2025 12:36:47 Europe/Berlin] Starting budget decision process for budget_id: 8
+[28-Oct-2025 12:36:47 Europe/Berlin] ✅ Project created with ID: 7
+[28-Oct-2025 12:49:37 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 12:49:37 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 12:49:37 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 6
+    [format] => html
+)
+
+[28-Oct-2025 12:49:37 Europe/Berlin] Error fetching budget reviews: SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'id' in field list is ambiguous
+[28-Oct-2025 13:00:35 Europe/Berlin] Starting budget decision process for budget_id: 9
+[28-Oct-2025 13:00:35 Europe/Berlin] ✅ Project created with ID: 8
+[28-Oct-2025 13:02:52 Europe/Berlin] PHP Warning:  Undefined array key "evauluated_end_date" in D:\Programming\xampp\htdocs\buildwatch\php\client_proposal_details.php on line 451
+[28-Oct-2025 13:03:26 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 13:03:26 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 13:03:26 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 8
+    [format] => html
+)
+
+[28-Oct-2025 13:03:27 Europe/Berlin] Error fetching budget reviews: SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'id' in field list is ambiguous
+[28-Oct-2025 13:09:41 Europe/Berlin] Starting budget decision process for budget_id: 10
+[28-Oct-2025 13:09:41 Europe/Berlin] ✅ Project created with ID: 9
+[28-Oct-2025 13:09:56 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 13:09:56 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 13:09:56 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 9
+    [format] => html
+)
+
+[28-Oct-2025 13:09:56 Europe/Berlin] Error fetching budget reviews: SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'id' in field list is ambiguous

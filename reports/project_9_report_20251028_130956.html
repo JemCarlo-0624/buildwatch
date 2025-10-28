@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Report - test 3</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: #f5f5f5; color: #333; line-height: 1.6; }
+.header { background: linear-gradient(135deg, #0a4275 0%, #084980 100%); color: white; padding: 40px 20px; text-align: center; }
+.header h1 { margin: 0; font-size: 32px; }
+.subtitle { margin: 10px 0 0 0; opacity: 0.9; font-size: 14px; }
+.project-banner { background: #0a4275; color: white; padding: 20px; text-align: center; margin-bottom: 30px; }
+.project-banner h2 { margin: 0; font-size: 24px; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.section { background: white; padding: 25px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.section h3 { color: #0a4275; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #0a4275; padding-bottom: 10px; }
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 20px; }
+.metric-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+.metric-card.success { border-left: 4px solid #2ecc71; }
+.metric-card.primary { border-left: 4px solid #0a4275; }
+.metric-card.warning { border-left: 4px solid #f39c12; }
+.metric-card.info { border-left: 4px solid #3498db; }
+.metric-card.danger { border-left: 4px solid #e74c3c; }
+.metric-label { font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 5px; font-weight: 600; }
+.metric-value { font-size: 28px; font-weight: bold; color: #333; }
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 15px; }
+.team-card { background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 3px solid #0a4275; }
+.team-card .name { font-weight: 600; color: #0a4275; margin-bottom: 5px; }
+.team-card .role { font-size: 12px; color: #666; text-transform: uppercase; }
+.team-card .email { font-size: 13px; color: #888; margin-top: 5px; }
+table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+th { background: #0a4275; color: white; padding: 12px; text-align: left; font-weight: 600; }
+td { padding: 10px; border-bottom: 1px solid #ddd; }
+tr:hover { background: #f9f9f9; }
+.status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: inline-block; }
+.status-completed { background: #d4edda; color: #155724; }
+.status-in-progress { background: #fff3cd; color: #856404; }
+.status-pending { background: #d1ecf1; color: #0c5460; }
+.status-blocked { background: #f8d7da; color: #721c24; }
+.status-ongoing { background: #d1ecf1; color: #0c5460; }
+.status-on-hold { background: #fff3cd; color: #856404; }
+.status-planning { background: #e2e3e5; color: #383d41; }
+.status-approved { background: #d4edda; color: #155724; }
+.status-rejected { background: #f8d7da; color: #721c24; }
+.status-pending-client { background: #fff3cd; color: #856404; }
+.priority-high { color: #e74c3c; font-weight: 600; }
+.priority-medium { color: #f39c12; font-weight: 600; }
+.priority-low { color: #95a5a6; font-weight: 600; }
+.insights { background: #e8f4f8; border-left: 4px solid #3498db; }
+.footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; font-size: 12px; }
+@media print { body { background: white; } .section { box-shadow: none; page-break-inside: avoid; } }
+@media (max-width: 768px) { .metrics-grid, .overview-grid, .team-grid { grid-template-columns: 1fr; } .container { padding: 10px; } }</style>
+</head>
+<body>
+<div class="header">
+<h1>BuildWatch Project Report</h1>
+<p class="subtitle">Generated: 2025-10-28 13:09:56</p>
+</div>
+<div class="project-banner">
+<h2>test 3</h2>
+</div>
+<div class="container">
+<div class="section">
+<h3>Project Overview</h3>
+<div class="overview-grid">
+<div><strong>Project Manager:</strong> Admin</div>
+<div><strong>Client:</strong> Jan Julliene Narvasa</div>
+<div><strong>Client Email:</strong> jjnarvasa@buildwatch.com</div>
+<div><strong>Status:</strong> <span class="status-badge status-ongoing">ongoing</span></div>
+<div><strong>Priority:</strong> <span class="priority-medium">MEDIUM</span></div>
+</div>
+<p style="margin-top: 15px;"><strong>Description:</strong> afafafafafa fafafas agasgagagagag afafafafaf afafaf</p>
+</div>
+<div class="section">
+<h3>Proposal & Budget Information</h3>
+<div class="overview-grid">
+<div><strong>Proposal Title:</strong> test 3</div>
+<div><strong>Proposal Status:</strong> <span class="status-badge status-approved">approved</span></div>
+<div><strong>Proposed Amount:</strong> ₱123.00</div>
+<div><strong>Evaluated Amount:</strong> ₱1,234.00</div>
+<div><strong>Budget Status:</strong> <span class="status-badge status-approved">approved</span></div>
+<div><strong>Client Decision:</strong> approved</div>
+</div>
+</div>
+<div class="section">
+<h3>Budget Breakdown</h3>
+<div style="overflow-x: auto;">
+<table>
+<thead>
+<tr>
+<th>Item Name</th><th>Category</th><th>Estimated Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Building Permits and Inspections</td>
+<td>Materials</td>
+<td>₱1,234.00</td>
+</tr>
+<tr style="background: #f0f0f0; font-weight: bold;">
+<td colspan="2">Total Breakdown Cost</td>
+<td>₱1,234.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="metrics-grid">
+<div class="metric-card success">
+<div class="metric-label">Completion</div>
+<div class="metric-value">0%</div>
+</div>
+<div class="metric-card primary">
+<div class="metric-label">Total Tasks</div>
+<div class="metric-value">0</div>
+</div>
+<div class="metric-card success">
+<div class="metric-label">Completed</div>
+<div class="metric-value">0</div>
+</div>
+<div class="metric-card warning">
+<div class="metric-label">In Progress</div>
+<div class="metric-value">0</div>
+</div>
+<div class="metric-card info">
+<div class="metric-label">Pending</div>
+<div class="metric-value">0</div>
+</div>
+<div class="metric-card primary">
+<div class="metric-label">Team Size</div>
+<div class="metric-value">0</div>
+</div>
+</div>
+<div class="section">
+<h3>Timeline Analysis</h3>
+<pre style="white-space: pre-wrap; font-family: inherit;">Project started: Oct 29, 2025
+Days elapsed: 0 days
+Expected completion: Nov 01, 2025
+Days remaining: 3 days
+⚠ ALERT: Project deadline is approaching soon!
+</pre>
+</div>
+<div class="section">
+<h3>Task Details</h3>
+<p style="color: #888; font-style: italic;">No tasks have been created for this project yet.</p></div>
+<div class="section insights">
+<h3>Insights & Recommendations</h3>
+<pre style="white-space: pre-wrap; font-family: inherit;">→ Project is in early stages. Focus on establishing momentum.
+
+⚠ Project deadline is approaching within 2 weeks. Prioritize critical path tasks.
+
+⚠ Budget has been increased by ₱1111.00 (903.3%) during evaluation.
+
+RECOMMENDATIONS:
+• Maintain regular communication with stakeholders.
+• Continue monitoring progress and adjust plans as needed.
+</pre>
+</div>
+</div>
+<div class="footer">
+<p>This report was automatically generated by BuildWatch Report Generator.</p>
+</div>
+</body>
+</html>

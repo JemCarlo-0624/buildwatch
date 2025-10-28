@@ -445,11 +445,11 @@ $breakdowns = $breakdownStmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="details-meta-value"><?php echo date('M j, Y', strtotime($proposal['submitted_at'])); ?></div>
                 </div>
                 <div class="details-meta-box">
-                    <div class="details-meta-label">Proposed Timeline</div>
+                    <div class="details-meta-label">Evaluated Timeline</div>
                     <div class="details-meta-value">
                         <?php 
-                        if ($proposal['start_date'] && $proposal['end_date']) {
-                            echo date('M j', strtotime($proposal['start_date'])) . ' - ' . date('M j, Y', strtotime($proposal['end_date']));
+                        if ($proposal['evaluated_start_date'] && $proposal['evaluated_end_date']) {
+                            echo date('M j', strtotime($proposal['evaluated_start_date'])) . ' - ' . date('M j, Y', strtotime($proposal['evaluated_end_date']));
                         } else {
                             echo 'Not specified';
                         }
@@ -504,14 +504,14 @@ $breakdowns = $breakdownStmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="timeline-icon"><i class="fas fa-play-circle"></i></div>
                     <div class="timeline-label">Start Date</div>
                     <div class="timeline-date">
-                        <?php echo $proposal['start_date'] ? date('M j, Y', strtotime($proposal['start_date'])) : 'TBD'; ?>
+                        <?php echo $proposal['evaluated_start_date'] ? date('M j, Y', strtotime($proposal['evaluated_start_date'])) : 'TBD'; ?>
                     </div>
                 </div>
                 <div class="timeline-box">
                     <div class="timeline-icon"><i class="fas fa-flag-checkered"></i></div>
                     <div class="timeline-label">End Date</div>
                     <div class="timeline-date">
-                        <?php echo $proposal['end_date'] ? date('M j, Y', strtotime($proposal['end_date'])) : 'TBD'; ?>
+                        <?php echo $proposal['evaluated_end_date'] ? date('M j, Y', strtotime($proposal['evaluated_end_date'])) : 'TBD'; ?>
                     </div>
                 </div>
                 <div class="timeline-box">
@@ -519,9 +519,9 @@ $breakdowns = $breakdownStmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="timeline-label">Duration</div>
                     <div class="timeline-date">
                         <?php 
-                        if ($proposal['start_date'] && $proposal['end_date']) {
-                            $start = new DateTime($proposal['start_date']);
-                            $end = new DateTime($proposal['end_date']);
+                        if ($proposal['evaluated_start_date'] && $proposal['evaluated_end_date']) {
+                            $start = new DateTime($proposal['evaluated_start_date']);
+                            $end = new DateTime($proposal['evaluated_end_date']);
                             $interval = $start->diff($end);
                             echo $interval->days . ' days';
                         } else {

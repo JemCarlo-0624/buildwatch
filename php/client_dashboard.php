@@ -71,6 +71,8 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/client-dashboard.css">
+
+
 </head>
 <body>
     <!-- Improved header with better spacing and visual hierarchy -->
@@ -385,74 +387,109 @@ $status = htmlspecialchars($project['status'] ?? 'planning');
         </div>
     </div>
 
-    <!-- Budget review modal with improved styling -->
-    <div class="modal fade" id="budgetReviewModal" tabindex="-1" aria-labelledby="budgetReviewLabel" aria-hidden="true" style="z-index: 9999;">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="budgetReviewLabel">
-                    <i class="fas fa-exclamation-triangle"></i> Over Budget Alert
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Budget review modal with improved styling -->
+<div class="modal fade" id="budgetReviewModal" tabindex="-1" aria-labelledby="budgetReviewLabel" aria-hidden="true" style="z-index: 9999;">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      
+      <!-- Header -->
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="budgetReviewLabel">
+          <i class="fas fa-exclamation-triangle"></i> Over Budget Alert
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Body -->
+      <div class="modal-body p-4">
+        
+        <!-- Budget Comparison -->
+        <div class="row g-2 mb-4">
+          
+          <!-- Proposed Budget -->
+          <div class="col-12 col-md-5">
+            <div class="p-3 border rounded-3 text-center">
+              <div class="text-muted mb-2" style="font-size: 0.8rem;">Your Proposed Budget</div>
+              <div class="fw-bold text-primary" id="proposedBudgetTop" style="font-size: 1.25rem; line-height: 1.3; word-break: break-word;">₱0.00</div>
             </div>
-
-            <div class="modal-body p-4">
-                
-                <div class="row g-3 mb-4 text-center">
-                    
-                    <div class="col-md-5">
-                        <div class="p-3 border rounded-3 h-100">
-                            <h6 class="text-muted mb-2">Your Proposed Budget</h6>
-                            <p class="h3 fw-bold text-primary mb-0" id="proposedBudget">₱890,000.00</p>
-                        </div>
-                    </div>
-
-                    <div class="col-md-2 d-flex align-items-center justify-content-center">
-                         <i class="fas fa-arrow-right fa-2x text-secondary"></i>
-                    </div>
-
-                    <div class="col-md-5">
-                        <div class="p-3 border border-3 border-danger rounded-3 h-100">
-                            <h6 class="text-muted mb-2">Admin Evaluation</h6>
-                            <p class="h3 fw-bold text-danger mb-0" id="adminEvaluation">₱900,000.00</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-danger p-3 mb-4 rounded-3" role="alert">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <h5 class="mb-0 fw-bold text-danger">Difference: ₱10,000.00</h5>
-                        </div>
-                        <div class="badge bg-danger text-uppercase p-2">
-                            Higher than Proposed
-                        </div>
-                    </div>
-                </div>
-
-                <div id="budgetBreakdown" class="p-3 border rounded-3 bg-light">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-list-ul me-2 text-primary"></i>Budget Breakdown Details</h6>
-                    <p class="text-muted small mb-0">Original breakdown table content goes here...</p>
-                </div>
+          </div>
+          
+          <!-- Arrow -->
+          <div class="col-12 col-md-2 d-flex align-items-center justify-content-center py-2">
+            <i class="fas fa-arrow-right fa-lg text-secondary"></i>
+          </div>
+          
+          <!-- Admin Evaluation -->
+          <div class="col-12 col-md-5">
+            <div class="p-3 border border-3 border-danger rounded-3 text-center">
+              <div class="text-muted mb-2" style="font-size: 0.8rem;">Admin Evaluation</div>
+              <div class="fw-bold text-danger" id="adminEvaluationTop" style="font-size: 1.25rem; line-height: 1.3; word-break: break-word;">₱0.00</div>
             </div>
-
-            <div class="modal-footer d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-arrow-left"></i> Close
-                </button>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-danger" onclick="handleBudgetDecision('reject')">
-                        <i class="fas fa-times"></i> Reject
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="handleBudgetDecision('accept')">
-                        <i class="fas fa-check"></i> Approve
-                    </button>
-                </div>
-            </div>
+          </div>
         </div>
+        
+        <!-- Difference Alert -->
+        <div class="alert alert-danger p-3 mb-4 rounded-3" role="alert">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              <h5 class="mb-0 fw-bold text-danger">Difference: <span id="differenceAmount">₱10,000.00</span></h5>
+            </div>
+            <div class="badge bg-danger text-uppercase p-2">
+              Higher than Proposed
+            </div>
+          </div>
+        </div>
+        
+        <!-- Budget Breakdown -->
+        <div id="budgetBreakdown" class="p-3 border rounded-3 bg-light">
+          <h6 class="fw-bold mb-3">
+            <i class="fas fa-list-ul me-2 text-primary"></i> Budget Breakdown Details
+          </h6>
+          <div class="small">
+            <p class="mb-1"><strong>Your Proposed Budget:</strong> <span id="proposedBudgetDetail">₱1,200,000.00</span></p>
+            <p class="mb-1"><strong>Admin Evaluation:</strong> <span id="adminEvaluationDetail">₱12,000,000.00</span></p>
+            <p class="mb-1 text-danger"><strong>Difference:</strong> <span id="differenceDetail">₱10,800,000.00</span></p>
+            <p class="mb-0 text-danger"><em>Higher than Proposed</em></p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-arrow-left"></i> Close
+        </button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-danger" onclick="handleBudgetDecision('reject')">
+            <i class="fas fa-times"></i> Reject
+          </button>
+          <button type="button" class="btn btn-success" onclick="handleBudgetDecision('accept')">
+            <i class="fas fa-check"></i> Approve
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
+<style>
+/* Ensure numbers fit properly in their containers */
+#proposedBudgetTop,
+#adminEvaluationTop {
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  #proposedBudgetTop,
+  #adminEvaluationTop {
+    font-size: 1.1rem !important;
+  }
+}
+</style>
     <!-- Report generation modal with improved layout -->
     <div id="reportModal" class="modal">
         <div class="modal-content">
@@ -653,46 +690,70 @@ $status = htmlspecialchars($project['status'] ?? 'planning');
         }
 
         function updateBudgetModal(data) {
-            const differenceClass = data.difference > 0 ? 'text-danger' : 'text-success';
-            const differenceLabel = data.difference > 0 ? 'Higher than proposed' : 'Lower than proposed';
-            const evalTimelineHtml = (data.evaluated_start_date && data.evaluated_end_date) ? `
-                <div class="alert alert-light border-start border-primary border-4 mt-4">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <i class="fas fa-calendar-alt text-primary"></i>
-                        <strong>Evaluated Timeline</strong>
-                    </div>
-                    <div>${formatDate(data.evaluated_start_date)} - ${formatDate(data.evaluated_end_date)}</div>
-                    ${data.evaluation_notes ? `<small class="text-muted d-block mt-1">${escapeHtml(data.evaluation_notes)}</small>` : ''}
+    const differenceClass = data.difference > 0 ? 'text-danger' : 'text-success';
+    const differenceLabel = data.difference > 0 ? 'Higher than Proposed' : 'Lower than Proposed';
+
+    // 1️⃣ Update top section values
+    const proposedEl = document.getElementById('proposedBudgetTop');
+    const adminEvalEl = document.getElementById('adminEvaluationTop');
+
+    if (proposedEl) proposedEl.textContent = `₱${numberFormat(data.proposed_budget)}`;
+    if (adminEvalEl) adminEvalEl.textContent = `₱${numberFormat(data.admin_evaluation)}`;
+
+    // 2️⃣ Update difference section dynamically (if present)
+    const diffHeader = document.querySelector('.alert-danger h5');
+    const diffBadge = document.querySelector('.alert-danger .badge');
+
+    if (diffHeader) diffHeader.innerHTML = `Difference: ₱${numberFormat(Math.abs(data.difference))}`;
+    if (diffBadge) {
+        diffBadge.textContent = differenceLabel;
+        diffBadge.className = `badge text-uppercase p-2 ${data.difference > 0 ? 'bg-danger' : 'bg-success'}`;
+    }
+
+    // 3️⃣ Optional: evaluation timeline block
+    const evalTimelineHtml =
+        data.evaluated_start_date && data.evaluated_end_date
+            ? `
+        <div class="alert alert-light border-start border-primary border-4 mt-4">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="fas fa-calendar-alt text-primary"></i>
+                <strong>Evaluated Timeline</strong>
+            </div>
+            <div>${formatDate(data.evaluated_start_date)} - ${formatDate(data.evaluated_end_date)}</div>
+            ${data.evaluation_notes ? `<small class="text-muted d-block mt-1">${escapeHtml(data.evaluation_notes)}</small>` : ''}
+        </div>`
+            : '';
+
+    // 4️⃣ Update budget breakdown details
+    document.getElementById('budgetBreakdown').innerHTML = `
+        <div class="budget-breakdown">
+            <div class="budget-comparison">
+                <div class="budget-item">
+                    <label>Your Proposed Budget:</label>
+                    <div class="budget-amount">₱${numberFormat(data.proposed_budget)}</div>
                 </div>
-            ` : '';
-            
-            document.getElementById('budgetBreakdown').innerHTML = `
-                <div class="budget-breakdown">
-                    <div class="budget-comparison">
-                        <div class="budget-item">
-                            <label>Your Proposed Budget:</label>
-                            <div class="budget-amount">₱${numberFormat(data.proposed_budget)}</div>
-                        </div>
-                        <div class="budget-item">
-                            <label>Admin Evaluation:</label>
-                            <div class="budget-amount highlight">₱${numberFormat(data.admin_evaluation)}</div>
-                        </div>
-                        <div class="budget-item ${differenceClass}">
-                            <label>Difference:</label>
-                            <div class="budget-amount">₱${numberFormat(Math.abs(data.difference))}</div>
-                            <small>${differenceLabel}</small>
-                        </div>
-                    </div>
-                    ${data.admin_comment ? `
-                        <div class="alert alert-info mt-4">
-                            <strong><i class="fas fa-comment"></i> Admin Comment:</strong><br>
-                            <p class="mt-2">${escapeHtml(data.admin_comment)}</p>
-                        </div>
-                    ` : ''}
-                    ${evalTimelineHtml}
+                <div class="budget-item">
+                    <label>Admin Evaluation:</label>
+                    <div class="budget-amount highlight">₱${numberFormat(data.admin_evaluation)}</div>
                 </div>
-            `;
-        }
+                <div class="budget-item ${differenceClass}">
+                    <label>Difference:</label>
+                    <div class="budget-amount">₱${numberFormat(Math.abs(data.difference))}</div>
+                    <small>${differenceLabel}</small>
+                </div>
+            </div>
+            ${data.admin_comment
+                ? `
+            <div class="alert alert-info mt-4">
+                <strong><i class="fas fa-comment"></i> Admin Comment:</strong><br>
+                <p class="mt-2">${escapeHtml(data.admin_comment)}</p>
+            </div>`
+                : ''}
+            ${evalTimelineHtml}
+        </div>
+    `;
+}
+
 
         function formatDate(isoDate) {
             try {

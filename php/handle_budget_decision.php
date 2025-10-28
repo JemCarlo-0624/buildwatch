@@ -43,7 +43,9 @@ try {
             pp.title,
             pp.description,
             pp.start_date,
-            pp.end_date
+            pp.end_date,
+            pp.evaluated_start_date,
+            pp.evaluated_end_date
         FROM project_budgets pb
         JOIN project_proposals pp ON pb.proposal_id = pp.id
         WHERE pb.id = ? AND pp.client_id = ?
@@ -56,7 +58,7 @@ try {
     }
 
     // ✅ Validate required fields
-    $requiredFields = ['title', 'description', 'client_id', 'start_date', 'end_date'];
+    $requiredFields = ['title', 'description', 'client_id'];
     foreach ($requiredFields as $field) {
         if (empty($budget[$field])) {
             throw new Exception("Missing required field: {$field}");
@@ -65,41 +67,45 @@ try {
 
     // ✅ Handle client decision
     if ($decision === 'accept') {
+
+        // ✅ Determine final start and end dates (use evaluated if available)
+        $startDate = $budget['evaluated_start_date'] ?: $budget['start_date'];
+        $endDate   = $budget['evaluated_end_date'] ?: $budget['end_date'];
+
         // --- Create a new project record ---
         $stmt = $pdo->prepare("
-    INSERT INTO projects (
-        name,
-        description,
-        status,
-        completion_percentage,
-        priority,
-        created_by,
-        client_id,
-        timeline,
-        start_date,
-        end_date
-    ) VALUES (
-        :name,
-        :description,
-        'ongoing',
-        0,
-        'medium',
-        :created_by,
-        :client_id,
-        NULL,
-        :start_date,
-        :end_date
-    )
-");
-
+            INSERT INTO projects (
+                name,
+                description,
+                status,
+                completion_percentage,
+                priority,
+                created_by,
+                client_id,
+                timeline,
+                start_date,
+                end_date
+            ) VALUES (
+                :name,
+                :description,
+                'ongoing',
+                0,
+                'medium',
+                :created_by,
+                :client_id,
+                NULL,
+                :start_date,
+                :end_date
+            )
+        ");
 
         $projectData = [
             ':name'        => $budget['title'],
             ':description' => $budget['description'],
             ':created_by'  => $budget['admin_id'] ?? 1,
             ':client_id'   => $budget['client_id'],
-            ':start_date'  => $budget['start_date'],
-            ':end_date'    => $budget['end_date']
+            ':start_date'  => $startDate,
+            ':end_date'    => $endDate
         ];
 
         if (!$stmt->execute($projectData)) {
@@ -132,6 +138,7 @@ try {
 
         $message = "Client has approved the budget and a project has been created for: " . htmlspecialchars($budget['title']);
         $success_msg = "Budget approved and project created successfully!";
+
     } else {
         // --- Client rejected the budget ---
         $stmt = $pdo->prepare("

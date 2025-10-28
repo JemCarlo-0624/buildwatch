@@ -866,3 +866,45 @@ textarea.form-input {
     gap: var(--space-md);
   }
 }
+
+/* ================================
+   FIX – Bootstrap Modal Override
+   ================================ */
+
+/* Ensure Bootstrap modals behave correctly */
+.modal {
+  display: none;
+}
+
+.modal.show {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 1060 !important;
+  pointer-events: auto !important;
+}
+
+.modal-content {
+  position: relative;
+  z-index: 1070 !important;
+  pointer-events: auto;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.modal-backdrop {
+  z-index: 1050 !important;
+}
+
+/* Keep the budget boxes aligned */
+#budgetReviewModal .col-md-5 > div {
+  min-height: 140px;
+  height: auto;
+  z-index: 1;
+}
+
+#budgetReviewModal .col-md-2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
