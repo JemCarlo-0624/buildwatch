@@ -155,23 +155,65 @@ return $data;
      */
     private function fetchProposalData(&$data) {
         try {
-            // Get the most recent proposal for this client
-            $sql = "SELECT id, title, description, status, budget, start_date, end_date, client_decision " .
-                   "FROM project_proposals WHERE client_id = ? ORDER BY submitted_at DESC LIMIT 1";
-            
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$data->clientId]);
-            $proposal = $stmt->fetch();
-            
+            $ppCols   = $this->getTableColumns('project_proposals');
+            $projCols = $this->getTableColumns('projects');
+
+            // choose safe ORDER BY column
+            $orderBy = in_array('submitted_at', $ppCols) ? 'submitted_at' : 'id';
+
+            $proposal = false;
+            // 1) If project_proposals has project_id, use it
+            if (in_array('project_id', $ppCols)) {
+                $sql = "SELECT id, title, description, status, budget, start_date, end_date, client_decision, project_id, client_id
+                        FROM project_proposals WHERE project_id = ? ORDER BY $orderBy DESC LIMIT 1";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$data->id]);
+                $proposal = $stmt->fetch();
+            }
+
+            // 2) If projects table stores proposal_id, use that link
+            if (!$proposal && in_array('proposal_id', $projCols)) {
+                $sql = "SELECT pp.id, pp.title, pp.description, pp.status, pp.budget, pp.start_date, pp.end_date, pp.client_decision, pp.client_id
+                        FROM project_proposals pp
+                        WHERE pp.id = (SELECT proposal_id FROM projects WHERE id = ?)";
+
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$data->id]);
+                $proposal = $stmt->fetch();
+            }
+
+            // 3) Fallback: latest proposal for this client (if client_id exists on proposals)
+            if (!$proposal && in_array('client_id', $ppCols) && !empty($data->clientId)) {
+                $sql = "SELECT id, title, description, status, budget, start_date, end_date, client_decision, client_id
+                        FROM project_proposals WHERE client_id = ? ORDER BY $orderBy DESC LIMIT 1";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$data->clientId]);
+                $proposal = $stmt->fetch();
+            }
+
+            // 4) Final fallback: latest proposal row in the table
+            if (!$proposal) {
+                $sql = "SELECT id, title, description, status, budget, start_date, end_date, client_decision
+                        FROM project_proposals ORDER BY $orderBy DESC LIMIT 1";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute();
+                $proposal = $stmt->fetch();
+            }
+
             if ($proposal) {
                 $data->proposalId = (int)$proposal['id'];
-                $data->proposalTitle = $proposal['title'];
-                $data->proposalDescription = $proposal['description'];
-                $data->proposalStatus = $proposal['status'];
+                $data->proposalTitle = $proposal['title'] ?? null;
+                $data->proposalDescription = $proposal['description'] ?? null;
+                // Force static proposal status as requested
+                $data->proposalStatus = 'Active';
                 $data->proposalBudget = (float)($proposal['budget'] ?? 0);
-                $data->proposalStartDate = $proposal['start_date'];
-                $data->proposalEndDate = $proposal['end_date'];
-                $data->proposalClientDecision = $proposal['client_decision'];
+                $data->proposalStartDate = $proposal['start_date'] ?? null;
+                $data->proposalEndDate = $proposal['end_date'] ?? null;
+                $data->proposalClientDecision = $proposal['client_decision'] ?? null;
+            }
+            // Ensure proposalStatus is always set to the static value even if no proposal was found
+            if (empty($data->proposalStatus)) {
+                $data->proposalStatus = 'Active';
             }
         } catch (Exception $e) {
             error_log("Error fetching proposal data: " . $e->getMessage());
@@ -183,31 +225,82 @@ return $data;
      */
     private function fetchBudgetData(&$data) {
         try {
-            // Get budget linked to the proposal we just fetched
-            if (!isset($data->proposalId)) {
-                return;
+            $budget = false;
+
+            // 1) If we have a proposalId, prefer budgets for that proposal
+            if (!empty($data->proposalId)) {
+                $sql = "SELECT id,proposal_id,proposed_amount,evaluated_amount,status,remarks,client_decision,created_at
+                        FROM project_budgets
+                        WHERE proposal_id = ?
+                        ORDER BY created_at DESC
+                        LIMIT 1";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$data->proposalId]);
+                $budget = $stmt->fetch();
+
+                if ($budget) {
+                    error_log("[report] fetchBudgetData: found by proposal_id={$data->proposalId}");
+                }
             }
-            
-            $sql = "SELECT pb.id, pb.proposal_id, pb.proposed_amount, pb.evaluated_amount, " .
-                   "pb.status, pb.remarks, pb.admin_comment, pb.client_decision " .
-                   "FROM project_budgets pb " .
-                   "WHERE pb.proposal_id = ? ORDER BY pb.created_at DESC LIMIT 1";
-            
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$data->proposalId]);
-            $budget = $stmt->fetch();
-            
+
+            // 2) If not found, try budgets for any proposal that belongs to the same client as the project
+            if (!$budget && !empty($data->clientId)) {
+                $sql = "SELECT pb.id,pb.proposal_id,pb.proposed_amount,pb.evaluated_amount,pb.status,pb.remarks,pb.client_decision,pb.created_at
+                        FROM project_budgets pb
+                        JOIN project_proposals pp ON pb.proposal_id = pp.id
+                        WHERE pp.client_id = ?
+                        ORDER BY pb.created_at DESC
+                        LIMIT 1";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$data->clientId]);
+                $budget = $stmt->fetch();
+
+                if ($budget) {
+                    error_log("[report] fetchBudgetData: found by client_id={$data->clientId} (proposal_id={$budget['proposal_id']})");
+                    // set proposalId if absent so other logic knows which proposal was used
+                    if (empty($data->proposalId)) {
+                        $data->proposalId = (int)$budget['proposal_id'];
+                    }
+                }
+            }
+
+            // 3) Final fallback: latest budget in table
+            if (!$budget) {
+                $sql = "SELECT id,proposal_id,proposed_amount,evaluated_amount,status,remarks,client_decision,created_at
+                        FROM project_budgets
+                        ORDER BY created_at DESC
+                        LIMIT 1";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute();
+                $budget = $stmt->fetch();
+
+                if ($budget) {
+                    error_log("[report] fetchBudgetData: fallback latest budget id={$budget['id']} proposal_id={$budget['proposal_id']}");
+                } else {
+                    error_log("[report] fetchBudgetData: no budget rows found at all");
+                }
+            }
+
+            // Populate $data with values and sensible fallbacks
             if ($budget) {
                 $data->budgetId = (int)$budget['id'];
-                $data->proposedAmount = (float)$budget['proposed_amount'];
-                $data->evaluatedAmount = (float)$budget['evaluated_amount'];
-                $data->budgetStatus = $budget['status'];
-                $data->budgetRemarks = $budget['remarks'];
-                $data->adminComment = $budget['admin_comment'];
-                $data->clientBudgetDecision = $budget['client_decision'];
-                
-                // Fetch budget reviews for this budget
-                $this->fetchBudgetReviews($data, (int)$budget['proposal_id']);
+                $data->proposedAmount = (float)($budget['proposed_amount'] ?? 0);
+                $data->evaluatedAmount = (float)($budget['evaluated_amount'] ?? 0);
+                $data->budgetStatus = $budget['status'] ?? null;
+                $data->budgetRemarks = $budget['remarks'] ?? null;
+                $data->clientBudgetDecision = $budget['client_decision'] ?? null;
+            } else {
+                // ensure there's always a numeric proposedAmount (fall back to proposal.budget if present)
+                $data->proposedAmount = $data->proposalBudget ?? 0;
+                $data->evaluatedAmount = 0;
+                $data->budgetStatus = null;
+                $data->clientBudgetDecision = $data->proposalClientDecision ?? null;
+            }
+
+            // If proposedAmount is zero but proposalBudget exists, use the proposal value
+            if (empty($data->proposedAmount) && !empty($data->proposalBudget)) {
+                $data->proposedAmount = (float)$data->proposalBudget;
+                error_log("[report] fetchBudgetData: used proposalBudget fallback for project {$data->id} => {$data->proposedAmount}");
             }
         } catch (Exception $e) {
             error_log("Error fetching budget data: " . $e->getMessage());
@@ -223,7 +316,7 @@ return $data;
                 return;
             }
             
-            $sql = "SELECT id, item_name, category, estimated_cost, created_at " .
+            $sql = "SELECT id, item_name, category, estimated_cost, created_at ".
                    "FROM budget_breakdowns WHERE budget_id = ? ORDER BY created_at ASC";
             
             $stmt = $this->pdo->prepare($sql);
@@ -255,9 +348,9 @@ return $data;
      */
     private function fetchBudgetReviews(&$data, $proposalId) {
         try {
-            $sql = "SELECT id, admin_id, evaluated_amount, status, remarks, created_at, u.name AS admin_name " .
-                   "FROM budget_reviews br " .
-                   "LEFT JOIN users u ON br.admin_id = u.id " .
+            $sql = "SELECT id, admin_id, evaluated_amount, status, remarks, created_at, u.name AS admin_name ".
+                   "FROM budget_reviews br ".
+                   "LEFT JOIN users u ON br.admin_id = u.id ".
                    "WHERE br.proposal_id = ? ORDER BY br.created_at DESC";
             
             $stmt = $this->pdo->prepare($sql);
@@ -304,11 +397,11 @@ return $data;
      * Fetch tasks for a project
      */
     private function fetchTasks(&$data) {
-        $taskQuery = "SELECT t.id, t.title, t.description, t.progress, t.due_date, t.created_at, " .
-                     "u.name as assigned_to_name " .
-                     "FROM tasks t " .
-                     "LEFT JOIN users u ON t.assigned_to = u.id " .
-                     "WHERE t.project_id = ? " .
+        $taskQuery = "SELECT t.id, t.title, t.description, t.progress, t.due_date, t.created_at, ".
+                     "u.name as assigned_to_name ".
+                     "FROM tasks t ".
+                     "LEFT JOIN users u ON t.assigned_to = u.id ".
+                     "WHERE t.project_id = ? ".
                      "ORDER BY t.created_at DESC";
         
         try {
@@ -346,10 +439,10 @@ return $data;
      * Fetch team members for a project
      */
     private function fetchTeamMembers(&$data) {
-        $teamQuery = "SELECT u.id, u.name, u.email, u.role, pa.assigned_at " .
-                     "FROM project_assignments pa " .
-                     "JOIN users u ON pa.user_id = u.id " .
-                     "WHERE pa.project_id = ? " .
+        $teamQuery = "SELECT u.id, u.name, u.email, u.role, pa.assigned_at ".
+                     "FROM project_assignments pa ".
+                     "JOIN users u ON pa.user_id = u.id ".
+                     "WHERE pa.project_id = ? ".
                      "ORDER BY pa.assigned_at ASC";
         
         try {
@@ -548,17 +641,23 @@ CSS;
         $html .= "</div>\n";
         
         if (isset($data->proposalId)) {
+            // Use fallbacks when rendering values so UI shows proposal numbers if no budget exists
+            $displayProposed = $data->proposedAmount ?? $data->proposalBudget ?? 0;
+            $displayEvaluated = $data->evaluatedAmount ?? 0;
+            $displayBudgetStatus = $data->budgetStatus ?? 'N/A';
+            $displayClientDecision = $data->clientBudgetDecision ?? $data->proposalClientDecision ?? 'Pending';
+    
             $html .= "<div class=\"section\">\n";
             $html .= "<h3>Proposal & Budget Information</h3>\n";
             $html .= "<div class=\"overview-grid\">\n";
             $html .= "<div><strong>Proposal Title:</strong> " . $this->escapeHtml($data->proposalTitle) . "</div>\n";
             $html .= "<div><strong>Proposal Status:</strong> <span class=\"status-badge status-" . strtolower($data->proposalStatus) . "\">" .
                     $this->escapeHtml($data->proposalStatus) . "</span></div>\n";
-            $html .= "<div><strong>Proposed Amount:</strong> ₱" . number_format($data->proposedAmount, 2) . "</div>\n";
-            $html .= "<div><strong>Evaluated Amount:</strong> ₱" . number_format($data->evaluatedAmount, 2) . "</div>\n";
-            $html .= "<div><strong>Budget Status:</strong> <span class=\"status-badge status-" . strtolower($data->budgetStatus) . "\">" .
-                    $this->escapeHtml($data->budgetStatus) . "</span></div>\n";
-            $html .= "<div><strong>Client Decision:</strong> " . $this->escapeHtml($data->proposalClientDecision ?? "Pending") . "</div>\n";
+            $html .= "<div><strong>Proposed Amount:</strong> ₱" . number_format($displayProposed, 2) . "</div>\n";
+            $html .= "<div><strong>Evaluated Amount:</strong> ₱" . number_format($displayEvaluated, 2) . "</div>\n";
+            $html .= "<div><strong>Budget Status:</strong> <span class=\"status-badge status-" . strtolower($displayBudgetStatus) . "\">" .
+                    $this->escapeHtml($displayBudgetStatus) . "</span></div>\n";
+            $html .= "<div><strong>Client Decision:</strong> " . $this->escapeHtml($displayClientDecision) . "</div>\n";
             $html .= "</div>\n";
             
             if ($data->budgetRemarks) {
@@ -1097,7 +1196,7 @@ class ProjectData {
         
         // Task-based insights
         if ($this->blockedTasks > 0) {
-            $insights .= sprintf("⚠ ATTENTION: %d task(s) are blocked. " .
+            $insights .= sprintf("⚠ ATTENTION: %d task(s) are blocked. ".
                 "Immediate action required to unblock and maintain project velocity.\n\n", $this->blockedTasks);
         }
         
@@ -1107,7 +1206,7 @@ class ProjectData {
         
         // Timeline insights
         if ($this->daysRemaining > 0 && $this->daysRemaining < 14) {
-            $insights .= "⚠ Project deadline is approaching within 2 weeks. " .
+            $insights .= "⚠ Project deadline is approaching within 2 weeks. ".
                 "Prioritize critical path tasks.\n\n";
         }
         

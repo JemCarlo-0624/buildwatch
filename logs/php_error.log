@@ -823,3 +823,141 @@ Stack trace:
 )
 
 [28-Oct-2025 13:09:56 Europe/Berlin] Error fetching budget reviews: SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'id' in field list is ambiguous
+[28-Oct-2025 17:27:44 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 17:27:44 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 17:27:44 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 10
+    [format] => html
+)
+
+[28-Oct-2025 17:37:07 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 17:37:07 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 17:37:07 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 10
+    [format] => html
+)
+
+[28-Oct-2025 17:37:07 Europe/Berlin] Error fetching proposal data: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'project_id' in 'field list'
+[28-Oct-2025 17:37:21 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 17:37:21 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 17:37:21 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 4
+    [format] => html
+)
+
+[28-Oct-2025 17:37:21 Europe/Berlin] Error fetching proposal data: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'project_id' in 'field list'
+[28-Oct-2025 17:38:49 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 17:38:49 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 17:38:49 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 4
+    [format] => html
+)
+
+[28-Oct-2025 17:38:49 Europe/Berlin] Error fetching proposal data: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'project_id' in 'field list'
+[28-Oct-2025 17:43:02 Europe/Berlin] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'pp.id' in 'on clause' in D:\Programming\xampp\htdocs\buildwatch\php\client_dashboard.php:15
+Stack trace:
+#0 D:\Programming\xampp\htdocs\buildwatch\php\client_dashboard.php(15): PDO->prepare('\r\n    SELECT pp...')
+#1 {main}
+  thrown in D:\Programming\xampp\htdocs\buildwatch\php\client_dashboard.php on line 15
+[28-Oct-2025 17:43:38 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 17:43:38 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 17:43:38 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 1
+    [format] => html
+)
+
+[28-Oct-2025 17:43:38 Europe/Berlin] Error fetching proposal data: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'project_id' in 'field list'
+[28-Oct-2025 17:45:15 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 17:45:15 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 17:45:15 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 1
+    [format] => html
+)
+
+[28-Oct-2025 17:56:13 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 17:56:13 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 17:56:13 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 12
+    [format] => html
+)
+
+[28-Oct-2025 17:56:13 Europe/Berlin] [report] fetchBudgetData: found by client_id=1 (proposal_id=13)
+[28-Oct-2025 17:56:22 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 17:56:22 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 17:56:22 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 10
+    [format] => html
+)
+
+[28-Oct-2025 17:56:22 Europe/Berlin] [report] fetchBudgetData: found by client_id=1 (proposal_id=13)
+[28-Oct-2025 18:00:04 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 18:00:04 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 18:00:04 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 10
+    [format] => html
+)
+
+[28-Oct-2025 18:00:04 Europe/Berlin] [report] fetchBudgetData: found by client_id=1 (proposal_id=13)
