@@ -655,6 +655,16 @@ $status = htmlspecialchars($project['status'] ?? 'planning');
         function updateBudgetModal(data) {
             const differenceClass = data.difference > 0 ? 'text-danger' : 'text-success';
             const differenceLabel = data.difference > 0 ? 'Higher than proposed' : 'Lower than proposed';
+            const evalTimelineHtml = (data.evaluated_start_date && data.evaluated_end_date) ? `
+                <div class="alert alert-light border-start border-primary border-4 mt-4">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="fas fa-calendar-alt text-primary"></i>
+                        <strong>Evaluated Timeline</strong>
+                    </div>
+                    <div>${formatDate(data.evaluated_start_date)} - ${formatDate(data.evaluated_end_date)}</div>
+                    ${data.evaluation_notes ? `<small class="text-muted d-block mt-1">${escapeHtml(data.evaluation_notes)}</small>` : ''}
+                </div>
+            ` : '';
             
             document.getElementById('budgetBreakdown').innerHTML = `
                 <div class="budget-breakdown">
@@ -679,8 +689,16 @@ $status = htmlspecialchars($project['status'] ?? 'planning');
                             <p class="mt-2">${escapeHtml(data.admin_comment)}</p>
                         </div>
                     ` : ''}
+                    ${evalTimelineHtml}
                 </div>
             `;
+        }
+
+        function formatDate(isoDate) {
+            try {
+                const d = new Date(isoDate);
+                return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch (_) { return isoDate; }
         }
 
         function handleBudgetDecision(decision) {

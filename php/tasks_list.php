@@ -538,25 +538,32 @@ foreach ($tasks as $task) {
         </div>
 
         <div class="nav-section">
-            <div class="nav-section-title"><?php echo $_SESSION['role'] === 'admin' ? 'Admin Panel' : 'PM Panel'; ?></div>
-            <a href="<?php echo $_SESSION['role'] === 'admin' ? 'dashboard_admin.php' : 'dashboard_pm.php'; ?>" class="nav-item">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </a>
-            <a href="projects_list.php" class="nav-item">
-                <i class="fas fa-project-diagram"></i> Projects
-            </a>
-            <a href="tasks_list.php" class="nav-item active">
-                <i class="fas fa-tasks"></i> Tasks
-            </a>
-            <a href="proposals_review.php" class="nav-item">
+    <div class="nav-section-title">
+        <?php echo $_SESSION['role'] === 'admin' ? 'Admin Panel' : 'PM Panel'; ?>
+    </div>
+
+    <a href="<?php echo $_SESSION['role'] === 'admin' ? 'dashboard_admin.php' : 'dashboard_pm.php'; ?>" class="nav-item">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+
+    <a href="projects_list.php" class="nav-item">
+        <i class="fas fa-project-diagram"></i> Projects
+    </a>
+
+    <a href="tasks_list.php" class="nav-item active">
+        <i class="fas fa-tasks"></i> Tasks
+    </a>
+
+    <?php if ($_SESSION['role'] === 'admin'): ?>
+        <a href="proposals_review.php" class="nav-item">
             <i class="fas fa-lightbulb"></i> Proposals
-            </a>
-            <?php if ($_SESSION['role'] === 'admin'): ?>
-            <a href="users_list.php" class="nav-item">
-                <i class="fas fa-users"></i> Users
-            </a>
-            <?php endif; ?>
-        </div>
+        </a>
+        <a href="users_list.php" class="nav-item">
+            <i class="fas fa-users"></i> Users
+        </a>
+    <?php endif; ?>
+</div>
+
 
         <div class="sidebar-footer">
             <div class="d-flex align-items-start gap-2 mb-3">

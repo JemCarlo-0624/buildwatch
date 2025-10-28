@@ -12,6 +12,9 @@ $budget_id = $_POST['budget_id'] ?? null;
 $proposal_id = $_POST['proposal_id'] ?? null;
 $evaluated_amount = $_POST['evaluated_amount'] ?? null;
 $remarks = $_POST['remarks'] ?? '';
+$evaluated_start_date = $_POST['evaluated_start_date'] ?? null;
+$evaluated_end_date = $_POST['evaluated_end_date'] ?? null;
+$evaluation_notes = $_POST['evaluation_notes'] ?? null;
 $item_names = $_POST['item_name'] ?? [];
 $costs = $_POST['cost'] ?? [];
 $categories = $_POST['category'] ?? [];
@@ -37,7 +40,16 @@ try {
 
     $status = ($evaluated_amount > $budgetData['proposed_amount']) ? 'pending_client' : 'approved';
 
-    // === 2. Update project_budgets ===
+    // === 2. Optionally update evaluated timeline on project_proposals ===
+    if (!empty($evaluated_start_date) && !empty($evaluated_end_date)) {
+        if (strtotime($evaluated_end_date) <= strtotime($evaluated_start_date)) {
+            throw new Exception('Evaluated end date must be after start date.');
+        }
+        $updateTimeline = $pdo->prepare("UPDATE project_proposals SET evaluated_start_date = ?, evaluated_end_date = ?, evaluation_notes = ? WHERE id = ?");
+        $updateTimeline->execute([$evaluated_start_date, $evaluated_end_date, $evaluation_notes, $proposal_id]);
+    }
+
+    // === 3. Update project_budgets ===
     $stmt = $pdo->prepare("
         UPDATE project_budgets 
         SET evaluated_amount = ?, status = ?, remarks = ?, admin_comment = ?, updated_at = NOW()
@@ -45,7 +57,7 @@ try {
     ");
     $stmt->execute([$evaluated_amount, $status, $remarks, $remarks, $budget_id]);
 
-    // === 3. Replace all budget_breakdowns ===
+    // === 4. Replace all budget_breakdowns ===
     $deleteStmt = $pdo->prepare("DELETE FROM budget_breakdowns WHERE budget_id = ?");
     $deleteStmt->execute([$budget_id]);
 
@@ -63,7 +75,7 @@ try {
         }
     }
 
-    // === 4. Record admin evaluation in budget_reviews ===
+    // === 5. Record admin evaluation in budget_reviews ===
     $admin_id = $_SESSION['user_id'] ?? 24;
     $reviewStmt = $pdo->prepare("
         INSERT INTO budget_reviews (proposal_id, admin_id, evaluated_amount, status, remarks, created_at)
@@ -123,7 +135,7 @@ try {
         $updateProposal->execute([$proposal_id]);
     }
 
-    // === 5. Check if evaluated amount > proposed and notify client ===
+    // === 6. Check if evaluated amount > proposed and notify client ===
     if ($evaluated_amount > $budgetData['proposed_amount']) {
         $client_id = $budgetData['client_id'];
 

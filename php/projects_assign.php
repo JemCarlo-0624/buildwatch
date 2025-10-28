@@ -32,6 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_POST['user_id'];
     $assignment_type = $_POST['assignment_type'] ?? 'worker';
 
+    // Disallow PMs from assigning another PM
+    if ($_SESSION['role'] === 'pm' && $assignment_type === 'pm') {
+        http_response_code(403);
+        die("❌ PMs cannot assign project managers.");
+    }
+
     // Validate user existence
     $userCheck = $pdo->prepare("SELECT id, role FROM users WHERE id = ?");
     $userCheck->execute([$user_id]);
@@ -423,6 +429,7 @@ $assignedWorkers = $stmt->fetchAll();
                 <?php endif; ?>
             </div>
 
+            <?php if ($_SESSION['role'] === 'admin'): ?>
             <div class="assignment-section">
                 <div class="section-header">
                     <h3 class="section-title pm-section">
@@ -451,6 +458,7 @@ $assignedWorkers = $stmt->fetchAll();
                     </button>
                 </form>
             </div>
+            <?php endif; ?>
 
             <div class="assignment-section">
                 <div class="section-header">

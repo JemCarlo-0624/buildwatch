@@ -24,7 +24,10 @@ try {
         SELECT 
             pb.*,
             pp.budget as proposed_budget,
-            pp.client_id
+            pp.client_id,
+            pp.evaluated_start_date,
+            pp.evaluated_end_date,
+            pp.evaluation_notes
         FROM project_budgets pb
         JOIN project_proposals pp ON pb.proposal_id = pp.id
         WHERE pb.id = ? AND pp.client_id = ?
@@ -43,7 +46,10 @@ try {
         'proposed_budget' => (float)$budget['proposed_amount'],
         'admin_evaluation' => (float)$budget['evaluated_amount'],
         'difference' => (float)($budget['evaluated_amount'] - $budget['proposed_amount']),
-        'admin_comment' => $budget['admin_comment'] ?? ''
+        'admin_comment' => $budget['admin_comment'] ?? '',
+        'evaluated_start_date' => $budget['evaluated_start_date'] ?? null,
+        'evaluated_end_date' => $budget['evaluated_end_date'] ?? null,
+        'evaluation_notes' => $budget['evaluation_notes'] ?? ''
     ]);
 
 } catch (PDOException $e) {

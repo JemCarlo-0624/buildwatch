@@ -1,6 +1,6 @@
 <?php
 require_once("auth_check.php");
-requireRole(["admin", "pm"]);
+requireRole(["admin"]);
 require_once("../config/db.php");
 
 if (session_status() === PHP_SESSION_NONE) session_start();
@@ -14,6 +14,7 @@ if (!$proposal_id) {
 
 // Fetch proposal and budget details
 $sql = "SELECT p.id, p.title, p.description, p.client_id, p.start_date, p.end_date, p.status, p.submitted_at, p.budget,
+               p.evaluated_start_date, p.evaluated_end_date, p.evaluation_notes,
                c.name as client_name, c.email as client_email, c.phone as client_phone, c.company as client_company,
                b.id AS budget_id, b.proposed_amount, b.evaluated_amount, b.status as budget_status, b.remarks
         FROM project_proposals p
@@ -532,6 +533,56 @@ $projectManagers = $pmStmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="info-value"><?php echo htmlspecialchars($proposal['client_company'] ?: 'Not provided'); ?></div>
                 </div>
             </div>
+        </div>
+
+        <!-- Evaluated Timeline (Admin) -->
+        <div class="content-card">
+            <div class="card-header-title">
+                <i class="fas fa-calendar-check"></i> Evaluated Timeline
+            </div>
+
+            <form method="POST" action="admin_review_timeline.php" id="timelineForm">
+                <input type="hidden" name="proposal_id" value="<?php echo $proposal_id; ?>">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="evaluated_start_date"><i class="fas fa-calendar-day"></i> Evaluated Start Date <span style="color: #d42f13;">*</span></label>
+                            <input type="date" id="evaluated_start_date" name="evaluated_start_date"
+                                   value="<?php echo htmlspecialchars($proposal['evaluated_start_date'] ?? ''); ?>"
+                                   <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?> required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="evaluated_end_date"><i class="fas fa-calendar-check"></i> Evaluated End Date <span style="color: #d42f13;">*</span></label>
+                            <input type="date" id="evaluated_end_date" name="evaluated_end_date"
+                                   value="<?php echo htmlspecialchars($proposal['evaluated_end_date'] ?? ''); ?>"
+                                   <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?> required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="evaluation_notes"><i class="fas fa-comment-dots"></i> Notes</label>
+                    <textarea id="evaluation_notes" name="evaluation_notes" rows="3"
+                              placeholder="Add notes about your timeline evaluation..."
+                              <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>><?php echo htmlspecialchars($proposal['evaluation_notes'] ?? ''); ?></textarea>
+                </div>
+
+                <?php if (!empty($proposal['evaluated_start_date']) && !empty($proposal['evaluated_end_date'])): ?>
+                <div class="alert alert-light border-start border-primary border-4" style="border-radius: 8px;">
+                    <strong>Current Evaluated Timeline:</strong>
+                    <?php echo date('M j, Y', strtotime($proposal['evaluated_start_date'])) . ' - ' . date('M j, Y', strtotime($proposal['evaluated_end_date'])); ?>
+                </div>
+                <?php endif; ?>
+
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-outline-primary" <?php echo $proposal['status'] === 'approved' ? 'disabled' : ''; ?>>
+                        <i class="fas fa-save"></i> Save Evaluated Timeline
+                    </button>
+                </div>
+            </form>
         </div>
 
         <!-- Budget review section integrated from admin_review_budget.php -->

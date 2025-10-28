@@ -1,7 +1,7 @@
 <?php
 // Include auth_check first — defines requireRole()
 require_once("auth_check.php"); // <-- important!
-requireRole(["pm","admin"]);
+requireRole(["admin"]);
 require_once("../config/db.php");
 
 if (isset($_POST['approve_proposal'])) {

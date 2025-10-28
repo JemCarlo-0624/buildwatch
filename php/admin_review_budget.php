@@ -12,7 +12,10 @@ if (!$proposal_id) {
 }
 
 // Fetch proposal and budget details
-$sql = "SELECT p.id, p.title, p.description, p.client_id, c.name as client_name, c.email as client_email,
+$sql = "SELECT p.id, p.title, p.description, p.client_id,
+               p.start_date, p.end_date,
+               p.evaluated_start_date, p.evaluated_end_date, p.evaluation_notes,
+               c.name as client_name, c.email as client_email,
                b.id AS budget_id, b.proposed_amount, b.evaluated_amount, b.status, b.remarks
         FROM project_proposals p
         LEFT JOIN project_budgets b ON p.id = b.proposal_id
@@ -392,6 +395,42 @@ $breakdowns = $breakdownStmt->fetchAll(PDO::FETCH_ASSOC);
         <form method="POST" action="admin_approve_budget.php" id="budgetForm">
             <input type="hidden" name="budget_id" value="<?php echo $budget['budget_id']; ?>">
             <input type="hidden" name="proposal_id" value="<?php echo $proposal_id; ?>">
+
+            <!-- Evaluated Timeline (Admin) embedded -->
+            <div class="budget-card">
+                <div class="card-title">
+                    <i class="fas fa-calendar-check"></i> Evaluated Timeline
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="evaluated_start_date"><i class="fas fa-calendar-day"></i> Evaluated Start Date <span style="color: #d42f13;">*</span></label>
+                            <input type="date" id="evaluated_start_date" name="evaluated_start_date"
+                                   value="<?php echo htmlspecialchars($budget['evaluated_start_date'] ?? ''); ?>">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="evaluated_end_date"><i class="fas fa-calendar-check"></i> Evaluated End Date <span style="color: #d42f13;">*</span></label>
+                            <input type="date" id="evaluated_end_date" name="evaluated_end_date"
+                                   value="<?php echo htmlspecialchars($budget['evaluated_end_date'] ?? ''); ?>">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="evaluation_notes"><i class="fas fa-comment-dots"></i> Notes</label>
+                    <textarea id="evaluation_notes" name="evaluation_notes" rows="3" placeholder="Add notes about timeline evaluation..."><?php echo htmlspecialchars($budget['evaluation_notes'] ?? ''); ?></textarea>
+                </div>
+
+                <?php if (!empty($budget['evaluated_start_date']) && !empty($budget['evaluated_end_date'])): ?>
+                <div class="alert alert-light border-start border-primary border-4" style="border-radius: 8px;">
+                    <strong>Current Evaluated Timeline:</strong>
+                    <?php echo date('M j, Y', strtotime($budget['evaluated_start_date'])) . ' - ' . date('M j, Y', strtotime($budget['evaluated_end_date'])); ?>
+                </div>
+                <?php endif; ?>
+            </div>
 
             <div class="budget-card">
                 <div class="card-title">
