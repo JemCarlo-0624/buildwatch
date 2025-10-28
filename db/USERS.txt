@@ -1,0 +1,54 @@
+Based on the database dump, here are all the accounts that have been populated:
+
+## **CLIENT ACCOUNT (1):**
+- **Email:** jjnarvasa@buildwatch.com
+- **Password:** (hashed) 
+- **Name:** Jan Julliene Narvasa
+- **Company:** Discaya
+- **Phone:** 09129841241
+
+## **USER ACCOUNTS (17):**
+
+### **Admin (1):**
+1. **Email:** admin@buildwatch.com
+   - **Name:** Admin
+   - **Role:** admin
+
+
+3. **Email:** maria.santos@buildwatch.com
+   - **Name:** Maria Santos
+   - **Phone:** 09178234567
+   - **Role:** pm
+   - *(Assigned to completed Corporate HQ project)*
+
+4. **Email:** roberto.cruz@buildwatch.com
+   - **Name:** Roberto Cruz
+   - **Phone:** 09189345678
+   - **Role:** pm
+   - *(Assigned to ongoing Hospital Lab project)*
+
+
+
+8. **Email:** juan.delacruz@buildwatch.com
+   - **Name:** Juan Dela Cruz
+   - **Phone:** 09171234567
+   - **Role:** worker
+   - *(Assigned to completed Corporate HQ project)*
+
+9. **Email:** pedro.garcia@buildwatch.com
+   - **Name:** Pedro Garcia
+   - **Phone:** 09182345678
+   - **Role:** worker
+   - *(Assigned to completed Corporate HQ project)*
+
+10. **Email:** miguel.torres@buildwatch.com
+    - **Name:** Miguel Torres
+    - **Phone:** 09193456789
+    - **Role:** worker
+    - *(Assigned to ongoing Hospital Lab project)*
+
+11. **Email:** antonio.reyes@buildwatch.com
+    - **Name:** Antonio Reyes
+    - **Phone:** 09184567890
+    - **Role:** worker
+    - *(Assigned to ongoing Hospital Lab project)*

@@ -961,3 +961,48 @@ Stack trace:
 )
 
 [28-Oct-2025 18:00:04 Europe/Berlin] [report] fetchBudgetData: found by client_id=1 (proposal_id=13)
+[28-Oct-2025 18:37:49 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 18:37:49 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 18:37:49 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 1
+    [format] => html
+)
+
+[28-Oct-2025 18:37:49 Europe/Berlin] [report] fetchBudgetData: found by proposal_id=3
+[28-Oct-2025 18:38:55 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 18:38:55 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 18:38:55 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 3
+    [format] => html
+)
+
+[28-Oct-2025 18:38:55 Europe/Berlin] [report] fetchBudgetData: found by proposal_id=3
+[28-Oct-2025 18:39:37 Europe/Berlin] [v1] Report generation request received
+[28-Oct-2025 18:39:37 Europe/Berlin] [v1] Session data: Array
+(
+    [client_id] => 1
+    [client_name] => Jan Julliene Narvasa
+    [client_email] => jjnarvasa@buildwatch.com
+)
+
+[28-Oct-2025 18:39:37 Europe/Berlin] [v1] GET parameters: Array
+(
+    [project_id] => 1
+    [format] => html
+)
+
+[28-Oct-2025 18:39:37 Europe/Berlin] [report] fetchBudgetData: found by proposal_id=3

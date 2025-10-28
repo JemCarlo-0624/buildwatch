@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 26, 2025 at 03:08 PM
+-- Generation Time: Oct 28, 2025 at 06:13 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -67,6 +67,13 @@ CREATE TABLE `clients` (
   `company` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `clients`
+--
+
+INSERT INTO `clients` (`id`, `name`, `email`, `password`, `phone`, `company`, `created_at`) VALUES
+(1, 'Jan Julliene Narvasa', 'jjnarvasa@buildwatch.com', '$2y$10$L0990U6T0PrxZ93CSmEk3ulMNiIKelMILpgtpCFnh.ATN1pXUA3qu', '09129841241', 'Discaya', '2025-10-25 14:54:08');
 
 -- --------------------------------------------------------
 
@@ -155,6 +162,9 @@ CREATE TABLE `project_proposals` (
   `description` text DEFAULT NULL,
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
+  `evaluated_start_date` date DEFAULT NULL,
+  `evaluated_end_date` date DEFAULT NULL,
+  `evaluation_notes` text DEFAULT NULL,
   `status` enum('pending','approved','rejected') DEFAULT 'pending',
   `submitted_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `client_decision` varchar(50) DEFAULT NULL,
@@ -320,7 +330,7 @@ ALTER TABLE `budget_reviews`
 -- AUTO_INCREMENT for table `clients`
 --
 ALTER TABLE `clients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `notifications`
